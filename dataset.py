@@ -1,7 +1,6 @@
-from torch.utils.data import Dataset
 import numpy as np
 import pandas as pd
-
+from torch.utils.data import Dataset
 
 class ParticleDataset(Dataset):
     def __init__(self, data_path, norm_path, QT, dataGroup):
@@ -26,12 +25,15 @@ class ParticleDataset(Dataset):
             self.data[col] = (self.data[col] - self.norm['min'][col] + epsilon) / (self.norm['max'][col] - self.norm['min'][col] + 2 * epsilon)
 
         # store values before any transformation
-        self.preprocess = self.data
+        self.preprocess = self.data.copy()
         # The following transformation is only relevant to inner
         if dataGroup == 'inner':
-            # Similar to y' = (y-0.83)**(3/7), makes sure we get the real root
-            self.data[' yy'] = np.copysign(np.abs(self.data[' yy'] - 0.83) ** (3. / 7),
-                                           self.data[' yy'] - 0.83)
+            # Similar to y' = (y-0.83)**(5/7), makes sure we get the real root
+            # self.data[' yy'] = np.copysign(np.abs(self.data[' yy'] - 0.83) ** (5. / 9),
+            #                                self.data[' yy'] - 0.83)
+            self.data[' yy'] = np.arctan(10*(self.data[' yy']-0.83))
+            self.data[' xx'] = np.copysign(np.abs(self.data[' xx'] - 0.73) ** (5. / 9),
+                                           self.data[' xx'] - 0.73)
 
         self.data[' pzz'] = 1 - self.data[' pzz']
         self.data[[' rp', ' pzz', ' eneg', ' time']] = -np.log(self.data[[' rp', ' pzz', ' eneg', ' time']])

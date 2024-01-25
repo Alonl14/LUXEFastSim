@@ -3,7 +3,7 @@
     "subsample": 75000,
     "data": "TrainData/neutron_inner_1M.csv",
     "dataNorm": "TrainData/neutron_inner_1M_norm.csv",
-    "outputDir": "/Users/alonlevi/PycharmProjects/LUXEFastSim/Output",
+    "outputDir": "",
     "dataGroup": "inner",
     "batchSize": 256,
     "noiseDim": 100,

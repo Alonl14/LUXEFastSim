@@ -3,7 +3,6 @@
     "subsample": 75000,
     "data": "TrainData/neutron_outer_5M.csv",
     "dataNorm": "TrainData/neutron_outer_5M_norm.csv",
-    "outputDir": "/Users/alonlevi/PycharmProjects/LUXEFastSim/Output",
     "dataGroup": "outer",
     "batchSize": 1024,
     "noiseDim": 100,

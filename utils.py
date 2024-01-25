@@ -34,7 +34,8 @@ def transform(quantiles, norm, columns, fake_p, dataGroup):
 
     temp = quantiles.inverse_transform(fake_p)
     if dataGroup == 'inner':
-        temp[:, 1] = temp[:, 1] = (np.cbrt(temp[:, 1]) ** 7 + 0.83)
+        temp[:, 1] = temp[:, 1] = (np.abs((temp[:, 1]) ** (9/5)) + 0.73)
+        temp[:, 2] = temp[:, 2] = np.tan(temp[:, 2])/10 + 0.83
         temp[:, [2, 4, 5, 6]] = np.exp(-temp[:, [2, 4, 5, 6]])
         temp[:, 4] = 1 - temp[:, 4]
     else:
@@ -157,11 +158,12 @@ def get_q(ds):
 
 def plot_features(ds):
     print("Feature Slope      Curvature")
-    for i, col in enumerate(ds.data.columns):
+
+    for i, col in enumerate(ds.preprocess):
         fig, (ax1, ax2, ax3, ax4) = plt.subplots(1, 4, figsize=(20, 5))
         fig.suptitle(col)
 
-        ax1.hist(ds.preprocess[:, i], bins=400)
+        ax1.hist(ds.preprocess[col], bins=400)
         ax2.hist(ds.preqt[:, i], bins=400)
         ax3.hist(ds.data[:, i], bins=400)
         ax4.plot(ds.quantiles.quantiles_[:, i])
@@ -178,6 +180,7 @@ def plot_features(ds):
         ax1.set_yscale('log')
         ax2.set_yscale('log')
         ax3.set_yscale('log')
+        plt.show()
 
 
 def generate_df(trainer, noiseDim, numEvents):
