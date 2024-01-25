@@ -15,7 +15,7 @@ with open(config_dir+"/cfg_outer_cluster.json", 'r') as outer_file:
 # cfg_inner["data"] = 'TrainData/neutron_inner_1M.csv'
 # cfg_outer["data"] = 'TrainData/neutron_outer_5M.csv'
 
-numEpochs = sys.argv[0]
+numEpochs = np.int64(sys.argv[0])
 
 cfg_inner["numEpochs"] = numEpochs
 cfg_outer["numEpochs"] = numEpochs
