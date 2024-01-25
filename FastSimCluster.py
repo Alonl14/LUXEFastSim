@@ -4,7 +4,7 @@ from trainerFactory import create_trainer
 import torch
 import numpy as np
 
-config_dir = "~/LUXEFastSim/Config"
+config_dir = "/srv01/agrp/alonle/LUXEFastSim/Config"
 
 with open(config_dir+"/cfg_inner_cluster.json", 'r') as inner_file:
     cfg_inner = json.loads(inner_file.read())
