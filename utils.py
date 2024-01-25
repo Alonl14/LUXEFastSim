@@ -13,10 +13,10 @@ def get_kld(real, fake):
     :return: KL-divergence associated with the pdf's
     """
 
-    target_2d_hist = torch.histogram(real.cpu(), bins=200, density=True).hist
-    current_2d_hist = torch.histogram(fake.cpu(), bins=200, density=True).hist
-    current_kld = nn.functional.kl_div(nn.functional.log_softmax(target_2d_hist)
-                                       , nn.functional.log_softmax(current_2d_hist)
+    target_hist = torch.histogram(real.cpu(), bins=500, density=True).hist
+    current_hist = torch.histogram(fake.cpu(), bins=500, density=True).hist
+    current_kld = nn.functional.kl_div(nn.functional.log_softmax(target_hist)
+                                       , nn.functional.log_softmax(current_hist)
                                        , log_target=True)
     return current_kld
 
@@ -34,7 +34,7 @@ def transform(quantiles, norm, columns, fake_p, dataGroup):
 
     temp = quantiles.inverse_transform(fake_p)
     if dataGroup == 'inner':
-        temp[:, 1] = temp[:, 1] = (np.abs((temp[:, 1]) ** (9/5)) + 0.73)
+        temp[:, 1] = temp[:, 1] = (np.copysign(np.abs((temp[:, 1]) ** (9/5)), temp[:, 1])) + 0.73
         temp[:, 2] = temp[:, 2] = np.tan(temp[:, 2])/10 + 0.83
         temp[:, [2, 4, 5, 6]] = np.exp(-temp[:, [2, 4, 5, 6]])
         temp[:, 4] = 1 - temp[:, 4]

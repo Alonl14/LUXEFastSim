@@ -7,8 +7,8 @@ class ParticleDataset(Dataset):
         super().__init__()
 
         self.data = pd.read_csv(data_path)
-        # self.data = self.data[self.data[' pdg'].isin([2112])]  # 22 - photons , 2112 - neutrons
-        print(dataGroup)
+        if ' pdg' in self.data.columns.values:
+            self.data = self.data[self.data[' pdg'].isin([2112])]  # 22 - photons , 2112 - neutrons
         self.data[' rp'] = np.sqrt(self.data[' pxx'].values ** 2 + self.data[' pyy'].values ** 2)
         self.data[' phi_p'] = np.arctan2(self.data[' pyy'].values, self.data[' pxx'].values) + np.pi
         if dataGroup == 'outer':

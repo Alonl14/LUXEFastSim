@@ -1,14 +1,14 @@
 {
-    "nQuantiles": 15000,
+    "nQuantiles": 20000,
     "subsample": 75000,
-    "data": "TrainData/neutron_inner_1M.csv",
-    "dataNorm": "TrainData/neutron_inner_1M_norm.csv",
-    "outputDir": "",
+    "data": "/storage/agrp/alonle/GAN_InputSample/neutron_inner.csv",
+    "dataNorm": "/storage/agrp/alonle/GAN_InputSample/neutron_inner_norm.csv",
+    "outputDir": "/storage/agrp/alonle/GAN_Output/run_1",
     "dataGroup": "inner",
-    "batchSize": 256,
+    "batchSize": 128,
     "noiseDim": 100,
     "numEpochs": 1,
     "device": "mps",
-    "nCrit": 3,
+    "nCrit": 5,
     "Lambda": 0.01
 }

@@ -27,6 +27,7 @@ def create_trainer(cfg):
         'genNet': genNet,
         'noiseDim': cfg['noiseDim'],
         'discNet': discNet,
+        'outputDir': cfg['outputDir'],
         'dataloader': dataloader,
         'dataset': dataset,
         'dataGroup': cfg['dataGroup'],

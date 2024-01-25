@@ -26,6 +26,7 @@ class Trainer:
         self.genNet = cfgDict['genNet']
         self.noiseDim = cfgDict['noiseDim']
         self.discNet = cfgDict['discNet']
+        self.outputDir = cfgDict['outputDir']
         self.genOptimizer = cfgDict['genOptimizer']
         self.discOptimizer = cfgDict['discOptimizer']
         self.dataloader = cfgDict['dataloader']
@@ -116,22 +117,25 @@ class Trainer:
 
             if len(self.D_Losses) > 0:
                 if avg_error_D < self.D_Losses[-1]:
-                    torch.save(self.genNet.state_dict(), 'Output/'+self.dataGroup+'_Gen_model.pt')
-            if np.mod(epoch, 10) == 0:
-                # generate events, same number as real events for comparison
-                noise = torch.randn(len(self.dataset), self.noiseDim, device='cpu')
-                self.genNet.eval()
-                self.genNet.to('cpu')
-                fake_p = self.genNet(noise).detach().numpy()
-                generated_df = utils.transform(self.dataset.quantiles, self.dataset.norm,
-                                               self.dataset.preprocess.columns, fake_p, self.dataGroup)
-                utils.make_plots(generated_df, self.dataGroup)
-                self.genNet.to(self.device)
-                self.genNet.train()
+                    torch.save(self.genNet.state_dict(), self.outputDir+'/'+self.dataGroup+'_Gen_model.pt')
+            else:
+                torch.save(self.genNet.state_dict(), self.outputDir + '/' + self.dataGroup + '_Gen_model.pt')
+
+            # if np.mod(epoch, 10) == 0:
+            #     # generate events, same number as real events for comparison
+            #     noise = torch.randn(len(self.dataset), self.noiseDim, device='cpu')
+            #     self.genNet.eval()
+            #     self.genNet.to('cpu')
+            #     fake_p = self.genNet(noise).detach().numpy()
+            #     generated_df = utils.transform(self.dataset.quantiles, self.dataset.norm,
+            #                                    self.dataset.preprocess.columns, fake_p, self.dataGroup)
+            #     utils.make_plots(generated_df, self.dataGroup)
+            #     self.genNet.to(self.device)
+            #     self.genNet.train()
 
             avg_error_G = avg_error_G/iters
             self.G_Losses = np.append(self.G_Losses, avg_error_G)
             avg_error_D = avg_error_D/iters
             self.D_Losses = np.append(self.D_Losses, avg_error_D)
-            print(f'{epoch}/{self.numEpochs}\tLoss_D: {avg_error_D:.4f}\tLoss_G: {avg_error_G:.4f}')
+            # print(f'{epoch}/{self.numEpochs}\tLoss_D: {avg_error_D:.4f}\tLoss_G: {avg_error_G:.4f}')
         return generated_df
