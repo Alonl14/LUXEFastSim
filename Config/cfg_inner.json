@@ -1,13 +1,13 @@
 {
-    "nQuantiles": 5000,
-    "subsample": 75000,
+    "nQuantiles": 10000,
+    "subsample": 30000,
     "data": "TrainData/neutron_inner_1M.csv",
     "dataNorm": "TrainData/neutron_inner_1M_norm.csv",
     "outputDir": "/Users/alonlevi/PycharmProjects/LUXEFastSim/Output",
     "dataGroup": "inner",
-    "batchSize": 4196,
+    "batchSize": 256,
     "noiseDim": 100,
-    "numEpochs": 1,
+    "numEpochs": 10,
     "device": "mps",
     "nCrit": 3,
     "Lambda": 0.01

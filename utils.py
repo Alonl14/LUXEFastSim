@@ -17,7 +17,7 @@ def get_kld(real, fake):
     current_hist = torch.histogram(fake.cpu()[:,[0,1]], bins=500, density=True).hist
     current_kld = nn.functional.kl_div(nn.functional.log_softmax(target_hist)
                                        , nn.functional.log_softmax(current_hist)
-                                       , log_target=True, dim = 2)
+                                       , log_target=True)
     return current_kld
 
 
