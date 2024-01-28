@@ -20,11 +20,14 @@ numEpochs = np.int64(sys.argv[1])
 cfg_inner["numEpochs"] = numEpochs
 cfg_outer["numEpochs"] = numEpochs
 
-inner_trainer = create_trainer(cfg_inner)
 outer_trainer = create_trainer(cfg_outer)
+inner_trainer = create_trainer(cfg_inner)
 
-inner_trainer.run()
 outer_trainer.run()
+print("Outer Training Done!")
+inner_trainer.run()
+print("Inner Training Done!")
+
 KL_in = np.zeros(len(inner_trainer.KL_Div))
 KL_out = np.zeros(len(outer_trainer.KL_Div))
 

@@ -5,7 +5,7 @@
     "dataNorm": "/storage/agrp/alonle/GAN_InputSample/neutron_inner_norm.csv",
     "outputDir": "/storage/agrp/alonle/GAN_Output/run_1",
     "dataGroup": "inner",
-    "batchSize": 64,
+    "batchSize": 128,
     "noiseDim": 100,
     "numEpochs": 1,
     "device": "cuda",

@@ -3,7 +3,7 @@ import torch.nn as nn
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-
+from generator import (InnerGenerator, OuterGenerator)
 
 def get_kld(real, fake):
     """
@@ -13,8 +13,8 @@ def get_kld(real, fake):
     :return: KL-divergence associated with the pdf's
     """
 
-    target_hist = torch.histogram(real.cpu(), bins=500, density=True).hist
-    current_hist = torch.histogram(fake.cpu(), bins=500, density=True).hist
+    target_hist = torch.histogram(real.cpu()[:,[0,1]], bins=500, density=True).hist
+    current_hist = torch.histogram(fake.cpu()[:,[0,1]], bins=500, density=True).hist
     current_kld = nn.functional.kl_div(nn.functional.log_softmax(target_hist)
                                        , nn.functional.log_softmax(current_hist)
                                        , log_target=True)
@@ -34,8 +34,8 @@ def transform(quantiles, norm, columns, fake_p, dataGroup):
 
     temp = quantiles.inverse_transform(fake_p)
     if dataGroup == 'inner':
-        temp[:, 1] = temp[:, 1] = (np.copysign(np.abs((temp[:, 1]) ** (9/5)), temp[:, 1])) + 0.73
-        temp[:, 2] = temp[:, 2] = np.tan(temp[:, 2])/10 + 0.83
+        temp[:, 0] = (np.copysign(np.abs(temp[:, 0]) ** (9./5), temp[:, 0])) + 0.73
+        temp[:, 1] = np.tan(temp[:, 1])/10 + 0.83
         temp[:, [2, 4, 5, 6]] = np.exp(-temp[:, [2, 4, 5, 6]])
         temp[:, 4] = 1 - temp[:, 4]
     else:
@@ -53,7 +53,6 @@ def transform(quantiles, norm, columns, fake_p, dataGroup):
     #     df[' xx'] = df[' rx'] * np.cos(df[' phi_x'] - np.pi)
     #     df[' yy'] = df[' rx'] * np.sin(df[' phi_x'] - np.pi)
     # el
-    print("changes made!")
     if dataGroup == 'inner':
         df[' rx'] = np.sqrt(df[' xx'] ** 2 + df[' yy'] ** 2)
     df[' pxx'] = df[' rp'] * np.cos(df[' phi_p'] - np.pi)
@@ -220,4 +219,16 @@ def combine(real_df, innerT, outerT):
     generated_df = pd.concat((inner_df, outer_df), axis=0)
 
     return generated_df
+
+
+def check_run(id, real_df, innerTrainer, outerTrainer):
+    for var in ["inner", "outer"]:
+        cap = var.capitalize()
+        exec(var+"Gen = " + cap+"Generator(" + var+"Trainer.noiseDim)")
+        exec(var+"""Gen.load_state_dict(torch.load("Output/run_"""+id+"/" + var+"""_Gen_model.pt"
+                , map_location=torch.device('cpu')))""")
+        exec(var + "Gen = " + cap+"Generator(" + var+"Trainer.noiseDim)")
+        exec(var + "Trainer.genNet = " + var+"Gen")
+    return combine(real_df, innerTrainer, outerTrainer)
+
 

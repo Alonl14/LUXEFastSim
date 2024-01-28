@@ -3,6 +3,7 @@ import numpy as np
 import pandas as pd
 import tqdm
 import utils
+from numpy import random
 
 
 def get_gradient(crit, real, fake,
@@ -37,6 +38,7 @@ class Trainer:
         self.nCrit = cfgDict['nCrit']
         self.Lambda = cfgDict['Lambda']
 
+        self.trainedGen = torch.Tensor([])
         self.G_Losses = np.array([])
         self.D_Losses = np.array([])
         self.KL_Div = np.array([])
@@ -57,7 +59,7 @@ class Trainer:
 
         for epoch in tqdm.tqdm_notebook(range(self.numEpochs), desc=' epochs', position=0):
 
-            avg_error_G, avg_error_D, iters = 0, 0, 0
+            avg_error_G, avg_error_D, iters, currentKLD = 0, 0, 0, 0
 
             for i, data in tqdm.tqdm_notebook(enumerate(self.dataloader, 0), desc=' batch', position=1, leave=False):
                 # Update the discriminator network
@@ -108,10 +110,14 @@ class Trainer:
                 avg_error_G += err_G.item()
                 avg_error_D += crit_err_D/self.nCrit
 
-                if iters % 100 == 0:
-                    currentKLD = utils.get_kld(real_data, fake_p)
-                    currentKLD = currentKLD.detach().numpy()
-                    self.KL_Div = np.append(self.KL_Div, currentKLD)
+                addCurrentKLD = utils.get_kld(real_data, fake_p)
+                addCurrentKLD = addCurrentKLD.detach().numpy()
+                currentKLD += addCurrentKLD
+
+                if iters % 1000 == 0:
+                    print("Iteration #"+str(iters))
+                    self.KL_Div = np.append(self.KL_Div, currentKLD/1000)
+                    currentKLD = 0
 
                 iters += 1
 
