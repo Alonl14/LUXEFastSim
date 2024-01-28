@@ -1,6 +1,6 @@
 {
-    "nQuantiles": 20000,
-    "subsample": 75000,
+    "nQuantiles": 15000,
+    "subsample": 30000,
     "data": "/storage/agrp/alonle/GAN_InputSample/neutron_inner.csv",
     "dataNorm": "/storage/agrp/alonle/GAN_InputSample/neutron_inner_norm.csv",
     "outputDir": "/storage/agrp/alonle/GAN_Output/run_1",
