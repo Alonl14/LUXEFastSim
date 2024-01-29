@@ -116,7 +116,7 @@ class Trainer:
 
                 if iters % 10000 == 0:
                     print("Iteration #"+str(iters))
-                    self.KL_Div = np.append(self.KL_Div, currentKLD/1000)
+                    self.KL_Div = np.append(self.KL_Div, currentKLD/10000)
                     currentKLD = 0
 
                 iters += 1
