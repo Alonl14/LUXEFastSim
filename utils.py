@@ -64,6 +64,7 @@ def transform(quantiles, norm, columns, fake_p, dataGroup):
 def plot_correlations(x, y, xlabel, ylabel, bins=[400, 400], loglog=False, Xlim=None, Ylim=None):
     H, xb, yb = np.histogram2d(x, y, bins=bins, range=[[x.min(), x.max()], [y.min(), y.max()]], density=True)
     X, Y = np.meshgrid(xb, yb)
+    plt.figure(dpi=250)
     plt.pcolormesh(X, Y, np.log10(H.T))
     if loglog:
         plt.xscale('log')
@@ -93,6 +94,21 @@ def make_plots(df, dataGroup):
         y_lim = [-2500, 500]
 
     plot_correlations(df[' xx'], df[' yy'], 'x[mm]', 'y[mm]', Xlim=x_lim, Ylim=y_lim)
+    energy_bins = 10 ** np.linspace(-7, 0, 400)
+    time_bins = 10 ** np.linspace(1, 8, 400)
+    plot_correlations(df[' time'], df[' eneg'], 't[ns]', 'E[GeV]', bins=[time_bins, energy_bins], loglog=True)
+    plot_correlations(df[' rx'], df['theta'], 'r [mm]', 'theta_p [rad]')
+    plot_correlations(df[' phi_p'], df[' phi_x'], 'phi_p [rad]', 'phi_x [rad]')
+
+
+def make_plots2(df, dataGroup):
+    x_lim = [-1800, 600]
+    y_lim = [-2000, 600]
+    if dataGroup == 'inner':
+        x_lim = [-1700, 500]
+        y_lim = [-2500, 500]
+
+    plot_correlations(df[' xx'], df[' yy'], 'x[mm]', 'y[mm]',bins = 800 ,Xlim=x_lim, Ylim=y_lim)
     energy_bins = 10 ** np.linspace(-7, 0, 400)
     time_bins = 10 ** np.linspace(1, 8, 400)
     plot_correlations(df[' time'], df[' eneg'], 't[ns]', 'E[GeV]', bins=[time_bins, energy_bins], loglog=True)
@@ -208,7 +224,7 @@ def weights_init(m):
 
 def combine(real_df, innerT, outerT):
     inner, outer = split(real_df)
-    numEvents = len(real_df)
+    numEvents = len(real_df)/25
     q_in = len(inner)/(len(inner)+len(outer))
     inner_events = np.int64(np.floor(numEvents*q_in))
     outer_events = np.int64(np.ceil(numEvents*(1-q_in)))
