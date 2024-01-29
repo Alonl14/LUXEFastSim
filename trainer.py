@@ -114,7 +114,7 @@ class Trainer:
                 addCurrentKLD = addCurrentKLD.detach().numpy()
                 currentKLD += addCurrentKLD
 
-                if iters % 1000 == 0:
+                if iters % 10000 == 0:
                     print("Iteration #"+str(iters))
                     self.KL_Div = np.append(self.KL_Div, currentKLD/1000)
                     currentKLD = 0
