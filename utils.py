@@ -48,13 +48,14 @@ def transform(quantiles, norm, columns, fake_p, dataGroup):
         min = norm['min'][col]
         df[col] = min + (max - min) * temp[:, i]
 
-    df[' phi_x'] = np.arctan2(df[' yy'], df[' xx']) + np.pi
-    # if dataGroup == 'outer':
-    #     df[' xx'] = df[' rx'] * np.cos(df[' phi_x'] - np.pi)
-    #     df[' yy'] = df[' rx'] * np.sin(df[' phi_x'] - np.pi)
-    # el
-    if dataGroup == 'inner':
+    # df[' phi_x'] = np.arctan2(df[' yy'], df[' xx']) + np.pi
+    if dataGroup == 'outer':
+        # df[' xx'] = df[' rx'] * np.cos(df[' phi_x'] - np.pi)
+        df[' yy'] = df[' rx'] * np.sin(df[' phi_x'] - np.pi)
+        df[[' xx', ' yy']] = df[[' xx', ' yy']] + 500
+    elif dataGroup == 'inner':
         df[' rx'] = np.sqrt(df[' xx'] ** 2 + df[' yy'] ** 2)
+
     df[' pxx'] = df[' rp'] * np.cos(df[' phi_p'] - np.pi)
     df[' pyy'] = df[' rp'] * np.sin(df[' phi_p'] - np.pi)
     df['theta'] = np.arccos(df[' pzz'] / np.sqrt(df[' pzz'] ** 2 + df[' rp'] ** 2))

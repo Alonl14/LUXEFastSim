@@ -7,7 +7,7 @@
     "dataGroup": "inner",
     "batchSize": 256,
     "noiseDim": 100,
-    "numEpochs": 10,
+    "numEpochs": 1,
     "device": "mps",
     "nCrit": 3,
     "Lambda": 0.01
