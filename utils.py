@@ -252,5 +252,6 @@ def check_run(id, real_df, innerTrainer, outerTrainer):
 
 
 def get_time(end_time, beg_time=np.zeros(9)):
+    print(np.int64(end_time) - np.int64(beg_time))
     print(time.asctime(time.struct_time(np.int64(end_time) - np.int64(beg_time))))
     return time.asctime(time.struct_time(np.int64(end_time) - np.int64(beg_time)))[11:19]
