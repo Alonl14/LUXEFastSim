@@ -1,8 +1,8 @@
 {
     "nQuantiles": 10000,
     "subsample": 300000,
-    "data": "/storage/agrp/alonle/GAN_InputSample/neutron_outer.csv",
-    "dataNorm": "/storage/agrp/alonle/GAN_InputSample/neutron_outer_norm.csv",
+    "data": "/storage/agrp/alonle/GAN_InputSample/20M_r_cut.csv",
+    "dataNorm": "/storage/agrp/alonle/GAN_InputSample/FullData_r_cut.csv",
     "outputDir": "",
     "dataGroup": "outer",
     "batchSize": 512,
