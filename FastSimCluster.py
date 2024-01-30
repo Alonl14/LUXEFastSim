@@ -15,6 +15,7 @@ with open(config_dir+"/cfg_inner_cluster.json", 'r') as inner_file:
 with open(config_dir+"/cfg_outer_cluster.json", 'r') as outer_file:
     cfg_outer = json.loads(outer_file.read())
 print(sys.argv)
+
 cfg_inner['outputDir'] = sys.argv[2]
 cfg_outer['outputDir'] = sys.argv[2]
 
@@ -51,7 +52,7 @@ for i in range(len(KL_in)):
     KL_in[i] = inner_trainer.KL_Div[i]
     KL_out[i] = outer_trainer.KL_Div[i]
 
-np.save(inner_trainer.outputDir+'/KL_in.npy', KL_in)
-np.save(outer_trainer.outputDir+'/KL_out.npy', KL_out)
-np.save(inner_trainer.outputDir+'/D_losses_in.npy', inner_trainer.D_Losses)
-np.save(outer_trainer.outputDir+'/D_losses_out.npy', outer_trainer.D_Losses)
+np.save(inner_trainer.outputDir+'KL_in.npy', KL_in)
+np.save(outer_trainer.outputDir+'KL_out.npy', KL_out)
+np.save(inner_trainer.outputDir+'D_losses_in.npy', inner_trainer.D_Losses)
+np.save(outer_trainer.outputDir+'D_losses_out.npy', outer_trainer.D_Losses)

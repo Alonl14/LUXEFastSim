@@ -123,9 +123,9 @@ class Trainer:
 
             if len(self.D_Losses) > 0:
                 if avg_error_D < self.D_Losses[-1]:
-                    torch.save(self.genNet.state_dict(), self.outputDir+'/'+self.dataGroup+'_Gen_model.pt')
+                    torch.save(self.genNet.state_dict(), self.outputDir+self.dataGroup+'_Gen_model.pt')
             else:
-                torch.save(self.genNet.state_dict(), self.outputDir + '/' + self.dataGroup + '_Gen_model.pt')
+                torch.save(self.genNet.state_dict(), self.outputDir + self.dataGroup + '_Gen_model.pt')
 
             # if np.mod(epoch, 10) == 0:
             #     # generate events, same number as real events for comparison
