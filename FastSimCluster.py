@@ -14,9 +14,9 @@ with open(config_dir+"/cfg_inner_cluster.json", 'r') as inner_file:
     cfg_inner = json.loads(inner_file.read())
 with open(config_dir+"/cfg_outer_cluster.json", 'r') as outer_file:
     cfg_outer = json.loads(outer_file.read())
-
-cfg_inner['outputDir'] = sys.argv[0]
-cfg_outer['outputDir'] = sys.argv[0]
+print(sys.argv)
+cfg_inner['outputDir'] = sys.argv[2]
+cfg_outer['outputDir'] = sys.argv[2]
 
 #LOCAL TESTING
 # cfg_inner["data"] = 'TrainData/neutron_inner_1M.csv'
