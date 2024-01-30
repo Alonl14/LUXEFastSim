@@ -20,7 +20,7 @@ def create_trainer(cfg):
     print("making dataset...")
     dataset = ParticleDataset(cfg['data'], cfg['dataNorm'], QT, cfg['dataGroup'])
     dataset_time = time.localtime()
-    print(f"dataset created, time elapsed : {utils.get_time(dataset_time, QT_time)}")
+    print(f"dataset created, time elapsed : {utils.get_time(QT_time, dataset_time)}")
     print("making date loader...")
     dataloader = DataLoader(dataset, batch_size=cfg['batchSize'], shuffle=True)
     dataloader_time = time.localtime()
