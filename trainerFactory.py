@@ -6,12 +6,25 @@ from torch.utils.data import DataLoader
 import torch.optim as optim
 import torch
 from trainer import Trainer
+import time
+import utils
 
 
 def create_trainer(cfg):
-    QT_inner = qt(output_distribution='normal', n_quantiles=cfg['nQuantiles'], subsample=cfg['subsample'])
-    dataset = ParticleDataset(cfg['data'], cfg['dataNorm'], QT_inner, cfg['dataGroup'])
+    beg_time = time.localtime()
+    print(f"Creating trainer at : {utils.get_time(beg_time)}")
+    print("Creating QT...")
+    QT = qt(output_distribution='normal', n_quantiles=cfg['nQuantiles'], subsample=cfg['subsample'])
+    QT_time = time.localtime()
+    print(f"QT created, time elapsed : {utils.get_time(QT_time, beg_time)}")
+    print("making dataset...")
+    dataset = ParticleDataset(cfg['data'], cfg['dataNorm'], QT, cfg['dataGroup'])
+    dataset_time = time.localtime()
+    print(f"dataset created, time elapsed : {utils.get_time(dataset_time, QT_time)}")
+    print("making date loader...")
     dataloader = DataLoader(dataset, batch_size=cfg['batchSize'], shuffle=True)
+    dataloader_time = time.localtime()
+    print(f"data loader created, time elapsed : {utils.get_time(dataloader_time, dataset_time)}")
     device = torch.device(cfg['device'])
     print(f'Using {device} as device')
     if cfg['dataGroup'] == 'inner':

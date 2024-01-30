@@ -4,6 +4,7 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 from generator import (InnerGenerator, OuterGenerator)
+import time
 
 def get_kld(real, fake):
     """
@@ -48,12 +49,13 @@ def transform(quantiles, norm, columns, fake_p, dataGroup):
         min = norm['min'][col]
         df[col] = min + (max - min) * temp[:, i]
 
-    # df[' phi_x'] = np.arctan2(df[' yy'], df[' xx']) + np.pi
-    if dataGroup == 'outer':
-        # df[' xx'] = df[' rx'] * np.cos(df[' phi_x'] - np.pi)
-        df[' yy'] = df[' rx'] * np.sin(df[' phi_x'] - np.pi)
-        df[[' xx', ' yy']] = df[[' xx', ' yy']] + 500
-    elif dataGroup == 'inner':
+    df[' phi_x'] = np.arctan2(df[' yy'], df[' xx']) + np.pi
+    # if dataGroup == 'outer':
+    #     df[' xx'] = df[' rx'] * np.cos(df[' phi_x'] - np.pi)
+    #     df[' yy'] = df[' rx'] * np.sin(df[' phi_x'] - np.pi)
+    #     df[[' xx', ' yy']] = df[[' xx', ' yy']] + 500
+    # el
+    if dataGroup == 'inner':
         df[' rx'] = np.sqrt(df[' xx'] ** 2 + df[' yy'] ** 2)
 
     df[' pxx'] = df[' rp'] * np.cos(df[' phi_p'] - np.pi)
@@ -88,8 +90,8 @@ def make_plots(df, dataGroup):
     :param dataGroup: inner/outer
     :return: null
     """
-    x_lim = [-10000, 10000]
-    y_lim = [-10000, 10000]
+    x_lim = [-4000, 4000]
+    y_lim = [-4000, 4000]
     if dataGroup == 'inner':
         x_lim = [-1700, 500]
         y_lim = [-2500, 500]
@@ -249,3 +251,5 @@ def check_run(id, real_df, innerTrainer, outerTrainer):
     return combine(real_df, innerTrainer, outerTrainer)
 
 
+def get_time(end_time, beg_time=np.zeros(9)):
+    return time.asctime(time.struct_time(np.int64(end_time) - np.int64(beg_time)))[11:19]
