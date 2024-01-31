@@ -5,7 +5,7 @@
     "dataNorm": "/storage/agrp/alonle/GAN_InputSample/inner_r_cut_norm.csv",
     "outputDir": "",
     "dataGroup": "inner",
-    "batchSize": 512,
+    "batchSize": 128,
     "noiseDim": 100,
     "numEpochs": 1,
     "device": "cuda",

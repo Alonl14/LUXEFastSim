@@ -240,16 +240,63 @@ def combine(real_df, innerT, outerT):
     return generated_df
 
 
-def check_run(id, real_df, innerTrainer, outerTrainer):
-    for var in ["inner", "outer"]:
-        cap = var.capitalize()
-        exec(var+"Gen = " + cap+"Generator(" + var+"Trainer.noiseDim)")
-        exec(var+"""Gen.load_state_dict(torch.load("Output/run_"""+id+"/" + var+"""_Gen_model.pt"
-                , map_location=torch.device('cpu')))""")
-        exec(var + "Gen = " + cap+"Generator(" + var+"Trainer.noiseDim)")
-        exec(var + "Trainer.genNet = " + var+"Gen")
-    return combine(real_df, innerTrainer, outerTrainer)
+def generate_trained_df(run_id, realData, trainer):
+    """
+    Given a run id load the trained model in run_id dir to its respective trainer and return the generated dataframe
+    :param run_id: run_id
+    :param realData
+    :param trainer
+    :return:
+    """
+    generator = InnerGenerator(trainer.noiseDim)
+    if trainer.dataGroup == "outer":
+        generator = OuterGenerator(trainer.noiseDim)
+    path = "Output/run_" + run_id + "/" + trainer.dataGroup +"_Gen_model.pt"
+    generator.load_state_dict(torch.load(path, map_location=torch.device('cpu')))
+    trainer.genNet = generator
+
+    return generate_df(trainer, trainer.noiseDim, np.floor(len(realData)/25,dtype=np.int64))
+
+
+def check_run(run_id, innerPath, outerPath, innerTrainer, outerTrainer):
+
+    innerData = pd.read_csv(innerPath)
+    outerData = pd.read_csv(outerPath)
+    innerDF = generate_trained_df(run_id, innerData, innerTrainer)
+    outerDF = generate_trained_df(run_id, outerData, outerTrainer)
+
+    iKLPath = "Output/run_" + run_id + "/KL_in.npy"
+    oKLPath = "Output/run_" + run_id + "/KL_out.npy"
+    iDLPath = "Output/run_" + run_id + "/D_Losses_in.npy"
+    oDLPath = "Output/run_" + run_id + "/D_Losses_out.npy"
+    innerKLDiv = np.load(iKLPath)
+    outerKLDiv = np.load(oKLPath)
+    innerDLosses = np.load(iDLPath)
+    outerDLosses = np.load(oDLPath)
+
+    plt.figure(dpi=200)
+    plt.title("Inner KL divergence")
+    plt.plot(innerKLDiv)
+    plt.figure(dpi=200)
+    plt.title("Outer KL divergence")
+    plt.plot(outerKLDiv)
+    plt.figure(dpi=200)
+    plt.title("Inner Discriminator Losses")
+    plt.plot(innerDLosses)
+    plt.figure(dpi=200)
+    plt.title("Outer Discriminator Losses")
+    plt.plot(outerDLosses)
+    plt.show()
+
+    make_plots(innerDF,"inner")
+    make_plots(outerDF, "outer")
 
 
 def get_time(end_time, beg_time=np.zeros(9)):
+    """
+    get time elapsed between two localtime() objects in format hh:mm:ss
+    :param end_time:
+    :param beg_time:
+    :return:
+    """
     return time.asctime(time.struct_time(np.abs(np.int64(end_time) - np.int64(beg_time))))[11:19]

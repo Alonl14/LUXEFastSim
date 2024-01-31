@@ -5,6 +5,7 @@ import torch
 import numpy as np
 import time
 import utils
+import pandas as pd
 
 beg_time = time.localtime()
 print(f"Starting timer at : {utils.get_time(beg_time)}")
@@ -43,13 +44,19 @@ outer_time = time.localtime()
 print(f"Outer Training Done! Time elapsed : {utils.get_time(outer_time, training_time)} \nStarting inner Training:")
 inner_trainer.run()
 inner_time = time.localtime()
-print(f"Inner Training Done! Time elapsed : {utils.get_time(inner_time, outer_time)} \nStarting inner Training:")
+print(f"Inner Training Done! Time elapsed : {utils.get_time(inner_time, outer_time)} \nMaking dataframes:")
+
+innerDF = utils.generate_df(inner_trainer, inner_trainer.noiseDim, np.int64(len(inner_trainer.dataset.data)))
+innerDF.to_csv(inner_trainer.outputDir+'innerDF.csv')
+outerDF = utils.generate_df(outer_trainer, outer_trainer.noiseDim, np.int64(len(outer_trainer.dataset.data)))
+outerDF.to_csv(outer_trainer.outputDir+'outerDF.csv')
 
 KL_in = np.zeros(len(inner_trainer.KL_Div))
 KL_out = np.zeros(len(outer_trainer.KL_Div))
 
 for i in range(len(KL_in)):
     KL_in[i] = inner_trainer.KL_Div[i]
+for i in range(len(KL_out)):
     KL_out[i] = outer_trainer.KL_Div[i]
 
 np.save(inner_trainer.outputDir+'KL_in.npy', KL_in)

@@ -1,8 +1,8 @@
 {
     "nQuantiles": 5000,
     "subsample": 30000,
-    "data": "TrainData/neutron_outer_5M.csv",
-    "dataNorm": "TrainData/neutron_outer_5M_norm.csv",
+    "data": "RadiusExclusion/outer_r_cut.csv",
+    "dataNorm": "RadiusExclusion/outer_r_cut_norm.csv",
     "outputDir": "/Users/alonlevi/PycharmProjects/LUXEFastSim/Output",
     "dataGroup": "outer",
     "batchSize": 512,
