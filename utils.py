@@ -240,11 +240,10 @@ def combine(real_df, innerT, outerT):
     return generated_df
 
 
-def generate_trained_df(run_id, realData, trainer):
+def generate_trained_df(run_id, trainer):
     """
     Given a run id load the trained model in run_id dir to its respective trainer and return the generated dataframe
     :param run_id: run_id
-    :param realData
     :param trainer
     :return:
     """
@@ -254,16 +253,19 @@ def generate_trained_df(run_id, realData, trainer):
     path = "Output/run_" + run_id + "/" + trainer.dataGroup +"_Gen_model.pt"
     generator.load_state_dict(torch.load(path, map_location=torch.device('cpu')))
     trainer.genNet = generator
+    factor = 1
+    if trainer.dataGroup =="outer":
+        factor = 10
 
-    return generate_df(trainer, trainer.noiseDim, np.floor(len(realData)/25,dtype=np.int64))
+    return generate_df(trainer, trainer.noiseDim, np.int64(len(trainer.dataset.data)/factor))
 
 
 def check_run(run_id, innerPath, outerPath, innerTrainer, outerTrainer):
 
-    innerData = pd.read_csv(innerPath)
-    outerData = pd.read_csv(outerPath)
-    innerDF = generate_trained_df(run_id, innerData, innerTrainer)
-    outerDF = generate_trained_df(run_id, outerData, outerTrainer)
+    # innerData = pd.read_csv(innerPath)
+    # outerData = pd.read_csv(outerPath)
+    innerDF = generate_trained_df(run_id, innerTrainer)
+    outerDF = generate_trained_df(run_id, outerTrainer)
 
     iKLPath = "Output/run_" + run_id + "/KL_in.npy"
     oKLPath = "Output/run_" + run_id + "/KL_out.npy"
