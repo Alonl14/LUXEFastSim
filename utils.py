@@ -5,7 +5,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 from generator import (InnerGenerator, OuterGenerator)
 import time
-from ml_share import plotting
 from scipy.stats import kstest
 
 def get_kld(real, fake):
@@ -269,28 +268,28 @@ def check_run(run_id, innerData, outerData, innerTrainer, outerTrainer):
     innerDF = generate_trained_df(run_id, innerTrainer)
     outerDF = generate_trained_df(run_id, outerTrainer)
 
-    iKLPath = "Output/run_" + run_id + "/KL_in.npy"
-    oKLPath = "Output/run_" + run_id + "/KL_out.npy"
-    iDLPath = "Output/run_" + run_id + "/D_Losses_in.npy"
-    oDLPath = "Output/run_" + run_id + "/D_Losses_out.npy"
-    innerKLDiv = np.load(iKLPath)
-    outerKLDiv = np.load(oKLPath)
-    innerDLosses = np.load(iDLPath)
-    outerDLosses = np.load(oDLPath)
-
-    plt.figure(dpi=200)
-    plt.title("Inner KL divergence")
-    plt.plot(innerKLDiv)
-    plt.figure(dpi=200)
-    plt.title("Outer KL divergence")
-    plt.plot(outerKLDiv)
-    plt.figure(dpi=200)
-    plt.title("Inner Discriminator Losses")
-    plt.plot(innerDLosses)
-    plt.figure(dpi=200)
-    plt.title("Outer Discriminator Losses")
-    plt.plot(outerDLosses)
-    plt.show()
+    # iKLPath = "Output/run_" + run_id + "/KL_in.npy"
+    # oKLPath = "Output/run_" + run_id + "/KL_out.npy"
+    # iDLPath = "Output/run_" + run_id + "/D_Losses_in.npy"
+    # oDLPath = "Output/run_" + run_id + "/D_Losses_out.npy"
+    # innerKLDiv = np.load(iKLPath)
+    # outerKLDiv = np.load(oKLPath)
+    # innerDLosses = np.load(iDLPath)
+    # outerDLosses = np.load(oDLPath)
+    #
+    # plt.figure(dpi=200)
+    # plt.title("Inner KL divergence")
+    # plt.plot(innerKLDiv)
+    # plt.figure(dpi=200)
+    # plt.title("Outer KL divergence")
+    # plt.plot(outerKLDiv)
+    # plt.figure(dpi=200)
+    # plt.title("Inner Discriminator Losses")
+    # plt.plot(innerDLosses)
+    # plt.figure(dpi=200)
+    # plt.title("Outer Discriminator Losses")
+    # plt.plot(outerDLosses)
+    # plt.show()
 
     features = [' xx', ' yy', ' pxx', ' pyy', ' pzz', ' eneg', ' time', 'theta']
     chi2_tests = {'inner': {}, 'outer': {}, 'combined': {}, 'noLeaks': {}}
@@ -315,9 +314,7 @@ def check_run(run_id, innerData, outerData, innerTrainer, outerTrainer):
 
     for key in chi2_tests.keys():
         for feat in features:
-            print("EXEC: "+"chi2_"+key+"[feat]=calc_ks("+key+"Data, "+key+"DF, feat)")
             exec("chi2_"+key+"[feat]=calc_ks("+key+"Data, "+key+"DF, feat)")
-        print("EXEC: "+"chi2_tests["+key+"]=chi2_"+key)
         exec("chi2_tests['"+key+"']=chi2_"+key)
     return chi2_tests
 
