@@ -7,6 +7,7 @@ import time
 import utils
 import pandas as pd
 
+
 beg_time = time.localtime()
 print(f"Starting timer at : {utils.get_time(beg_time)}")
 config_dir = "/srv01/agrp/alonle/LUXEFastSim/Config"
@@ -15,10 +16,18 @@ with open(config_dir+"/cfg_inner_cluster.json", 'r') as inner_file:
     cfg_inner = json.loads(inner_file.read())
 with open(config_dir+"/cfg_outer_cluster.json", 'r') as outer_file:
     cfg_outer = json.loads(outer_file.read())
-print(sys.argv)
 
 cfg_inner['outputDir'] = sys.argv[2]
 cfg_outer['outputDir'] = sys.argv[2]
+
+inner_obj = json.dumps(cfg_inner, indent=12)
+outer_obj = json.dumps(cfg_outer, indent=12)
+
+# Writing to sample.json
+with open(sys.argv[2]+"cfg_inner_cluster.json", "w") as outfile:
+    outfile.write(inner_obj)
+with open(sys.argv[2] + "cfg_inner_cluster.json", "w") as outfile:
+    outfile.write(outer_obj)
 
 #LOCAL TESTING
 # cfg_inner["data"] = 'TrainData/neutron_inner_1M.csv'
@@ -46,11 +55,6 @@ inner_trainer.run()
 inner_time = time.localtime()
 print(f"Inner Training Done! Time elapsed : {utils.get_time(inner_time, outer_time)} \nMaking dataframes:")
 
-innerDF = utils.generate_df(inner_trainer, inner_trainer.noiseDim, np.int64(len(inner_trainer.dataset.data)))
-innerDF.to_csv(inner_trainer.outputDir+'innerDF.csv')
-outerDF = utils.generate_df(outer_trainer, outer_trainer.noiseDim, np.int64(len(outer_trainer.dataset.data)))
-outerDF.to_csv(outer_trainer.outputDir+'outerDF.csv')
-
 KL_in = np.zeros(len(inner_trainer.KL_Div))
 KL_out = np.zeros(len(outer_trainer.KL_Div))
 
@@ -63,3 +67,8 @@ np.save(inner_trainer.outputDir+'KL_in.npy', KL_in)
 np.save(outer_trainer.outputDir+'KL_out.npy', KL_out)
 np.save(inner_trainer.outputDir+'D_losses_in.npy', inner_trainer.D_Losses)
 np.save(outer_trainer.outputDir+'D_losses_out.npy', outer_trainer.D_Losses)
+
+innerDF = utils.generate_df(inner_trainer, inner_trainer.noiseDim, np.int64(len(inner_trainer.dataset.data)))
+innerDF.to_csv(inner_trainer.outputDir+'innerDF.csv')
+outerDF = utils.generate_df(outer_trainer, outer_trainer.noiseDim, np.int64(len(outer_trainer.dataset.data)))
+outerDF.to_csv(outer_trainer.outputDir+'outerDF.csv')

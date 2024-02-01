@@ -1,5 +1,5 @@
 {
-    "nQuantiles": 15000,
+    "nQuantiles": 30000,
     "subsample": 1000000,
     "data": "/storage/agrp/alonle/GAN_InputSample/inner_r_cut.csv",
     "dataNorm": "/storage/agrp/alonle/GAN_InputSample/inner_r_cut_norm.csv",

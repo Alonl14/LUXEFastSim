@@ -5,6 +5,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 from generator import (InnerGenerator, OuterGenerator)
 import time
+from ml_share import plotting
+from scipy.stats import kstest
 
 def get_kld(real, fake):
     """
@@ -207,6 +209,7 @@ def generate_df(trainer, noiseDim, numEvents):
     :return: generated dataframe
     """
     noise = torch.randn(numEvents, noiseDim, device='cpu')
+    trainer.genNet.to('cpu')
     generated_data = trainer.genNet(noise)
     generated_data = generated_data.detach().numpy()
     ds = trainer.dataset
@@ -225,9 +228,10 @@ def weights_init(m):
         nn.init.normal_(m.weight.data, 1, 0.02)
 
 
-def combine(real_df, innerT, outerT):
-    inner, outer = split(real_df)
-    numEvents = len(real_df)/25
+def combine(innerT, outerT, real_df=None, inner=None, outer=None):
+    if real_df is not None:
+        inner, outer = split(real_df)
+    numEvents = (len(inner)+len(outer))/10
     q_in = len(inner)/(len(inner)+len(outer))
     inner_events = np.int64(np.floor(numEvents*q_in))
     outer_events = np.int64(np.ceil(numEvents*(1-q_in)))
@@ -260,10 +264,8 @@ def generate_trained_df(run_id, trainer):
     return generate_df(trainer, trainer.noiseDim, np.int64(len(trainer.dataset.data)/factor))
 
 
-def check_run(run_id, innerPath, outerPath, innerTrainer, outerTrainer):
+def check_run(run_id, innerData, outerData, innerTrainer, outerTrainer):
 
-    # innerData = pd.read_csv(innerPath)
-    # outerData = pd.read_csv(outerPath)
     innerDF = generate_trained_df(run_id, innerTrainer)
     outerDF = generate_trained_df(run_id, outerTrainer)
 
@@ -290,8 +292,44 @@ def check_run(run_id, innerPath, outerPath, innerTrainer, outerTrainer):
     plt.plot(outerDLosses)
     plt.show()
 
-    make_plots(innerDF,"inner")
+    features = [' xx', ' yy', ' pxx', ' pyy', ' pzz', ' eneg', ' time', 'theta']
+    chi2_tests = {'inner': {}, 'outer': {}, 'combined': {}, 'noLeaks': {}}
+    chi2_inner = {' xx': 0, ' yy': 0, ' pxx': 0, ' pyy': 0,
+                  ' pzz': 0, ' eneg': 0, ' time': 0, 'theta': 0}
+    chi2_outer = chi2_inner.copy()
+    chi2_combined = chi2_inner.copy()
+    chi2_noLeaks = chi2_inner.copy()
+    innerData, outerData = innerData[features], outerData[features]
+    combinedData = pd.concat([innerData, outerData])
+    combinedDF = pd.concat([innerDF, outerDF])
+    noLeaksData = combinedData.copy()
+    posIn = ((innerDF[' xx'] < 500) * (innerDF[' xx'] > -1700) * (innerDF[' yy'] < 500))
+    posOut = ((outerDF[' xx'] < 500) * (outerDF[' xx'] > -1700) * (outerDF[' yy'] < 500))
+    noLeakInner = innerDF[posIn]
+    noLeakOuter = outerDF[~posOut]
+    noLeaksDF = pd.concat([noLeakInner, noLeakOuter])
+    make_plots(innerDF, "inner")
     make_plots(outerDF, "outer")
+    make_plots(combinedDF, "inner")
+    make_plots(noLeaksDF, "outer")
+
+    for key in chi2_tests.keys():
+        for feat in features:
+            print("EXEC: "+"chi2_"+key+"[feat]=calc_ks("+key+"Data, "+key+"DF, feat)")
+            exec("chi2_"+key+"[feat]=calc_ks("+key+"Data, "+key+"DF, feat)")
+        print("EXEC: "+"chi2_tests["+key+"]=chi2_"+key)
+        exec("chi2_tests['"+key+"']=chi2_"+key)
+    return chi2_tests
+
+
+def calc_ks(data, DF, feat):
+    bins = np.linspace(np.min(data[feat]), np.max(data[feat]), 1000)
+    if feat == ' time':
+        bins = np.linspace(np.min(data[feat]), np.sort(data[feat])[-2], 1000)
+    h1 = np.histogram(data[feat], bins=bins, density=True)[0]
+    h2 = np.histogram(DF[feat], bins=bins, density=True)[0]
+    return kstest(h1, h2).pvalue
+
 
 
 def compare_1d(generated_df, real_df):
