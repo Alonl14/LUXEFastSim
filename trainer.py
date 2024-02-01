@@ -42,8 +42,6 @@ class Trainer:
         self.G_Losses = np.array([])
         self.D_Losses = np.array([])
         self.KL_Div = np.array([])
-        self.penalties = torch.Tensor([])
-
     def run(self):
         generated_df = pd.DataFrame([])
 
@@ -88,7 +86,6 @@ class Trainer:
                     gradient = get_gradient(self.discNet, real_data, fake_p.detach(), epsilon)
                     gradient_norm = gradient.norm(2, dim=1)
                     penalty = self.Lambda * torch.mean(torch.norm(gradient_norm - 1))
-                    self.penalties = torch.cat((self.penalties, torch.unsqueeze(penalty.to('cpu'), 0)),0)
 
                     err_D = err_D_real + err_D_fake + penalty
                     err_D.backward()
@@ -118,7 +115,6 @@ class Trainer:
                     print("Iteration #"+str(iters))
                     self.KL_Div = np.append(self.KL_Div, currentKLD/100)
                     currentKLD = 0
-
                 iters += 1
 
             if len(self.D_Losses) > 0:

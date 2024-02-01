@@ -294,6 +294,20 @@ def check_run(run_id, innerPath, outerPath, innerTrainer, outerTrainer):
     make_plots(outerDF, "outer")
 
 
+def compare_1d(generated_df, real_df):
+    for col in generated_df.columns:
+        plt.figure(dpi=200)
+        bins = np.linspace(np.min(real_df[col]),np.max(real_df[col]),400)
+        plt.hist(generated_df[col], density=True, alpha=0.6, bins=bins)
+        plt.hist(real_df[col], density=True, alpha=0.6, bins=bins)
+        plt.legend(["Generated data", "FullSim data"])
+        plt.title(col)
+        plt.yscale('log')
+        if col == " time":
+            plt.xscale('log')
+        plt.show()
+
+
 def get_time(end_time, beg_time=np.zeros(9)):
     """
     get time elapsed between two localtime() objects in format hh:mm:ss
