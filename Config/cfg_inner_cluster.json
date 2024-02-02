@@ -1,11 +1,11 @@
 {
-    "nQuantiles": 30000,
+    "nQuantiles": 100000,
     "subsample": 1000000,
     "data": "/storage/agrp/alonle/GAN_InputSample/inner_r_cut.csv",
     "dataNorm": "/storage/agrp/alonle/GAN_InputSample/inner_r_cut_norm.csv",
     "outputDir": "",
     "dataGroup": "inner",
-    "batchSize": 128,
+    "batchSize": 64,
     "noiseDim": 100,
     "numEpochs": 1,
     "device": "cuda",

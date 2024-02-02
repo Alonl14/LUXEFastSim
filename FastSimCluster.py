@@ -24,9 +24,9 @@ inner_obj = json.dumps(cfg_inner, indent=12)
 outer_obj = json.dumps(cfg_outer, indent=12)
 
 # Writing to sample.json
-with open(sys.argv[2]+"cfg_inner_cluster.json", "w") as outfile:
-    outfile.write(inner_obj)
 with open(sys.argv[2] + "cfg_inner_cluster.json", "w") as outfile:
+    outfile.write(inner_obj)
+with open(sys.argv[2] + "cfg_outer_cluster.json", "w") as outfile:
     outfile.write(outer_obj)
 
 #LOCAL TESTING

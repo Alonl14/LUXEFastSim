@@ -6,6 +6,8 @@ import matplotlib.pyplot as plt
 from generator import (InnerGenerator, OuterGenerator)
 import time
 from scipy.stats import kstest
+import json
+import os
 
 def get_kld(real, fake):
     """
@@ -263,32 +265,47 @@ def generate_trained_df(run_id, trainer):
     return generate_df(trainer, trainer.noiseDim, np.int64(len(trainer.dataset.data)/factor))
 
 
-def check_run(run_id, innerData, outerData, innerTrainer, outerTrainer):
+def check_run(run_id, innerData, outerData,
+              innerTrainer=None, outerTrainer=None):
 
-    innerDF = generate_trained_df(run_id, innerTrainer)
-    outerDF = generate_trained_df(run_id, outerTrainer)
+    run_dir = 'Output/run_' + run_id + '/'
+    fig_path = run_dir + 'plots'
+    if not os.path.isdir(fig_path):
+        os.mkdir(fig_path)
+    fig_path += '/'
 
-    # iKLPath = "Output/run_" + run_id + "/KL_in.npy"
-    # oKLPath = "Output/run_" + run_id + "/KL_out.npy"
-    # iDLPath = "Output/run_" + run_id + "/D_Losses_in.npy"
-    # oDLPath = "Output/run_" + run_id + "/D_Losses_out.npy"
+    if (innerTrainer is not None) and (outerTrainer is not None):
+        innerDF = generate_trained_df(run_id, innerTrainer)
+        outerDF = generate_trained_df(run_id, outerTrainer)
+    else:
+        innerDF = pd.read_csv(run_dir + 'innerDF.csv')
+        outerDF = pd.read_csv(run_dir + 'outerDF.csv')
+
+    # iKLPath = run_dir + "KL_in.npy"
+    # oKLPath = run_dir + "KL_out.npy"
+    # iDLPath = run_dir + "D_Losses_in.npy"
+    # oDLPath = run_dir + "D_Losses_out.npy"
     # innerKLDiv = np.load(iKLPath)
     # outerKLDiv = np.load(oKLPath)
     # innerDLosses = np.load(iDLPath)
     # outerDLosses = np.load(oDLPath)
-    #
+
     # plt.figure(dpi=200)
     # plt.title("Inner KL divergence")
     # plt.plot(innerKLDiv)
+    # plt.savefig(fig_path + 'innerKLDiv.png')
     # plt.figure(dpi=200)
     # plt.title("Outer KL divergence")
     # plt.plot(outerKLDiv)
+    # plt.savefig(fig_path + 'outerKLDiv.png')
     # plt.figure(dpi=200)
     # plt.title("Inner Discriminator Losses")
     # plt.plot(innerDLosses)
+    # plt.savefig(fig_path + 'innerDLosses.png')
     # plt.figure(dpi=200)
     # plt.title("Outer Discriminator Losses")
     # plt.plot(outerDLosses)
+    # plt.savefig(fig_path + 'outerDLosses.png')
     # plt.show()
 
     features = [' xx', ' yy', ' pxx', ' pyy', ' pzz', ' eneg', ' time', 'theta']
@@ -307,22 +324,37 @@ def check_run(run_id, innerData, outerData, innerTrainer, outerTrainer):
     noLeakInner = innerDF[posIn]
     noLeakOuter = outerDF[~posOut]
     noLeaksDF = pd.concat([noLeakInner, noLeakOuter])
-    make_plots(innerDF, "inner")
-    make_plots(outerDF, "outer")
-    make_plots(combinedDF, "inner")
-    make_plots(noLeaksDF, "outer")
+    # make_plots(innerDF, "inner")
+    # make_plots(outerDF, "outer")
+    # make_plots(combinedDF, "outer")
+    # make_plots(noLeaksDF, "outer")
 
     for key in chi2_tests.keys():
+        if key == "inner" or key == "outer":
+            if not os.path.isdir(fig_path+'1dHists'):
+                os.mkdir(fig_path+'1dHists')
         for feat in features:
             exec("chi2_"+key+"[feat]=calc_ks("+key+"Data, "+key+"DF, feat)")
+            print("debug1 ", feat)
+            if key == "inner" or key == "outer":
+                plt.figure(dpi=200)
+                print("debug2 ", key, feat)
+                exec("plt.hist("+key+"Data,bins=200,density = True,alpha=0.6)")
+                exec("plt.hist("+key+"DF, bins=200, density = True, alpha = 0.6)")
+                exec("plt.text(.01, .99,'chi2 = '+f'{chi2_"+key+"[feat]:.2e}', ha='left', va='top', transform=plt.gca().transAxes)")
+                plt.title(feat)
+                plt.savefig(fig_path+'1dHists/'+key+feat.strip().capitalize())
         exec("chi2_tests['"+key+"']=chi2_"+key)
+    chi_obj = json.dumps(chi2_tests, indent=8)
+    with open(run_dir + "cfg_inner_cluster.json", "w") as outfile:
+        outfile.write(chi_obj)
     return chi2_tests
 
 
 def calc_ks(data, DF, feat):
     bins = np.linspace(np.min(data[feat]), np.max(data[feat]), 1000)
     if feat == ' time':
-        bins = np.linspace(np.min(data[feat]), np.sort(data[feat])[-2], 1000)
+        bins = np.linspace(np.min(data[feat]), np.sort(data[feat])[-10], 1000)
     h1 = np.histogram(data[feat], bins=bins, density=True)[0]
     h2 = np.histogram(DF[feat], bins=bins, density=True)[0]
     return kstest(h1, h2).pvalue
