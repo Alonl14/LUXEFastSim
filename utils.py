@@ -5,7 +5,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from generator import (InnerGenerator, OuterGenerator)
 import time
-from scipy.stats import kstest
+from scipy.stats import chisquare
 import json
 import os
 
@@ -267,7 +267,6 @@ def generate_trained_df(run_id, trainer):
 
 def check_run(run_id, innerData, outerData,
               innerTrainer=None, outerTrainer=None):
-
     run_dir = 'Output/run_' + run_id + '/'
     fig_path = run_dir + 'plots'
     if not os.path.isdir(fig_path):
@@ -281,32 +280,32 @@ def check_run(run_id, innerData, outerData,
         innerDF = pd.read_csv(run_dir + 'innerDF.csv')
         outerDF = pd.read_csv(run_dir + 'outerDF.csv')
 
-    # iKLPath = run_dir + "KL_in.npy"
-    # oKLPath = run_dir + "KL_out.npy"
-    # iDLPath = run_dir + "D_Losses_in.npy"
-    # oDLPath = run_dir + "D_Losses_out.npy"
-    # innerKLDiv = np.load(iKLPath)
-    # outerKLDiv = np.load(oKLPath)
-    # innerDLosses = np.load(iDLPath)
-    # outerDLosses = np.load(oDLPath)
+    iKLPath = run_dir + "KL_in.npy"
+    oKLPath = run_dir + "KL_out.npy"
+    iDLPath = run_dir + "D_Losses_in.npy"
+    oDLPath = run_dir + "D_Losses_out.npy"
+    innerKLDiv = np.load(iKLPath)
+    outerKLDiv = np.load(oKLPath)
+    innerDLosses = np.load(iDLPath)
+    outerDLosses = np.load(oDLPath)
 
-    # plt.figure(dpi=200)
-    # plt.title("Inner KL divergence")
-    # plt.plot(innerKLDiv)
-    # plt.savefig(fig_path + 'innerKLDiv.png')
-    # plt.figure(dpi=200)
-    # plt.title("Outer KL divergence")
-    # plt.plot(outerKLDiv)
-    # plt.savefig(fig_path + 'outerKLDiv.png')
-    # plt.figure(dpi=200)
-    # plt.title("Inner Discriminator Losses")
-    # plt.plot(innerDLosses)
-    # plt.savefig(fig_path + 'innerDLosses.png')
-    # plt.figure(dpi=200)
-    # plt.title("Outer Discriminator Losses")
-    # plt.plot(outerDLosses)
-    # plt.savefig(fig_path + 'outerDLosses.png')
-    # plt.show()
+    plt.figure(dpi=200)
+    plt.title("Inner KL divergence")
+    plt.plot(innerKLDiv)
+    plt.savefig(fig_path + 'innerKLDiv.png')
+    plt.figure(dpi=200)
+    plt.title("Outer KL divergence")
+    plt.plot(outerKLDiv)
+    plt.savefig(fig_path + 'outerKLDiv.png')
+    plt.figure(dpi=200)
+    plt.title("Inner Discriminator Losses")
+    plt.plot(innerDLosses)
+    plt.savefig(fig_path + 'innerDLosses.png')
+    plt.figure(dpi=200)
+    plt.title("Outer Discriminator Losses")
+    plt.plot(outerDLosses)
+    plt.savefig(fig_path + 'outerDLosses.png')
+    plt.show()
 
     features = [' xx', ' yy', ' pxx', ' pyy', ' pzz', ' eneg', ' time', 'theta']
     chi2_tests = {'inner': {}, 'outer': {}, 'combined': {}, 'noLeaks': {}}
@@ -334,31 +333,40 @@ def check_run(run_id, innerData, outerData,
             if not os.path.isdir(fig_path+'1dHists'):
                 os.mkdir(fig_path+'1dHists')
         for feat in features:
-            exec("chi2_"+key+"[feat]=calc_ks("+key+"Data, "+key+"DF, feat)")
-            print("debug1 ", feat)
+            exec("chi2_"+key+"[feat] = get_chi_square("+key+"DF,"+key+"Data, feat)")
+            print(feat)
             if key == "inner" or key == "outer":
-                plt.figure(dpi=200)
-                print("debug2 ", key, feat)
-                exec("plt.hist("+key+"Data,bins=200,density = True,alpha=0.6)")
-                exec("plt.hist("+key+"DF, bins=200, density = True, alpha = 0.6)")
-                exec("plt.text(.01, .99,'chi2 = '+f'{chi2_"+key+"[feat]:.2e}', ha='left', va='top', transform=plt.gca().transAxes)")
-                plt.title(feat)
-                plt.savefig(fig_path+'1dHists/'+key+feat.strip().capitalize())
+                exec("plot_1d("+key+"Data,"+key+"DF,feat,chi2_"+key+", fig_path, key)")
         exec("chi2_tests['"+key+"']=chi2_"+key)
     chi_obj = json.dumps(chi2_tests, indent=8)
-    with open(run_dir + "cfg_inner_cluster.json", "w") as outfile:
+    with open(run_dir + "chi2_tests.json", "w") as outfile:
         outfile.write(chi_obj)
     return chi2_tests
 
 
-def calc_ks(data, DF, feat):
+def plot_1d(data, DF, feat, chi2, fig_path, key):
+    plt.figure(dpi=200)
+    plt.yscale('log')
+    bins = np.linspace(np.min(data[feat]), np.max(data[feat]), 500)
+    if feat == ' time':
+        bins = np.linspace(np.min(data[feat]), np.sort(data[feat])[-10], 500)
+        plt.xscale('log')
+    plt.text(.01, .99, 'chi2 = '+f'{chi2[feat]:.2e}', ha='left', va='top', transform=plt.gca().transAxes)
+    plt.hist(data[feat], bins=bins, density=True, alpha=0.6)
+    plt.hist(DF[feat], bins=bins, density=True, alpha=0.6)
+    plt.title(feat)
+    plt.savefig(fig_path + '1dHists/' + key + feat.strip().capitalize())
+
+
+
+def get_chi_square(data, DF, feat):
     bins = np.linspace(np.min(data[feat]), np.max(data[feat]), 1000)
     if feat == ' time':
         bins = np.linspace(np.min(data[feat]), np.sort(data[feat])[-10], 1000)
     h1 = np.histogram(data[feat], bins=bins, density=True)[0]
     h2 = np.histogram(DF[feat], bins=bins, density=True)[0]
-    return kstest(h1, h2).pvalue
-
+    print(np.sum(h1),np.sum(h2))
+    return chisquare(h1, h2).pvalue
 
 
 def compare_1d(generated_df, real_df):

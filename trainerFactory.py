@@ -50,8 +50,8 @@ def create_trainer(cfg):
         'Lambda': cfg['Lambda']
     }
 
-    genOptimizer = optim.Adam(cfgDict['genNet'].parameters(), lr=0.0001, betas=(0.5, 0.999))
-    discOptimizer = optim.Adam(cfgDict['discNet'].parameters(), lr=0.0001, betas=(0.5, 0.999))
+    genOptimizer = optim.Adam(cfgDict['genNet'].parameters(), lr=cfg['learningRate'], betas=(0.5, 0.999))
+    discOptimizer = optim.Adam(cfgDict['discNet'].parameters(), lr=cfg['learningRate'], betas=(0.5, 0.999))
 
     cfgDict['genOptimizer'] = genOptimizer
     cfgDict['discOptimizer'] = discOptimizer

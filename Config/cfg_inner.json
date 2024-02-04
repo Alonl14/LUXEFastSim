@@ -10,5 +10,6 @@
     "numEpochs": 1,
     "device": "mps",
     "nCrit": 3,
-    "Lambda": 0.01
+    "Lambda": 0.01,
+    "learningRate": 0.0001
 }
