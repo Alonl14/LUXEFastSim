@@ -45,8 +45,9 @@ class ParticleDataset(Dataset):
             self.data[' phi_x'] = np.arctan2(self.data[' yy'].values, self.data[' xx'].values)/2
             self.data[' xx'], self.data[' yy'] = (self.data[' rx']*np.cos(self.data[' phi_x']),
                                                   self.data[' rx']*np.sin(self.data[' phi_x']))
-            self.data[' eneg'] = np.copysign(np.abs((self.data[' eneg']-5)/2) ** (7. / 5),
-                                             (self.data[' eneg']-5)/2) + 5
+            self.data[' eneg'] = np.copysign(np.abs((self.data[' eneg']**(1/9)-0.3)**(1/5)),
+                                             self.data[' eneg']**(1/9)-0.3)
+            self.data = self.data[[" xx", " yy", " rp", " phi_p", " pzz", " eneg", " time"]]
 
 
 
