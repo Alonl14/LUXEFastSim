@@ -66,7 +66,7 @@ class OuterDiscriminator(nn.Module):
         super().__init__()
 
         self.main = nn.Sequential(
-            nn.Linear(8, 150),
+            nn.Linear(7, 150),
             nn.LeakyReLU(),
             nn.InstanceNorm1d(1),
             nn.Linear(150, 200),

@@ -85,7 +85,7 @@ class OuterGenerator(nn.Module):
             nn.Linear(50, 50, bias=False),
             nn.LeakyReLU(),
             nn.BatchNorm1d(50, affine=True),
-            nn.Linear(50, 8)
+            nn.Linear(50, 7)
         )
 
     def forward(self, input):

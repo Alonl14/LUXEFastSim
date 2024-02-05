@@ -4,6 +4,14 @@ import pandas as pd
 import tqdm
 import utils
 from numpy import random
+# from torch.nn.parallel import DistributedDataParallel as DDP
+# from torch.distributed import init_process_group, destroy_process_group
+# import os
+#
+#
+# def ddp_setup():
+#     init_process_group(backend="mps")
+#     torch.mps.set_device(int(os.environ["LOCAL_RANK"]))
 
 
 def get_gradient(crit, real, fake,

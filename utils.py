@@ -3,9 +3,10 @@ import torch.nn as nn
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-from generator import (InnerGenerator, OuterGenerator)
+# from generator import (InnerGenerator, OuterGenerator)
+from Archive.pre7generator import (InnerGenerator, OuterGenerator)
 import time
-from scipy.stats import chisquare
+from scipy.stats import kstest,chisquare
 import json
 import os
 
@@ -17,8 +18,8 @@ def get_kld(real, fake):
     :return: KL-divergence associated with the pdf's
     """
 
-    target_hist = torch.histogram(real.cpu()[:,[0,1]], bins=500, density=True).hist
-    current_hist = torch.histogram(fake.cpu()[:,[0,1]], bins=500, density=True).hist
+    target_hist = torch.histogram(real.cpu(), bins=200, density=True).hist
+    current_hist = torch.histogram(fake.cpu(), bins=200, density=True).hist
     current_kld = nn.functional.kl_div(nn.functional.log_softmax(target_hist)
                                        , nn.functional.log_softmax(current_hist)
                                        , log_target=True)
@@ -40,11 +41,11 @@ def transform(quantiles, norm, columns, fake_p, dataGroup):
     if dataGroup == 'inner':
         temp[:, 0] = (np.copysign(np.abs(temp[:, 0]) ** (9./5), temp[:, 0])) + 0.73
         temp[:, 1] = np.tan(temp[:, 1])/10 + 0.83
-        temp[:, [2, 4, 5, 6]] = np.exp(-temp[:, [2, 4, 5, 6]])
-        temp[:, 4] = 1 - temp[:, 4]
-    else:
-        temp[:, [3, 5, 6, 7]] = np.exp(-temp[:, [3, 5, 6, 7]])
-        temp[:, 5] = 1 - temp[:, 5]
+    temp[:, [2, 4, 5, 6]] = np.exp(-temp[:, [2, 4, 5, 6]])
+    temp[:, 4] = 1 - temp[:, 4]
+    # else:
+    #     temp[:, [3, 5, 6, 7]] = np.exp(-temp[:, [3, 5, 6, 7]])
+    #     temp[:, 5] = 1 - temp[:, 5]
     df = pd.DataFrame([])
 
     for i, col in enumerate(columns):
@@ -53,13 +54,14 @@ def transform(quantiles, norm, columns, fake_p, dataGroup):
         df[col] = min + (max - min) * temp[:, i]
 
     df[' phi_x'] = np.arctan2(df[' yy'], df[' xx']) + np.pi
+
     # if dataGroup == 'outer':
     #     df[' xx'] = df[' rx'] * np.cos(df[' phi_x'] - np.pi)
     #     df[' yy'] = df[' rx'] * np.sin(df[' phi_x'] - np.pi)
     #     df[[' xx', ' yy']] = df[[' xx', ' yy']] + 500
-    # el
-    if dataGroup == 'inner':
-        df[' rx'] = np.sqrt(df[' xx'] ** 2 + df[' yy'] ** 2)
+    # elif dataGroup == 'inner':
+
+    df[' rx'] = np.sqrt(df[' xx'] ** 2 + df[' yy'] ** 2)
 
     df[' pxx'] = df[' rp'] * np.cos(df[' phi_p'] - np.pi)
     df[' pyy'] = df[' rp'] * np.sin(df[' phi_p'] - np.pi)
@@ -67,7 +69,9 @@ def transform(quantiles, norm, columns, fake_p, dataGroup):
     return df
 
 
-def plot_correlations(x, y, xlabel, ylabel, bins=[400, 400], loglog=False, Xlim=None, Ylim=None):
+def plot_correlations(x, y, xlabel, ylabel, run_id, key,
+                      bins=[400, 400], loglog=False, Xlim=None, Ylim=None):
+
     H, xb, yb = np.histogram2d(x, y, bins=bins, range=[[x.min(), x.max()], [y.min(), y.max()]], density=True)
     X, Y = np.meshgrid(xb, yb)
     plt.figure(dpi=250)
@@ -83,14 +87,22 @@ def plot_correlations(x, y, xlabel, ylabel, bins=[400, 400], loglog=False, Xlim=
     plt.ylabel(ylabel)
     plt.grid(True)
     plt.colorbar()
+    path = 'Output/run_'+run_id+'/plots/2dHists'
+    if not os.path.isdir(path+'/'+key):
+        if not os.path.isdir(path):
+            os.mkdir(path)
+        os.mkdir(path+'/'+key)
+    if run_id is not None:
+        plt.savefig(path+'/'+key+'/'+xlabel+'-'+ylabel+'.png')
     plt.show()
 
 
-def make_plots(df, dataGroup):
+def make_plots(df, dataGroup, run_id=None, key = None):
     """
     Takes a dataframe and its data group and makes correlation plots for x-y,E-t,r_x-theta,phi_x-phi_p
     :param df: dataframe containing both polar and cartesian forms of data
     :param dataGroup: inner/outer
+    :param run_id: string
     :return: null
     """
     x_lim = [-4000, 4000]
@@ -99,12 +111,12 @@ def make_plots(df, dataGroup):
         x_lim = [-1700, 500]
         y_lim = [-2500, 500]
 
-    plot_correlations(df[' xx'], df[' yy'], 'x[mm]', 'y[mm]', Xlim=x_lim, Ylim=y_lim)
+    plot_correlations(df[' xx'], df[' yy'], 'x[mm]', 'y[mm]', run_id, key, Xlim=x_lim, Ylim=y_lim)
     energy_bins = 10 ** np.linspace(-7, 0, 400)
     time_bins = 10 ** np.linspace(1, 8, 400)
-    plot_correlations(df[' time'], df[' eneg'], 't[ns]', 'E[GeV]', bins=[time_bins, energy_bins], loglog=True)
-    plot_correlations(df[' rx'], df['theta'], 'r [mm]', 'theta_p [rad]')
-    plot_correlations(df[' phi_p'], df[' phi_x'], 'phi_p [rad]', 'phi_x [rad]')
+    plot_correlations(df[' time'], df[' eneg'], 't[ns]', 'E[GeV]', run_id, key, bins=[time_bins, energy_bins], loglog=True)
+    plot_correlations(df[' rx'], df['theta'], 'r [mm]', 'theta_p [rad]', run_id, key)
+    plot_correlations(df[' phi_p'], df[' phi_x'], 'phi_p [rad]', 'phi_x [rad]', run_id, key)
 
 
 def make_plots2(df, dataGroup):
@@ -323,17 +335,18 @@ def check_run(run_id, innerData, outerData,
     noLeakInner = innerDF[posIn]
     noLeakOuter = outerDF[~posOut]
     noLeaksDF = pd.concat([noLeakInner, noLeakOuter])
-    # make_plots(innerDF, "inner")
-    # make_plots(outerDF, "outer")
-    # make_plots(combinedDF, "outer")
-    # make_plots(noLeaksDF, "outer")
+    make_plots(innerDF, "inner", run_id, 'inner')
+    make_plots(outerDF, "outer", run_id, 'outer')
+    make_plots(combinedDF, "outer", run_id, 'combined')
+    make_plots(noLeaksDF, "outer", run_id, 'noLeaks')
 
     for key in chi2_tests.keys():
         if key == "inner" or key == "outer":
             if not os.path.isdir(fig_path+'1dHists'):
                 os.mkdir(fig_path+'1dHists')
         for feat in features:
-            exec("chi2_"+key+"[feat] = get_chi_square("+key+"DF,"+key+"Data, feat)")
+            # exec("chi2_"+key+"[feat] = kstest("+key+"DF[feat],"+key+"Data[feat]).pvalue")
+            exec("chi2_" + key + "[feat] = get_distance(" + key + "DF," + key + "Data, feat)")
             print(feat)
             if key == "inner" or key == "outer":
                 exec("plot_1d("+key+"Data,"+key+"DF,feat,chi2_"+key+", fig_path, key)")
@@ -344,43 +357,35 @@ def check_run(run_id, innerData, outerData,
     return chi2_tests
 
 
-def plot_1d(data, DF, feat, chi2, fig_path, key):
+def plot_1d(data, DF, feat, ks, fig_path, key):
     plt.figure(dpi=200)
     plt.yscale('log')
-    bins = np.linspace(np.min(data[feat]), np.max(data[feat]), 500)
+    bins = np.linspace(np.min(data[feat]), np.max(data[feat]), 400)
     if feat == ' time':
-        bins = np.linspace(np.min(data[feat]), np.sort(data[feat])[-10], 500)
+        bins = np.logspace(np.log10(np.min(data[feat])), np.log10(np.sort(data[feat]))[-10], 400)
         plt.xscale('log')
-    plt.text(.01, .99, 'chi2 = '+f'{chi2[feat]:.2e}', ha='left', va='top', transform=plt.gca().transAxes)
-    plt.hist(data[feat], bins=bins, density=True, alpha=0.6)
+    plt.text(.01, .85, 'distance = '+f'{ks[feat]:.3f}', ha='left', va='top', transform=plt.gca().transAxes)
     plt.hist(DF[feat], bins=bins, density=True, alpha=0.6)
+    plt.hist(data[feat], bins=bins, density=True, alpha=0.6)
+    plt.legend(["Generated data", "FullSim data"])
     plt.title(feat)
     plt.savefig(fig_path + '1dHists/' + key + feat.strip().capitalize())
 
 
 
-def get_chi_square(data, DF, feat):
+def get_distance(data, DF, feat):
     bins = np.linspace(np.min(data[feat]), np.max(data[feat]), 1000)
     if feat == ' time':
         bins = np.linspace(np.min(data[feat]), np.sort(data[feat])[-10], 1000)
     h1 = np.histogram(data[feat], bins=bins, density=True)[0]
     h2 = np.histogram(DF[feat], bins=bins, density=True)[0]
-    print(np.sum(h1),np.sum(h2))
-    return chisquare(h1, h2).pvalue
-
-
-def compare_1d(generated_df, real_df):
-    for col in generated_df.columns:
-        plt.figure(dpi=200)
-        bins = np.linspace(np.min(real_df[col]),np.max(real_df[col]),400)
-        plt.hist(generated_df[col], density=True, alpha=0.6, bins=bins)
-        plt.hist(real_df[col], density=True, alpha=0.6, bins=bins)
-        plt.legend(["Generated data", "FullSim data"])
-        plt.title(col)
-        plt.yscale('log')
-        if col == " time":
-            plt.xscale('log')
-        plt.show()
+    mean = 0
+    for i in range(len(h1)):
+        if h1[i] == 0 and h2[i] == 0:
+            mean += 0
+        else:
+            mean += np.abs(h2[i]-h1[i])/(h1[i]+h2[i])
+    return mean/len(h1)
 
 
 def get_time(end_time, beg_time=np.zeros(9)):

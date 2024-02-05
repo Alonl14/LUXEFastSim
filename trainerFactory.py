@@ -1,10 +1,12 @@
 from sklearn.preprocessing import QuantileTransformer as qt
 from dataset import ParticleDataset
-from generator import InnerGenerator, OuterGenerator
+# from generator import InnerGenerator, OuterGenerator
+from Archive.pre7generator import InnerGenerator, OuterGenerator
 from discriminator import InnerDiscriminator, OuterDiscriminator
 from torch.utils.data import DataLoader
 import torch.optim as optim
 import torch
+import torch.nn as nn
 from trainer import Trainer
 import time
 import utils
@@ -35,6 +37,9 @@ def create_trainer(cfg):
         discNet = OuterDiscriminator()
     else:
         raise Exception("dataGroup must be either inner or outer")
+
+    genNet = nn.DataParallel(genNet)
+    discNet = nn.DataParallel(discNet)
 
     cfgDict = {
         'genNet': genNet,
