@@ -1,7 +1,7 @@
 from sklearn.preprocessing import QuantileTransformer as qt
 from dataset import ParticleDataset
-# from generator import InnerGenerator, OuterGenerator
-from Archive.pre7generator import InnerGenerator, OuterGenerator
+from generator import InnerGenerator, OuterGenerator
+# from Archive.pre7generator import InnerGenerator, OuterGenerator
 from discriminator import InnerDiscriminator, OuterDiscriminator
 from torch.utils.data import DataLoader
 import torch.optim as optim

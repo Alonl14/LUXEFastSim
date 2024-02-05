@@ -11,5 +11,5 @@
     "device": "cuda",
     "nCrit": 5,
     "Lambda": 0.01,
-    "learningRate": 0.00001
+    "learningRate": 0.0001
 }

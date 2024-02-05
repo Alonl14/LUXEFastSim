@@ -27,6 +27,9 @@ class ParticleDataset(Dataset):
         # store values before any transformation
         self.preprocess = self.data.copy()
         # The following transformation is only relevant to inner
+        self.data[' pzz'] = 1 - self.data[' pzz']
+        self.data[[' rp', ' pzz', ' eneg', ' time']] = -np.log(self.data[[' rp', ' pzz', ' eneg', ' time']])
+
         if dataGroup == 'inner':
             # Similar to y' = (y-0.83)**(5/7), makes sure we get the real root
             # self.data[' yy'] = np.copysign(np.abs(self.data[' yy'] - 0.83) ** (5. / 9),
@@ -35,8 +38,18 @@ class ParticleDataset(Dataset):
             self.data[' xx'] = np.copysign(np.abs(self.data[' xx'] - 0.73) ** (5. / 9),
                                            self.data[' xx'] - 0.73)
 
-        self.data[' pzz'] = 1 - self.data[' pzz']
-        self.data[[' rp', ' pzz', ' eneg', ' time']] = -np.log(self.data[[' rp', ' pzz', ' eneg', ' time']])
+        if dataGroup == 'outer':
+            self.data[[' xx', ' yy']] = self.data[[' xx', ' yy']] - 0.55
+            self.data[' xx'], self.data[' yy'] = self.data[' yy'], -self.data[' xx']
+            self.data[' rx'] = np.sqrt(self.data[' xx'].values ** 2 + self.data[' yy'].values ** 2)
+            self.data[' phi_x'] = np.arctan2(self.data[' yy'].values, self.data[' xx'].values)/2
+            self.data[' xx'], self.data[' yy'] = (self.data[' rx']*np.cos(self.data[' phi_x']),
+                                                  self.data[' rx']*np.sin(self.data[' phi_x']))
+            self.data[' eneg'] = np.copysign(np.abs((self.data[' eneg']-5)/2) ** (7. / 5),
+                                             (self.data[' eneg']-5)/2) + 5
+
+
+
 
         # store values before quantile transformation, the used quantiles, and the data itself
         self.preqt = self.data.values

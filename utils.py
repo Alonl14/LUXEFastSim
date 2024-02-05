@@ -3,8 +3,8 @@ import torch.nn as nn
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-# from generator import (InnerGenerator, OuterGenerator)
-from Archive.pre7generator import (InnerGenerator, OuterGenerator)
+from generator import (InnerGenerator, OuterGenerator)
+# from Archive.pre7generator import (InnerGenerator, OuterGenerator)
 import time
 from scipy.stats import kstest,chisquare
 import json
@@ -87,12 +87,12 @@ def plot_correlations(x, y, xlabel, ylabel, run_id, key,
     plt.ylabel(ylabel)
     plt.grid(True)
     plt.colorbar()
-    path = 'Output/run_'+run_id+'/plots/2dHists'
-    if not os.path.isdir(path+'/'+key):
-        if not os.path.isdir(path):
-            os.mkdir(path)
-        os.mkdir(path+'/'+key)
     if run_id is not None:
+        path = 'Output/run_'+run_id+'/plots/2dHists'
+        if not os.path.isdir(path+'/'+key):
+            if not os.path.isdir(path):
+                os.mkdir(path)
+            os.mkdir(path+'/'+key)
         plt.savefig(path+'/'+key+'/'+xlabel+'-'+ylabel+'.png')
     plt.show()
 
@@ -119,19 +119,25 @@ def make_plots(df, dataGroup, run_id=None, key = None):
     plot_correlations(df[' phi_p'], df[' phi_x'], 'phi_p [rad]', 'phi_x [rad]', run_id, key)
 
 
-def make_plots2(df, dataGroup):
-    x_lim = [-1800, 600]
-    y_lim = [-2000, 600]
-    if dataGroup == 'inner':
-        x_lim = [-1700, 500]
-        y_lim = [-2500, 500]
+def check_transformation(ds, dataGroup, run_id=None, key = None):
+    """
+    Takes a dataframe and its data group and makes correlation plots for x-y,E-t,r_x-theta,phi_x-phi_p
+    :param ds: preqt dataset containing both polar and cartesian forms of data
+    :param dataGroup: inner/outer
+    :param run_id: string
+    :return: null
+    """
+    # x_lim = [-4000, 4000]
+    # y_lim = [-4000, 4000]
+    # if dataGroup == 'inner':
+    #     x_lim = [-1700, 500]
+    #     y_lim = [-2500, 500]
 
-    plot_correlations(df[' xx'], df[' yy'], 'x[mm]', 'y[mm]',bins = 800 ,Xlim=x_lim, Ylim=y_lim)
+    plot_correlations(ds[:, 0], ds[:, 1], 'x[mm]', 'y[mm]', run_id, key)  #, Xlim=x_lim, Ylim=y_lim
     energy_bins = 10 ** np.linspace(-7, 0, 400)
     time_bins = 10 ** np.linspace(1, 8, 400)
-    plot_correlations(df[' time'], df[' eneg'], 't[ns]', 'E[GeV]', bins=[time_bins, energy_bins], loglog=True)
-    plot_correlations(df[' rx'], df['theta'], 'r [mm]', 'theta_p [rad]')
-    plot_correlations(df[' phi_p'], df[' phi_x'], 'phi_p [rad]', 'phi_x [rad]')
+    plot_correlations(ds[:, 5], ds[:, 6], 't[ns]', 'E[GeV]', run_id, key)  #, bins=[time_bins, energy_bins], loglog=True
+    plot_correlations(np.sqrt(ds[:, 0]**2+ds[:, 1]**2),ds[:,4], 'r [mm]', 'p_z [rad]', run_id, key)
 
 
 def split(df):
