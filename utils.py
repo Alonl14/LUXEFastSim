@@ -10,6 +10,7 @@ from scipy.stats import kstest,chisquare
 import json
 import os
 
+
 def get_kld(real, fake):
     """
     Creates N-dimensional pdfs and calculate their KL-divergence
@@ -41,11 +42,11 @@ def transform(quantiles, norm, columns, fake_p, dataGroup):
     if dataGroup == 'inner':
         temp[:, 0] = (np.copysign(np.abs(temp[:, 0]) ** (9./5), temp[:, 0])) + 0.73
         temp[:, 1] = np.tan(temp[:, 1])/10 + 0.83
-    temp[:, [2, 4, 5, 6]] = np.exp(-temp[:, [2, 4, 5, 6]])
-    temp[:, 4] = 1 - temp[:, 4]
-    # else:
-    #     temp[:, [3, 5, 6, 7]] = np.exp(-temp[:, [3, 5, 6, 7]])
-    #     temp[:, 5] = 1 - temp[:, 5]
+        temp[:, [2, 4, 5, 6]] = np.exp(-temp[:, [2, 4, 5, 6]])
+        temp[:, 4] = 1 - temp[:, 4]
+    else:
+        temp[:, [3, 5, 6, 7]] = np.exp(-temp[:, [3, 5, 6, 7]])
+        temp[:, 5] = 1 - temp[:, 5]
     df = pd.DataFrame([])
 
     for i, col in enumerate(columns):
@@ -59,9 +60,10 @@ def transform(quantiles, norm, columns, fake_p, dataGroup):
     #     df[' xx'] = df[' rx'] * np.cos(df[' phi_x'] - np.pi)
     #     df[' yy'] = df[' rx'] * np.sin(df[' phi_x'] - np.pi)
     #     df[[' xx', ' yy']] = df[[' xx', ' yy']] + 500
-    # elif dataGroup == 'inner':
+    # el
 
-    df[' rx'] = np.sqrt(df[' xx'] ** 2 + df[' yy'] ** 2)
+    if dataGroup == 'inner':
+        df[' rx'] = np.sqrt(df[' xx'] ** 2 + df[' yy'] ** 2)
 
     df[' pxx'] = df[' rp'] * np.cos(df[' phi_p'] - np.pi)
     df[' pyy'] = df[' rp'] * np.sin(df[' phi_p'] - np.pi)

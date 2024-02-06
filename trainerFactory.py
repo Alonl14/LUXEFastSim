@@ -3,6 +3,8 @@ import dataset
 import importlib
 importlib.reload(dataset)
 from dataset import ParticleDataset
+import generator
+importlib.reload(generator)
 from generator import InnerGenerator, OuterGenerator
 # from Archive.pre7generator import InnerGenerator, OuterGenerator
 from discriminator import InnerDiscriminator, OuterDiscriminator

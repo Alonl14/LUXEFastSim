@@ -6,7 +6,7 @@ import numpy as np
 import time
 import utils
 import pandas as pd
-
+import pickle
 
 beg_time = time.localtime()
 print(f"Starting timer at : {utils.get_time(beg_time)}")
@@ -68,7 +68,7 @@ np.save(outer_trainer.outputDir+'KL_out.npy', KL_out)
 np.save(inner_trainer.outputDir+'D_losses_in.npy', inner_trainer.D_Losses)
 np.save(outer_trainer.outputDir+'D_losses_out.npy', outer_trainer.D_Losses)
 
-innerDF = utils.generate_df(inner_trainer, inner_trainer.noiseDim, np.int64(len(inner_trainer.dataset.data)))
-innerDF.to_csv(inner_trainer.outputDir+'innerDF.csv')
-outerDF = utils.generate_df(outer_trainer, outer_trainer.noiseDim, np.int64(len(outer_trainer.dataset.data)))
-outerDF.to_csv(outer_trainer.outputDir+'outerDF.csv')
+with open(inner_trainer.outputDir+"outer_trainer.pkl", "wb") as f:
+    pickle.dump(inner_trainer, f)
+with open(outer_trainer.outputDir+"outer_trainer.pkl", "wb") as g:
+    pickle.dump(outer_trainer, g)
