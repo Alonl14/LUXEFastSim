@@ -343,15 +343,16 @@ def check_run(run_id, innerData, outerData,
     noLeakInner = innerDF[posIn]
     noLeakOuter = outerDF[~posOut]
     noLeaksDF = pd.concat([noLeakInner, noLeakOuter])
-    make_plots(innerDF, "inner", run_id, 'inner')
-    make_plots(outerDF, "outer", run_id, 'outer')
-    make_plots(combinedDF, "outer", run_id, 'combined')
-    make_plots(noLeaksDF, "outer", run_id, 'noLeaks')
+    # make_plots(innerDF, "inner", run_id, 'inner')
+    # make_plots(outerDF, "outer", run_id, 'outer')
+    # make_plots(combinedDF, "outer", run_id, 'combined')
+    # make_plots(noLeaksDF, "outer", run_id, 'noLeaks')
 
     for key in chi2_tests.keys():
-        if key == "inner" or key == "outer":
+        if not os.path.isdir(fig_path+'1dHists/'+key):
             if not os.path.isdir(fig_path+'1dHists'):
                 os.mkdir(fig_path+'1dHists')
+            os.mkdir(fig_path+'1dHists/'+key)
         for feat in features:
             # exec("chi2_"+key+"[feat] = kstest("+key+"DF[feat],"+key+"Data[feat]).pvalue")
             exec("chi2_" + key + "[feat] = get_distance(" + key + "DF," + key + "Data, feat)")
