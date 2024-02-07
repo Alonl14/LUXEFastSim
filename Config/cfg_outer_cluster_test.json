@@ -1,0 +1,15 @@
+{
+    "nQuantiles": 10000,
+    "subsample": 300000,
+    "data": "/storage/agrp/alonle/GAN_InputSample/neutron_outer_5M.csv",
+    "dataNorm": "/storage/agrp/alonle/GAN_InputSample/neutron_outer_5M_norm.csv",
+    "outputDir": "/storage/agrp/alonle/GAN_Output/run_1",
+    "dataGroup": "outer",
+    "batchSize": 4096,
+    "noiseDim": 100,
+    "numEpochs": 1,
+    "device": "cuda",
+    "nCrit": 5,
+    "Lambda": 0.01,
+    "learningRate": 0.0001
+}
