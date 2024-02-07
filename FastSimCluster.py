@@ -30,14 +30,16 @@ with open(sys.argv[2] + "cfg_inner_cluster.json", "w") as outfile:
 with open(sys.argv[2] + "cfg_outer_cluster.json", "w") as outfile:
     outfile.write(outer_obj)
 
-#LOCAL TESTING
-# cfg_inner["data"] = 'TrainData/neutron_inner_1M.csv'
-# cfg_outer["data"] = 'TrainData/neutron_outer_5M.csv'
 
 numEpochs = np.int64(sys.argv[1])
 
 cfg_inner["numEpochs"] = numEpochs
 cfg_outer["numEpochs"] = numEpochs
+
+#LOCAL TESTING
+# cfg_inner["data"] = 'TrainData/neutron_inner_1M.csv'
+# cfg_outer["data"] = 'TrainData/neutron_outer_5M.csv'
+
 
 create_time = time.localtime()
 

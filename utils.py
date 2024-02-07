@@ -3,8 +3,8 @@ import torch.nn as nn
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-from generator import (InnerGenerator, OuterGenerator)
-# from Archive.pre7generator import (InnerGenerator, OuterGenerator)
+# from generator import (InnerGenerator, OuterGenerator)
+from Archive.pre7generator import (InnerGenerator, OuterGenerator)
 import time
 from scipy.stats import kstest,chisquare
 import json
@@ -278,10 +278,8 @@ def generate_trained_df(run_id, trainer):
     path = "Output/run_" + run_id + "/" + trainer.dataGroup +"_Gen_model.pt"
     generator.load_state_dict(torch.load(path, map_location=torch.device('cpu')))
     trainer.genNet = generator
-    factor = 1
-    if trainer.dataGroup =="outer":
-        factor = 10
-
+    factor = 10
+    print("equal factors")
     return generate_df(trainer, trainer.noiseDim, np.int64(len(trainer.dataset.data)/factor))
 
 
@@ -300,32 +298,32 @@ def check_run(run_id, innerData, outerData,
         innerDF = pd.read_csv(run_dir + 'innerDF.csv')
         outerDF = pd.read_csv(run_dir + 'outerDF.csv')
 
-    # iKLPath = run_dir + "KL_in.npy"
-    # oKLPath = run_dir + "KL_out.npy"
-    # iDLPath = run_dir + "D_Losses_in.npy"
-    # oDLPath = run_dir + "D_Losses_out.npy"
-    # innerKLDiv = np.load(iKLPath)
-    # outerKLDiv = np.load(oKLPath)
-    # innerDLosses = np.load(iDLPath)
-    # outerDLosses = np.load(oDLPath)
-    #
-    # plt.figure(dpi=200)
-    # plt.title("Inner KL divergence")
-    # plt.plot(innerKLDiv)
-    # plt.savefig(fig_path + 'innerKLDiv.png')
-    # plt.figure(dpi=200)
-    # plt.title("Outer KL divergence")
-    # plt.plot(outerKLDiv)
-    # plt.savefig(fig_path + 'outerKLDiv.png')
-    # plt.figure(dpi=200)
-    # plt.title("Inner Discriminator Losses")
-    # plt.plot(innerDLosses)
-    # plt.savefig(fig_path + 'innerDLosses.png')
-    # plt.figure(dpi=200)
-    # plt.title("Outer Discriminator Losses")
-    # plt.plot(outerDLosses)
-    # plt.savefig(fig_path + 'outerDLosses.png')
-    # plt.show()
+    iKLPath = run_dir + "KL_in.npy"
+    oKLPath = run_dir + "KL_out.npy"
+    iDLPath = run_dir + "D_Losses_in.npy"
+    oDLPath = run_dir + "D_Losses_out.npy"
+    innerKLDiv = np.load(iKLPath)
+    outerKLDiv = np.load(oKLPath)
+    innerDLosses = np.load(iDLPath)
+    outerDLosses = np.load(oDLPath)
+
+    plt.figure(dpi=200)
+    plt.title("Inner KL divergence")
+    plt.plot(innerKLDiv)
+    plt.savefig(fig_path + 'innerKLDiv.png')
+    plt.figure(dpi=200)
+    plt.title("Outer KL divergence")
+    plt.plot(outerKLDiv)
+    plt.savefig(fig_path + 'outerKLDiv.png')
+    plt.figure(dpi=200)
+    plt.title("Inner Discriminator Losses")
+    plt.plot(innerDLosses)
+    plt.savefig(fig_path + 'innerDLosses.png')
+    plt.figure(dpi=200)
+    plt.title("Outer Discriminator Losses")
+    plt.plot(outerDLosses)
+    plt.savefig(fig_path + 'outerDLosses.png')
+    plt.show()
 
     features = [' xx', ' yy', ' pxx', ' pyy', ' pzz', ' eneg', ' time', 'theta']
     chi2_tests = {'inner': {}, 'outer': {}, 'combined': {}, 'noLeaks': {}}
@@ -343,10 +341,10 @@ def check_run(run_id, innerData, outerData,
     noLeakInner = innerDF[posIn]
     noLeakOuter = outerDF[~posOut]
     noLeaksDF = pd.concat([noLeakInner, noLeakOuter])
-    # make_plots(innerDF, "inner", run_id, 'inner')
-    # make_plots(outerDF, "outer", run_id, 'outer')
-    # make_plots(combinedDF, "outer", run_id, 'combined')
-    # make_plots(noLeaksDF, "outer", run_id, 'noLeaks')
+    make_plots(innerDF, "inner", run_id, 'inner')
+    make_plots(outerDF, "outer", run_id, 'outer')
+    make_plots(combinedDF, "outer", run_id, 'combined')
+    make_plots(noLeaksDF, "outer", run_id, 'noLeaks')
 
     for key in chi2_tests.keys():
         if not os.path.isdir(fig_path+'1dHists/'+key):

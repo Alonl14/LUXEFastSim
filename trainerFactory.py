@@ -5,8 +5,8 @@ importlib.reload(dataset)
 from dataset import ParticleDataset
 import generator
 importlib.reload(generator)
-from generator import InnerGenerator, OuterGenerator
-# from Archive.pre7generator import InnerGenerator, OuterGenerator
+# from generator import InnerGenerator, OuterGenerator
+from Archive.pre7generator import InnerGenerator, OuterGenerator
 from discriminator import InnerDiscriminator, OuterDiscriminator
 from torch.utils.data import DataLoader
 import torch.optim as optim

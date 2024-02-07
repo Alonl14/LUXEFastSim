@@ -11,7 +11,11 @@ class ParticleDataset(Dataset):
             self.data = self.data[self.data[' pdg'].isin([2112])]  # 22 - photons , 2112 - neutrons
         self.data[' rp'] = np.sqrt(self.data[' pxx'].values ** 2 + self.data[' pyy'].values ** 2)
         self.data[' phi_p'] = np.arctan2(self.data[' pyy'].values, self.data[' pxx'].values) + np.pi
-        self.data = self.data[[" xx", " yy", " rp", " phi_p", " pzz", " eneg", " time"]]
+        if dataGroup == 'inner':
+            self.data = self.data[[" xx", " yy", " rp", " phi_p", " pzz", " eneg", " time"]]
+        if dataGroup == 'outer':
+            self.data[' rx'] = np.sqrt(self.data[' xx'].values ** 2 + self.data[' yy'].values ** 2)
+            self.data = self.data[[" rx", " xx", " yy", " rp", " phi_p", " pzz", " eneg", " time"]]
 
         self.norm = pd.read_csv(norm_path, index_col=0)
 
