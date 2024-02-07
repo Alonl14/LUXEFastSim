@@ -13,13 +13,19 @@ print(f"Starting timer at : {utils.get_time(beg_time)}")
 config_dir = "/srv01/agrp/alonle/LUXEFastSim/Config"
 # config_dir = "Config"
 
-with open(config_dir+"/cfg_inner_cluster_test.json", 'r') as inner_file:
+with open(config_dir+"/cfg_inner_cluster.json", 'r') as inner_file:
     cfg_inner = json.loads(inner_file.read())
-with open(config_dir+"/cfg_outer_cluster_test.json", 'r') as outer_file:
+with open(config_dir+"/cfg_outer_cluster.json", 'r') as outer_file:
     cfg_outer = json.loads(outer_file.read())
 
 cfg_inner['outputDir'] = sys.argv[2]
 cfg_outer['outputDir'] = sys.argv[2]
+
+
+numEpochs = np.int64(sys.argv[1])
+
+cfg_inner["numEpochs"] = numEpochs
+cfg_outer["numEpochs"] = numEpochs
 
 inner_obj = json.dumps(cfg_inner, indent=12)
 outer_obj = json.dumps(cfg_outer, indent=12)
@@ -30,16 +36,9 @@ with open(sys.argv[2] + "cfg_inner_cluster.json", "w") as outfile:
 with open(sys.argv[2] + "cfg_outer_cluster.json", "w") as outfile:
     outfile.write(outer_obj)
 
-
-numEpochs = np.int64(sys.argv[1])
-
-cfg_inner["numEpochs"] = numEpochs
-cfg_outer["numEpochs"] = numEpochs
-
 #LOCAL TESTING
 # cfg_inner["data"] = 'TrainData/neutron_inner_1M.csv'
 # cfg_outer["data"] = 'TrainData/neutron_outer_5M.csv'
-
 
 create_time = time.localtime()
 
