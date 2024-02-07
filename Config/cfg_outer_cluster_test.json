@@ -2,7 +2,7 @@
     "nQuantiles": 10000,
     "subsample": 300000,
     "data": "/storage/agrp/alonle/GAN_InputSample/5M_r_cut.csv",
-    "dataNorm": "/storage/agrp/alonle/GAN_InputSample/5M_r_cut_norm.csv",
+    "dataNorm": "/storage/agrp/alonle/GAN_InputSample/outer_r_cut_norm.csv",
     "outputDir": "",
     "dataGroup": "outer",
     "batchSize": 4096,
