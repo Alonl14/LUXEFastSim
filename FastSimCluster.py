@@ -11,10 +11,11 @@ import pickle
 beg_time = time.localtime()
 print(f"Starting timer at : {utils.get_time(beg_time)}")
 config_dir = "/srv01/agrp/alonle/LUXEFastSim/Config"
+# config_dir = "Config"
 
-with open(config_dir+"/cfg_inner_cluster_test.json", 'r') as inner_file:
+with open(config_dir+"/cfg_inner.json", 'r') as inner_file:
     cfg_inner = json.loads(inner_file.read())
-with open(config_dir+"/cfg_outer_cluster_test.json", 'r') as outer_file:
+with open(config_dir+"/cfg_outer.json", 'r') as outer_file:
     cfg_outer = json.loads(outer_file.read())
 
 cfg_inner['outputDir'] = sys.argv[2]

@@ -1,7 +1,7 @@
 {
     "nQuantiles": 100000,
     "subsample": 1000000,
-    "data": "RadiusExclusion/outer_r_cut.csv",
+    "data": "RadiusExclusion/5M_r_cut.csv",
     "dataNorm": "RadiusExclusion/outer_r_cut_norm.csv",
     "outputDir": "/Users/alonlevi/PycharmProjects/LUXEFastSim/Output/",
     "dataGroup": "outer",
