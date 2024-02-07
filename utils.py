@@ -3,8 +3,8 @@ import torch.nn as nn
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-# from generator import (InnerGenerator, OuterGenerator)
-from Archive.pre7generator import (InnerGenerator, OuterGenerator)
+from generator import (InnerGenerator, OuterGenerator)
+# from Archive.pre7generator import (InnerGenerator, OuterGenerator)
 import time
 from scipy.stats import kstest,chisquare
 import json
