@@ -125,13 +125,9 @@ class Trainer:
                     currentKLD = 0
                 iters += 1
 
-            if len(self.D_Losses) > 0:
-                if avg_error_D < self.D_Losses[-1]:
-                    torch.save(self.genNet.state_dict(), self.outputDir+self.dataGroup+'_Gen_model.pt')
-            else:
-                torch.save(self.genNet.state_dict(), self.outputDir + self.dataGroup + '_Gen_model.pt')
-
-
+            torch.save(self.genNet.state_dict(), self.outputDir + self.dataGroup + '_Gen_model.pt')
+            torch.save(self.discNet.state_dict(), self.outputDir + self.dataGroup + '_Gen_model.pt')
+            
             avg_error_G = avg_error_G/iters
             self.G_Losses = np.append(self.G_Losses, avg_error_G)
             avg_error_D = avg_error_D/iters

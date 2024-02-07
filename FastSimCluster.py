@@ -70,7 +70,8 @@ np.save(outer_trainer.outputDir+'KL_out.npy', KL_out)
 np.save(inner_trainer.outputDir+'D_losses_in.npy', inner_trainer.D_Losses)
 np.save(outer_trainer.outputDir+'D_losses_out.npy', outer_trainer.D_Losses)
 
-with open(inner_trainer.outputDir+"outer_trainer.pkl", "wb") as f:
-    pickle.dump(inner_trainer, f)
-with open(outer_trainer.outputDir+"outer_trainer.pkl", "wb") as g:
-    pickle.dump(outer_trainer, g)
+
+# with open(inner_trainer.outputDir+"outer_trainer.pkl", "wb") as f:
+#     pickle.dump(inner_trainer, f)
+# with open(outer_trainer.outputDir+"outer_trainer.pkl", "wb") as g:
+#     pickle.dump(outer_trainer, g)
