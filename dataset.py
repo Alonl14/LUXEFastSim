@@ -38,17 +38,17 @@ class ParticleDataset(Dataset):
                                            self.data[' xx'] - 0.73)
 
         if dataGroup == 'outer':
-            self.data[[' xx', ' yy']] = self.data[[' xx', ' yy']] - 0.55
-            self.data[' xx'], self.data[' yy'] = self.data[' yy'], -self.data[' xx']
-            self.data[' rx'] = np.sqrt(self.data[' xx'].values ** 2 + self.data[' yy'].values ** 2)
-            self.data[' phi_x'] = np.arctan2(self.data[' yy'].values, self.data[' xx'].values)/2
-            self.data[' xx'], self.data[' yy'] = (self.data[' rx']*np.cos(self.data[' phi_x']),
-                                                  self.data[' rx']*np.sin(self.data[' phi_x']))
+            # self.data[[' xx', ' yy']] = self.data[[' xx', ' yy']] - 0.55
+            # self.data[' xx'], self.data[' yy'] = self.data[' yy'], -self.data[' xx']
+            # self.data[' rx'] = np.sqrt(self.data[' xx'].values ** 2 + self.data[' yy'].values ** 2)
+            # self.data[' phi_x'] = np.arctan2(self.data[' yy'].values, self.data[' xx'].values)/2
+            # self.data[' xx'], self.data[' yy'] = (self.data[' rx']*np.cos(self.data[' phi_x']),
+            #                                       self.data[' rx']*np.sin(self.data[' phi_x']))
             self.data[' eneg'] = np.copysign(np.abs(self.data[' eneg']) ** (1 / 9),
                                              self.data[' eneg'])
             self.data[' eneg'] = np.copysign(np.abs(self.data[' eneg']-0.3)**(1/5),
                                              self.data[' eneg']-0.3)
-            self.data = self.data[[" rx", " xx", " yy", " rp", " phi_p", " pzz", " eneg", " time"]]
+            # self.data = self.data[[" rx", " xx", " yy", " rp", " phi_p", " pzz", " eneg", " time"]]
 
         # store values before quantile transformation, the used quantiles, and the data itself
         self.preqt = self.data.values

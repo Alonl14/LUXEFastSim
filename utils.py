@@ -6,7 +6,8 @@ import matplotlib.pyplot as plt
 from generator import (InnerGenerator, OuterGenerator)
 # from Archive.pre7generator import (InnerGenerator, OuterGenerator)
 import time
-from scipy.stats import kstest,chisquare
+from scipy.stats import wasserstein_distance as wd
+# kstest, chisquare,
 import json
 import os
 
@@ -45,6 +46,12 @@ def transform(quantiles, norm, columns, fake_p, dataGroup):
         temp[:, [2, 4, 5, 6]] = np.exp(-temp[:, [2, 4, 5, 6]])
         temp[:, 4] = 1 - temp[:, 4]
     else:
+        temp[:, 6] = (temp[:, 6]**5+0.3)**9
+        # r_temp = np.sqrt(temp[:, 1]**2+temp[:, 2]**2)
+        # phi_temp = np.arctan2(temp[:, 2],temp[:, 1])*2+np.pi/2
+        # temp[:, 1] = temp[:, 0]*np.cos(phi_temp)
+        # temp[:, 2] = temp[:, 0]*np.sin(phi_temp)
+        # temp[:, [1, 2]] += 0.55
         temp[:, [3, 5, 6, 7]] = np.exp(-temp[:, [3, 5, 6, 7]])
         temp[:, 5] = 1 - temp[:, 5]
     df = pd.DataFrame([])
@@ -56,14 +63,14 @@ def transform(quantiles, norm, columns, fake_p, dataGroup):
 
     df[' phi_x'] = np.arctan2(df[' yy'], df[' xx']) + np.pi
 
-    # if dataGroup == 'outer':
-    #     df[' xx'] = df[' rx'] * np.cos(df[' phi_x'] - np.pi)
-    #     df[' yy'] = df[' rx'] * np.sin(df[' phi_x'] - np.pi)
-    #     df[[' xx', ' yy']] = df[[' xx', ' yy']] + 500
-    # el
-
-    if dataGroup == 'inner':
+    if dataGroup == 'outer':
+        df[' xx'] = df[' rx'] * np.cos(df[' phi_x'] - np.pi)
+        df[' yy'] = df[' rx'] * np.sin(df[' phi_x'] - np.pi)
+        df[[' xx', ' yy']] = df[[' xx', ' yy']] + 500
+    elif dataGroup == 'inner':
         df[' rx'] = np.sqrt(df[' xx'] ** 2 + df[' yy'] ** 2)
+
+
 
     df[' pxx'] = df[' rp'] * np.cos(df[' phi_p'] - np.pi)
     df[' pyy'] = df[' rp'] * np.sin(df[' phi_p'] - np.pi)
@@ -272,10 +279,12 @@ def generate_trained_df(run_id, trainer):
     :param trainer
     :return:
     """
-    generator = InnerGenerator(trainer.noiseDim)
     if trainer.dataGroup == "outer":
-        generator = OuterGenerator(trainer.noiseDim)
+        generator = nn.DataParallel(OuterGenerator(trainer.noiseDim))
+    else:
+        generator = nn.DataParallel(InnerGenerator(trainer.noiseDim))
     path = "Output/run_" + run_id + "/" + trainer.dataGroup +"_Gen_model.pt"
+
     generator.load_state_dict(torch.load(path, map_location=torch.device('cpu')))
     trainer.genNet = generator
     factor = 10
@@ -300,12 +309,12 @@ def check_run(run_id, innerData, outerData,
 
     iKLPath = run_dir + "KL_in.npy"
     oKLPath = run_dir + "KL_out.npy"
-    iDLPath = run_dir + "D_Losses_in.npy"
-    oDLPath = run_dir + "D_Losses_out.npy"
+    # iDLPath = run_dir + "D_Losses_in.npy"
+    # oDLPath = run_dir + "D_Losses_out.npy"
     innerKLDiv = np.load(iKLPath)
     outerKLDiv = np.load(oKLPath)
-    innerDLosses = np.load(iDLPath)
-    outerDLosses = np.load(oDLPath)
+    # innerDLosses = np.load(iDLPath)
+    # outerDLosses = np.load(oDLPath)
 
     plt.figure(dpi=200)
     plt.title("Inner KL divergence")
@@ -315,14 +324,14 @@ def check_run(run_id, innerData, outerData,
     plt.title("Outer KL divergence")
     plt.plot(outerKLDiv)
     plt.savefig(fig_path + 'outerKLDiv.png')
-    plt.figure(dpi=200)
-    plt.title("Inner Discriminator Losses")
-    plt.plot(innerDLosses)
-    plt.savefig(fig_path + 'innerDLosses.png')
-    plt.figure(dpi=200)
-    plt.title("Outer Discriminator Losses")
-    plt.plot(outerDLosses)
-    plt.savefig(fig_path + 'outerDLosses.png')
+    # plt.figure(dpi=200)
+    # plt.title("Inner Discriminator Losses")
+    # plt.plot(innerDLosses)
+    # plt.savefig(fig_path + 'innerDLosses.png')
+    # plt.figure(dpi=200)
+    # plt.title("Outer Discriminator Losses")
+    # plt.plot(outerDLosses)
+    # plt.savefig(fig_path + 'outerDLosses.png')
     plt.show()
 
     features = [' xx', ' yy', ' pxx', ' pyy', ' pzz', ' eneg', ' time', 'theta']
@@ -353,7 +362,7 @@ def check_run(run_id, innerData, outerData,
             os.mkdir(fig_path+'1dHists/'+key)
         for feat in features:
             # exec("chi2_"+key+"[feat] = kstest("+key+"DF[feat],"+key+"Data[feat]).pvalue")
-            exec("chi2_" + key + "[feat] = get_distance(" + key + "DF," + key + "Data, feat)")
+            exec("chi2_" + key + "[feat] = wd(" + key + "DF[feat]," + key + "Data[feat])")
             print(feat)
             exec("plot_1d("+key+"Data,"+key+"DF,feat,chi2_"+key+", fig_path, key)")
         exec("chi2_tests['"+key+"']=chi2_"+key)
