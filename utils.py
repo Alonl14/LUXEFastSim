@@ -3,8 +3,8 @@ import torch.nn as nn
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-from generator import (InnerGenerator, OuterGenerator)
-# from Archive.pre7generator import (InnerGenerator, OuterGenerator)
+# from generator import (InnerGenerator, OuterGenerator)
+from Archive.pre7generator import (InnerGenerator, OuterGenerator)
 import time
 from scipy.stats import kstest,chisquare
 import json
@@ -300,32 +300,32 @@ def check_run(run_id, innerData, outerData,
         innerDF = pd.read_csv(run_dir + 'innerDF.csv')
         outerDF = pd.read_csv(run_dir + 'outerDF.csv')
 
-    iKLPath = run_dir + "KL_in.npy"
-    oKLPath = run_dir + "KL_out.npy"
-    iDLPath = run_dir + "D_Losses_in.npy"
-    oDLPath = run_dir + "D_Losses_out.npy"
-    innerKLDiv = np.load(iKLPath)
-    outerKLDiv = np.load(oKLPath)
-    innerDLosses = np.load(iDLPath)
-    outerDLosses = np.load(oDLPath)
-
-    plt.figure(dpi=200)
-    plt.title("Inner KL divergence")
-    plt.plot(innerKLDiv)
-    plt.savefig(fig_path + 'innerKLDiv.png')
-    plt.figure(dpi=200)
-    plt.title("Outer KL divergence")
-    plt.plot(outerKLDiv)
-    plt.savefig(fig_path + 'outerKLDiv.png')
-    plt.figure(dpi=200)
-    plt.title("Inner Discriminator Losses")
-    plt.plot(innerDLosses)
-    plt.savefig(fig_path + 'innerDLosses.png')
-    plt.figure(dpi=200)
-    plt.title("Outer Discriminator Losses")
-    plt.plot(outerDLosses)
-    plt.savefig(fig_path + 'outerDLosses.png')
-    plt.show()
+    # iKLPath = run_dir + "KL_in.npy"
+    # oKLPath = run_dir + "KL_out.npy"
+    # iDLPath = run_dir + "D_Losses_in.npy"
+    # oDLPath = run_dir + "D_Losses_out.npy"
+    # innerKLDiv = np.load(iKLPath)
+    # outerKLDiv = np.load(oKLPath)
+    # innerDLosses = np.load(iDLPath)
+    # outerDLosses = np.load(oDLPath)
+    #
+    # plt.figure(dpi=200)
+    # plt.title("Inner KL divergence")
+    # plt.plot(innerKLDiv)
+    # plt.savefig(fig_path + 'innerKLDiv.png')
+    # plt.figure(dpi=200)
+    # plt.title("Outer KL divergence")
+    # plt.plot(outerKLDiv)
+    # plt.savefig(fig_path + 'outerKLDiv.png')
+    # plt.figure(dpi=200)
+    # plt.title("Inner Discriminator Losses")
+    # plt.plot(innerDLosses)
+    # plt.savefig(fig_path + 'innerDLosses.png')
+    # plt.figure(dpi=200)
+    # plt.title("Outer Discriminator Losses")
+    # plt.plot(outerDLosses)
+    # plt.savefig(fig_path + 'outerDLosses.png')
+    # plt.show()
 
     features = [' xx', ' yy', ' pxx', ' pyy', ' pzz', ' eneg', ' time', 'theta']
     chi2_tests = {'inner': {}, 'outer': {}, 'combined': {}, 'noLeaks': {}}
@@ -357,8 +357,7 @@ def check_run(run_id, innerData, outerData,
             # exec("chi2_"+key+"[feat] = kstest("+key+"DF[feat],"+key+"Data[feat]).pvalue")
             exec("chi2_" + key + "[feat] = get_distance(" + key + "DF," + key + "Data, feat)")
             print(feat)
-            if key == "inner" or key == "outer":
-                exec("plot_1d("+key+"Data,"+key+"DF,feat,chi2_"+key+", fig_path, key)")
+            exec("plot_1d("+key+"Data,"+key+"DF,feat,chi2_"+key+", fig_path, key)")
         exec("chi2_tests['"+key+"']=chi2_"+key)
     chi_obj = json.dumps(chi2_tests, indent=8)
     with open(run_dir + "chi2_tests.json", "w") as outfile:
@@ -378,7 +377,7 @@ def plot_1d(data, DF, feat, ks, fig_path, key):
     plt.hist(data[feat], bins=bins, density=True, alpha=0.6)
     plt.legend(["Generated data", "FullSim data"])
     plt.title(feat)
-    plt.savefig(fig_path + '1dHists/' + key + feat.strip().capitalize())
+    plt.savefig(fig_path + '1dHists/' + key + '/' + feat.strip().capitalize())
 
 
 

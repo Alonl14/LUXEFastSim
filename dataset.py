@@ -11,12 +11,7 @@ class ParticleDataset(Dataset):
             self.data = self.data[self.data[' pdg'].isin([2112])]  # 22 - photons , 2112 - neutrons
         self.data[' rp'] = np.sqrt(self.data[' pxx'].values ** 2 + self.data[' pyy'].values ** 2)
         self.data[' phi_p'] = np.arctan2(self.data[' pyy'].values, self.data[' pxx'].values) + np.pi
-        if dataGroup == 'outer':
-            # self.data[' rx'] = np.sqrt(self.data[' xx'].values ** 2 + self.data[' yy'].values ** 2)
-            # self.data[' phi_x'] = np.arctan2(self.data[' yy'].values, self.data[' xx'].values) + np.pi
-            self.data = self.data[[" rx", " xx", " yy", " rp", " phi_p", " pzz", " eneg", " time"]]  # " rx",
-        elif dataGroup == 'inner':
-            self.data = self.data[[" xx", " yy", " rp", " phi_p", " pzz", " eneg", " time"]]
+        self.data = self.data[[" xx", " yy", " rp", " phi_p", " pzz", " eneg", " time"]]
 
         self.norm = pd.read_csv(norm_path, index_col=0)
 
@@ -26,7 +21,7 @@ class ParticleDataset(Dataset):
 
         # store values before any transformation
         self.preprocess = self.data.copy()
-        # The following transformation is only relevant to inner
+
         self.data[' pzz'] = 1 - self.data[' pzz']
         self.data[[' rp', ' pzz', ' eneg', ' time']] = -np.log(self.data[[' rp', ' pzz', ' eneg', ' time']])
 
@@ -38,16 +33,18 @@ class ParticleDataset(Dataset):
             self.data[' xx'] = np.copysign(np.abs(self.data[' xx'] - 0.73) ** (5. / 9),
                                            self.data[' xx'] - 0.73)
 
-        # if dataGroup == 'outer':
-            # self.data[[' xx', ' yy']] = self.data[[' xx', ' yy']] - 0.55
-            # self.data[' xx'], self.data[' yy'] = self.data[' yy'], -self.data[' xx']
-            # self.data[' rx'] = np.sqrt(self.data[' xx'].values ** 2 + self.data[' yy'].values ** 2)
-            # self.data[' phi_x'] = np.arctan2(self.data[' yy'].values, self.data[' xx'].values)/2
-            # self.data[' xx'], self.data[' yy'] = (self.data[' rx']*np.cos(self.data[' phi_x']),
-            #                                       self.data[' rx']*np.sin(self.data[' phi_x']))
-            # self.data[' eneg'] = np.copysign(np.abs((self.data[' eneg']**(1/9)-0.3)**(1/5)),
-            #                                  self.data[' eneg']**(1/9)-0.3)
-            # self.data = self.data[[' rx', " xx", " yy", " rp", " phi_p", " pzz", " eneg", " time"]]
+        if dataGroup == 'outer':
+            self.data[[' xx', ' yy']] = self.data[[' xx', ' yy']] - 0.55
+            self.data[' xx'], self.data[' yy'] = self.data[' yy'], -self.data[' xx']
+            self.data[' rx'] = np.sqrt(self.data[' xx'].values ** 2 + self.data[' yy'].values ** 2)
+            self.data[' phi_x'] = np.arctan2(self.data[' yy'].values, self.data[' xx'].values)/2
+            self.data[' xx'], self.data[' yy'] = (self.data[' rx']*np.cos(self.data[' phi_x']),
+                                                  self.data[' rx']*np.sin(self.data[' phi_x']))
+            self.data[' eneg'] = np.copysign(np.abs(self.data[' eneg'] ** (1 / 9)),
+                                             self.data[' eneg'])
+            self.data[' eneg'] = np.copysign(np.abs((self.data[' eneg']-0.3)**(1/5)),
+                                             self.data[' eneg']-0.3)
+            self.data = self.data[[" rx", " xx", " yy", " rp", " phi_p", " pzz", " eneg", " time"]]
 
         # store values before quantile transformation, the used quantiles, and the data itself
         self.preqt = self.data.values
