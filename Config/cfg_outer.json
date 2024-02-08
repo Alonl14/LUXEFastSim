@@ -6,7 +6,7 @@
     "outputDir": "/Users/alonlevi/PycharmProjects/LUXEFastSim/Output/",
     "dataGroup": "outer",
     "batchSize": 8192,
-    "noiseDim": 300,
+    "noiseDim": 100,
     "numEpochs": 2,
     "device": "mps",
     "nCrit": 5,

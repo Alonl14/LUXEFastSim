@@ -4,7 +4,7 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 from generator import (InnerGenerator, OuterGenerator)
-# from Archive.pre7generator import (InnerGenerator, OuterGenerator)
+# from Archive.pre7generator import OuterGenerator  #(InnerGenerator, )
 import time
 from scipy.stats import wasserstein_distance as wd
 # kstest, chisquare,
@@ -46,12 +46,12 @@ def transform(quantiles, norm, columns, fake_p, dataGroup):
         temp[:, [2, 4, 5, 6]] = np.exp(-temp[:, [2, 4, 5, 6]])
         temp[:, 4] = 1 - temp[:, 4]
     else:
-        temp[:, 6] = (temp[:, 6]**5+0.3)**9
-        # r_temp = np.sqrt(temp[:, 1]**2+temp[:, 2]**2)
-        # phi_temp = np.arctan2(temp[:, 2],temp[:, 1])*2+np.pi/2
-        # temp[:, 1] = temp[:, 0]*np.cos(phi_temp)
-        # temp[:, 2] = temp[:, 0]*np.sin(phi_temp)
-        # temp[:, [1, 2]] += 0.55
+    #     temp[:, 6] = (temp[:, 6]**5+0.3)**9
+    #     r_temp = np.sqrt(temp[:, 1]**2+temp[:, 2]**2)
+    #     phi_temp = np.arctan2(temp[:, 2], temp[:, 1])*2+np.pi/2
+    #     temp[:, 1] = temp[:, 0]*np.cos(phi_temp)
+    #     temp[:, 2] = temp[:, 0]*np.sin(phi_temp)
+    #     temp[:, [1, 2]] += 0.55
         temp[:, [3, 5, 6, 7]] = np.exp(-temp[:, [3, 5, 6, 7]])
         temp[:, 5] = 1 - temp[:, 5]
     df = pd.DataFrame([])
@@ -63,11 +63,12 @@ def transform(quantiles, norm, columns, fake_p, dataGroup):
 
     df[' phi_x'] = np.arctan2(df[' yy'], df[' xx']) + np.pi
 
-    if dataGroup == 'outer':
-        df[' xx'] = df[' rx'] * np.cos(df[' phi_x'] - np.pi)
-        df[' yy'] = df[' rx'] * np.sin(df[' phi_x'] - np.pi)
-        df[[' xx', ' yy']] = df[[' xx', ' yy']] + 500
-    elif dataGroup == 'inner':
+    # if dataGroup == 'outer':
+    #     df[' xx'] = df[' rx'] * np.cos(df[' phi_x'] - np.pi)
+    #     df[' yy'] = df[' rx'] * np.sin(df[' phi_x'] - np.pi)
+    #     df[[' xx', ' yy']] = df[[' xx', ' yy']] + 500
+    # el
+    if dataGroup == 'inner':
         df[' rx'] = np.sqrt(df[' xx'] ** 2 + df[' yy'] ** 2)
 
 
@@ -280,15 +281,14 @@ def generate_trained_df(run_id, trainer):
     :return:
     """
     if trainer.dataGroup == "outer":
-        generator = nn.DataParallel(OuterGenerator(trainer.noiseDim))
+        generator = OuterGenerator(trainer.noiseDim)
     else:
-        generator = nn.DataParallel(InnerGenerator(trainer.noiseDim))
+        generator = InnerGenerator(trainer.noiseDim)
     path = "Output/run_" + run_id + "/" + trainer.dataGroup +"_Gen_model.pt"
 
     generator.load_state_dict(torch.load(path, map_location=torch.device('cpu')))
     trainer.genNet = generator
-    factor = 10
-    print("equal factors")
+    factor = 7
     return generate_df(trainer, trainer.noiseDim, np.int64(len(trainer.dataset.data)/factor))
 
 
@@ -307,23 +307,23 @@ def check_run(run_id, innerData, outerData,
         innerDF = pd.read_csv(run_dir + 'innerDF.csv')
         outerDF = pd.read_csv(run_dir + 'outerDF.csv')
 
-    iKLPath = run_dir + "KL_in.npy"
-    oKLPath = run_dir + "KL_out.npy"
+    # iKLPath = run_dir + "KL_in.npy"
+    # oKLPath = run_dir + "KL_out.npy"
     # iDLPath = run_dir + "D_Losses_in.npy"
     # oDLPath = run_dir + "D_Losses_out.npy"
-    innerKLDiv = np.load(iKLPath)
-    outerKLDiv = np.load(oKLPath)
+    # innerKLDiv = np.load(iKLPath)
+    # outerKLDiv = np.load(oKLPath)
     # innerDLosses = np.load(iDLPath)
     # outerDLosses = np.load(oDLPath)
-
-    plt.figure(dpi=200)
-    plt.title("Inner KL divergence")
-    plt.plot(innerKLDiv)
-    plt.savefig(fig_path + 'innerKLDiv.png')
-    plt.figure(dpi=200)
-    plt.title("Outer KL divergence")
-    plt.plot(outerKLDiv)
-    plt.savefig(fig_path + 'outerKLDiv.png')
+    #
+    # plt.figure(dpi=200)
+    # plt.title("Inner KL divergence")
+    # plt.plot(innerKLDiv)
+    # plt.savefig(fig_path + 'innerKLDiv.png')
+    # plt.figure(dpi=200)
+    # plt.title("Outer KL divergence")
+    # plt.plot(outerKLDiv)
+    # plt.savefig(fig_path + 'outerKLDiv.png')
     # plt.figure(dpi=200)
     # plt.title("Inner Discriminator Losses")
     # plt.plot(innerDLosses)
@@ -332,10 +332,11 @@ def check_run(run_id, innerData, outerData,
     # plt.title("Outer Discriminator Losses")
     # plt.plot(outerDLosses)
     # plt.savefig(fig_path + 'outerDLosses.png')
-    plt.show()
+    # plt.show()
 
     features = [' xx', ' yy', ' pxx', ' pyy', ' pzz', ' eneg', ' time', 'theta']
     chi2_tests = {'inner': {}, 'outer': {}, 'combined': {}, 'noLeaks': {}}
+    dfDict = {'inner': {}, 'outer': {}, 'combined': {}, 'noLeaks': {}}
     chi2_inner = {' xx': 0, ' yy': 0, ' pxx': 0, ' pyy': 0,
                   ' pzz': 0, ' eneg': 0, ' time': 0, 'theta': 0}
     chi2_outer = chi2_inner.copy()
@@ -350,6 +351,11 @@ def check_run(run_id, innerData, outerData,
     noLeakInner = innerDF[posIn]
     noLeakOuter = outerDF[~posOut]
     noLeaksDF = pd.concat([noLeakInner, noLeakOuter])
+    dfDict['inner'] = innerDF
+    dfDict['outer'] = outerDF
+    dfDict['combined'] = combinedDF
+    dfDict['noLeaks'] = noLeaksDF
+
     make_plots(innerDF, "inner", run_id, 'inner')
     make_plots(outerDF, "outer", run_id, 'outer')
     make_plots(combinedDF, "outer", run_id, 'combined')
@@ -369,6 +375,7 @@ def check_run(run_id, innerData, outerData,
     chi_obj = json.dumps(chi2_tests, indent=8)
     with open(run_dir + "chi2_tests.json", "w") as outfile:
         outfile.write(chi_obj)
+
     return chi2_tests
 
 
