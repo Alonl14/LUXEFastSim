@@ -116,8 +116,8 @@ def make_plots(df, dataGroup, run_id=None, key = None):
     :param run_id: string
     :return: null
     """
-    x_lim = [-4000, 4000]
-    y_lim = [-4000, 4000]
+    x_lim = [-4500, 1500]
+    y_lim = [-3000, 6000]
     if dataGroup == 'inner':
         x_lim = [-1700, 500]
         y_lim = [-2500, 500]
