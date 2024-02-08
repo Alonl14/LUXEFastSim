@@ -4,7 +4,7 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 from generator import (InnerGenerator, OuterGenerator)
-# from Archive.pre7generator import OuterGenerator  #(InnerGenerator, )
+# from Archive.pre7generator import OuterGenerator (InnerGenerator, )
 import time
 from scipy.stats import wasserstein_distance as wd
 # kstest, chisquare,
@@ -105,6 +105,7 @@ def plot_correlations(x, y, xlabel, ylabel, run_id, key,
             os.mkdir(path+'/'+key)
         plt.savefig(path+'/'+key+'/'+xlabel+'-'+ylabel+'.png')
     plt.show()
+    return H
 
 
 def make_plots(df, dataGroup, run_id=None, key = None):
@@ -121,12 +122,13 @@ def make_plots(df, dataGroup, run_id=None, key = None):
         x_lim = [-1700, 500]
         y_lim = [-2500, 500]
 
-    plot_correlations(df[' xx'], df[' yy'], 'x[mm]', 'y[mm]', run_id, key, Xlim=x_lim, Ylim=y_lim)
+    Hxy = plot_correlations(df[' xx'], df[' yy'], 'x[mm]', 'y[mm]', run_id, key, Xlim=x_lim, Ylim=y_lim)
     energy_bins = 10 ** np.linspace(-7, 0, 400)
     time_bins = 10 ** np.linspace(1, 8, 400)
-    plot_correlations(df[' time'], df[' eneg'], 't[ns]', 'E[GeV]', run_id, key, bins=[time_bins, energy_bins], loglog=True)
-    plot_correlations(df[' rx'], df['theta'], 'r [mm]', 'theta_p [rad]', run_id, key)
-    plot_correlations(df[' phi_p'], df[' phi_x'], 'phi_p [rad]', 'phi_x [rad]', run_id, key)
+    Het = plot_correlations(df[' time'], df[' eneg'], 't[ns]', 'E[GeV]', run_id, key, bins=[time_bins, energy_bins], loglog=True)
+    Hrth = plot_correlations(df[' rx'], df['theta'], 'r [mm]', 'theta_p [rad]', run_id, key)
+    Hpp = plot_correlations(df[' phi_p'], df[' phi_x'], 'phi_p [rad]', 'phi_x [rad]', run_id, key)
+    return Hxy, Het, Hrth, Hpp
 
 
 def check_transformation(ds, dataGroup, run_id=None, key = None):
@@ -281,9 +283,9 @@ def generate_trained_df(run_id, trainer):
     :return:
     """
     if trainer.dataGroup == "outer":
-        generator = OuterGenerator(trainer.noiseDim)
+        generator = nn.DataParallel(OuterGenerator(trainer.noiseDim))
     else:
-        generator = InnerGenerator(trainer.noiseDim)
+        generator = nn.DataParallel(InnerGenerator(trainer.noiseDim))
     path = "Output/run_" + run_id + "/" + trainer.dataGroup +"_Gen_model.pt"
 
     generator.load_state_dict(torch.load(path, map_location=torch.device('cpu')))
@@ -307,32 +309,38 @@ def check_run(run_id, innerData, outerData,
         innerDF = pd.read_csv(run_dir + 'innerDF.csv')
         outerDF = pd.read_csv(run_dir + 'outerDF.csv')
 
-    # iKLPath = run_dir + "KL_in.npy"
-    # oKLPath = run_dir + "KL_out.npy"
-    # iDLPath = run_dir + "D_Losses_in.npy"
-    # oDLPath = run_dir + "D_Losses_out.npy"
-    # innerKLDiv = np.load(iKLPath)
-    # outerKLDiv = np.load(oKLPath)
-    # innerDLosses = np.load(iDLPath)
-    # outerDLosses = np.load(oDLPath)
-    #
-    # plt.figure(dpi=200)
-    # plt.title("Inner KL divergence")
-    # plt.plot(innerKLDiv)
-    # plt.savefig(fig_path + 'innerKLDiv.png')
-    # plt.figure(dpi=200)
-    # plt.title("Outer KL divergence")
-    # plt.plot(outerKLDiv)
-    # plt.savefig(fig_path + 'outerKLDiv.png')
-    # plt.figure(dpi=200)
-    # plt.title("Inner Discriminator Losses")
-    # plt.plot(innerDLosses)
-    # plt.savefig(fig_path + 'innerDLosses.png')
-    # plt.figure(dpi=200)
-    # plt.title("Outer Discriminator Losses")
-    # plt.plot(outerDLosses)
-    # plt.savefig(fig_path + 'outerDLosses.png')
-    # plt.show()
+    iKLPath = run_dir + "KL_in.npy"
+    oKLPath = run_dir + "KL_out.npy"
+    iDLPath = run_dir + "D_Losses_in.npy"
+    oDLPath = run_dir + "D_Losses_out.npy"
+    innerKLDiv = np.load(iKLPath)
+    outerKLDiv = np.load(oKLPath)
+    innerDLosses = np.load(iDLPath)
+    outerDLosses = np.load(oDLPath)
+
+    plt.figure(dpi=200)
+    plt.title("Inner KL divergence")
+    plt.grid(True, which='both', color='0.65', linestyle='-')
+    plt.plot(innerKLDiv)
+    plt.yscale('log')
+    plt.savefig(fig_path + 'innerKLDiv.png')
+    plt.figure(dpi=200)
+    plt.title("Outer KL divergence")
+    plt.grid(True, which='both', color='0.65', linestyle='-')
+    plt.plot(outerKLDiv)
+    plt.yscale('log')
+    plt.savefig(fig_path + 'outerKLDiv.png')
+    plt.figure(dpi=200)
+    plt.title("Inner Discriminator Losses")
+    plt.grid(True, which='both', color='0.65', linestyle='-')
+    plt.plot(innerDLosses)
+    plt.savefig(fig_path + 'innerDLosses.png')
+    plt.figure(dpi=200)
+    plt.title("Outer Discriminator Losses")
+    plt.grid(True, which='both', color='0.65', linestyle='-')
+    plt.plot(outerDLosses)
+    plt.savefig(fig_path + 'outerDLosses.png')
+    plt.show()
 
     features = [' xx', ' yy', ' pxx', ' pyy', ' pzz', ' eneg', ' time', 'theta']
     chi2_tests = {'inner': {}, 'outer': {}, 'combined': {}, 'noLeaks': {}}
@@ -356,27 +364,27 @@ def check_run(run_id, innerData, outerData,
     dfDict['combined'] = combinedDF
     dfDict['noLeaks'] = noLeaksDF
 
-    make_plots(innerDF, "inner", run_id, 'inner')
-    make_plots(outerDF, "outer", run_id, 'outer')
-    make_plots(combinedDF, "outer", run_id, 'combined')
-    make_plots(noLeaksDF, "outer", run_id, 'noLeaks')
+    # Hxy, Het, Hrth, Hpp = make_plots(innerDF, "inner", run_id, 'inner')
+    # Hxy, Het, Hrth, Hpp = make_plots(outerDF, "outer", run_id, 'outer')
+    # Hxy, Het, Hrth, Hpp = make_plots(noLeaksDF, "outer", run_id, 'noLeaks')
+    # GHxy, GHet, GHrth, GHpp = make_plots(combinedDF, "outer", run_id, 'combined')
 
-    for key in chi2_tests.keys():
-        if not os.path.isdir(fig_path+'1dHists/'+key):
-            if not os.path.isdir(fig_path+'1dHists'):
-                os.mkdir(fig_path+'1dHists')
-            os.mkdir(fig_path+'1dHists/'+key)
-        for feat in features:
-            # exec("chi2_"+key+"[feat] = kstest("+key+"DF[feat],"+key+"Data[feat]).pvalue")
-            exec("chi2_" + key + "[feat] = wd(" + key + "DF[feat]," + key + "Data[feat])")
-            print(feat)
-            exec("plot_1d("+key+"Data,"+key+"DF,feat,chi2_"+key+", fig_path, key)")
-        exec("chi2_tests['"+key+"']=chi2_"+key)
-    chi_obj = json.dumps(chi2_tests, indent=8)
-    with open(run_dir + "chi2_tests.json", "w") as outfile:
-        outfile.write(chi_obj)
+    # for key in chi2_tests.keys():
+    #     if not os.path.isdir(fig_path+'1dHists/'+key):
+    #         if not os.path.isdir(fig_path+'1dHists'):
+    #             os.mkdir(fig_path+'1dHists')
+    #         os.mkdir(fig_path+'1dHists/'+key)
+    #     for feat in features:
+    #         # exec("chi2_"+key+"[feat] = kstest("+key+"DF[feat],"+key+"Data[feat]).pvalue")
+    #         exec("chi2_" + key + "[feat] = wd(" + key + "DF[feat]," + key + "Data[feat])")
+    #         print(feat)
+    #         exec("plot_1d("+key+"Data,"+key+"DF,feat,chi2_"+key+", fig_path, key)")
+    #     exec("chi2_tests['"+key+"']=chi2_"+key)
+    # chi_obj = json.dumps(chi2_tests, indent=8)
+    # with open(run_dir + "chi2_tests.json", "w") as outfile:
+    #     outfile.write(chi_obj)
 
-    return chi2_tests
+    return chi2_tests, dfDict
 
 
 def plot_1d(data, DF, feat, ks, fig_path, key):
