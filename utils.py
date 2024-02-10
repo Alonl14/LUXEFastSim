@@ -2,12 +2,15 @@ import torch
 import torch.nn as nn
 import pandas as pd
 import numpy as np
-import matplotlib.pyplot as plt
+from matplotlib import pyplot as plt
+import importlib
+import generator
 from generator import (InnerGenerator, OuterGenerator)
 # from Archive.pre7generator import OuterGenerator (InnerGenerator, )
+importlib.reload(generator)
 import time
 from scipy.stats import wasserstein_distance as wd
-# kstest, chisquare,
+from scipy.stats import kstest, chisquare
 import json
 import os
 
@@ -43,17 +46,11 @@ def transform(quantiles, norm, columns, fake_p, dataGroup):
     if dataGroup == 'inner':
         temp[:, 0] = (np.copysign(np.abs(temp[:, 0]) ** (9./5), temp[:, 0])) + 0.73
         temp[:, 1] = np.tan(temp[:, 1])/10 + 0.83
-        temp[:, [2, 4, 5, 6]] = np.exp(-temp[:, [2, 4, 5, 6]])
-        temp[:, 4] = 1 - temp[:, 4]
-    else:
-    #     temp[:, 6] = (temp[:, 6]**5+0.3)**9
-    #     r_temp = np.sqrt(temp[:, 1]**2+temp[:, 2]**2)
-    #     phi_temp = np.arctan2(temp[:, 2], temp[:, 1])*2+np.pi/2
-    #     temp[:, 1] = temp[:, 0]*np.cos(phi_temp)
-    #     temp[:, 2] = temp[:, 0]*np.sin(phi_temp)
-    #     temp[:, [1, 2]] += 0.55
-        temp[:, [3, 5, 6, 7]] = np.exp(-temp[:, [3, 5, 6, 7]])
-        temp[:, 5] = 1 - temp[:, 5]
+    temp[:, [2, 4, 5]] = np.exp(-temp[:, [2, 4, 5]])  # if pre15 add , 6 and tab these 2 lines
+    temp[:, 4] = 1 - temp[:, 4]
+    # else:  # for pre15 versions
+    #     temp[:, [3, 5, 6, 7]] = np.exp(-temp[:, [3, 5, 6, 7]])
+    #     temp[:, 5] = 1 - temp[:, 5]
     df = pd.DataFrame([])
 
     for i, col in enumerate(columns):
@@ -68,11 +65,10 @@ def transform(quantiles, norm, columns, fake_p, dataGroup):
     #     df[' yy'] = df[' rx'] * np.sin(df[' phi_x'] - np.pi)
     #     df[[' xx', ' yy']] = df[[' xx', ' yy']] + 500
     # el
-    if dataGroup == 'inner':
-        df[' rx'] = np.sqrt(df[' xx'] ** 2 + df[' yy'] ** 2)
+    # if dataGroup == 'inner':
 
-
-
+    df[' rx'] = np.sqrt(df[' xx'] ** 2 + df[' yy'] ** 2)
+    df[' eneg'] = np.sqrt(df[' rp']**2+df[' pzz']**2)
     df[' pxx'] = df[' rp'] * np.cos(df[' phi_p'] - np.pi)
     df[' pyy'] = df[' rp'] * np.sin(df[' phi_p'] - np.pi)
     df['theta'] = np.arccos(df[' pzz'] / np.sqrt(df[' pzz'] ** 2 + df[' rp'] ** 2))
@@ -80,12 +76,30 @@ def transform(quantiles, norm, columns, fake_p, dataGroup):
 
 
 def plot_correlations(x, y, xlabel, ylabel, run_id, key,
-                      bins=[400, 400], loglog=False, Xlim=None, Ylim=None):
+                      bins=[400, 400], loglog=False, Xlim=None, Ylim=None, xData=None, yData=None):
+    if xData is None and yData is None:
+        H, xb, yb = np.histogram2d(x, y, bins=bins, range=[[x.min(), x.max()], [y.min(), y.max()]], density=True)
+        X, Y = np.meshgrid(xb, yb)
+        plt.figure(dpi=250)
+        plt.pcolormesh(X, Y, H.T, norm="log")
+    else:
+        if type(bins[0]) == int:
+            bins = [np.linspace(xData.min(),xData.max(),401), np.linspace(yData.min(),yData.max(),401) ]
+        H1, xb1, yb1 = np.histogram2d(xData, yData, bins=bins, range=[[xData.min(), xData.max()], [yData.min(), yData.max()]], density=True)
+        H2, xb2, yb2 = np.histogram2d(x, y, bins=bins, range=[[xData.min(), xData.max()], [yData.min(), yData.max()]], density=True)
+        X, Y = np.meshgrid(xb2, yb2)
+        plt.figure(dpi=250)
+        COM = ((H2-H1)**2/(H1+0.0000000001)).T
+        plt.pcolormesh(X, Y, COM, norm='log')
+        chi2 = 0
+        for i in range(400):
+            for j in range(400):
+                binX = np.diff(xb1)
+                binY = np.diff(yb1)
+                chi2 += COM[i, j] * binX[i] * binY[j]
+        print(chi2)
 
-    H, xb, yb = np.histogram2d(x, y, bins=bins, range=[[x.min(), x.max()], [y.min(), y.max()]], density=True)
-    X, Y = np.meshgrid(xb, yb)
-    plt.figure(dpi=250)
-    plt.pcolormesh(X, Y, np.log10(H.T))
+
     if loglog:
         plt.xscale('log')
         plt.yscale('log')
@@ -97,15 +111,17 @@ def plot_correlations(x, y, xlabel, ylabel, run_id, key,
     plt.ylabel(ylabel)
     plt.grid(True)
     plt.colorbar()
-    if run_id is not None:
-        path = 'Output/run_'+run_id+'/plots/2dHists'
-        if not os.path.isdir(path+'/'+key):
-            if not os.path.isdir(path):
-                os.mkdir(path)
-            os.mkdir(path+'/'+key)
-        plt.savefig(path+'/'+key+'/'+xlabel+'-'+ylabel+'.png')
+    if xData is None:
+        if run_id is not None:
+            path = 'Output/run_'+run_id+'/plots/2dHists'
+            if not os.path.isdir(path+'/'+key):
+                if not os.path.isdir(path):
+                    os.mkdir(path)
+                os.mkdir(path+'/'+key)
+            plt.savefig(path+'/'+key+'/'+xlabel+'-'+ylabel+'.png')
     plt.show()
-    return H
+    if xData is None:
+        return H
 
 
 def make_plots(df, dataGroup, run_id=None, key = None):
@@ -116,40 +132,23 @@ def make_plots(df, dataGroup, run_id=None, key = None):
     :param run_id: string
     :return: null
     """
-    x_lim = [-4500, 1500]
-    y_lim = [-3000, 6000]
+    # BEAM TRIM
+    # x_lim = [-4500, 1500]
+    # y_lim = [-3000, 6000]
+    # R CUT
+    x_lim = [-4000, 4000]
+    y_lim = [-4000, 4000]
     if dataGroup == 'inner':
         x_lim = [-1700, 500]
         y_lim = [-2500, 500]
 
     Hxy = plot_correlations(df[' xx'], df[' yy'], 'x[mm]', 'y[mm]', run_id, key, Xlim=x_lim, Ylim=y_lim)
-    energy_bins = 10 ** np.linspace(-7, 0, 400)
-    time_bins = 10 ** np.linspace(1, 8, 400)
+    energy_bins = 10 ** np.linspace(-7, 0, 401)
+    time_bins = 10 ** np.linspace(1, 8, 401)
     Het = plot_correlations(df[' time'], df[' eneg'], 't[ns]', 'E[GeV]', run_id, key, bins=[time_bins, energy_bins], loglog=True)
     Hrth = plot_correlations(df[' rx'], df['theta'], 'r [mm]', 'theta_p [rad]', run_id, key)
     Hpp = plot_correlations(df[' phi_p'], df[' phi_x'], 'phi_p [rad]', 'phi_x [rad]', run_id, key)
     return Hxy, Het, Hrth, Hpp
-
-
-def check_transformation(ds, dataGroup, run_id=None, key = None):
-    """
-    Takes a dataframe and its data group and makes correlation plots for x-y,E-t,r_x-theta,phi_x-phi_p
-    :param ds: preqt dataset containing both polar and cartesian forms of data
-    :param dataGroup: inner/outer
-    :param run_id: string
-    :return: null
-    """
-    # x_lim = [-4000, 4000]
-    # y_lim = [-4000, 4000]
-    # if dataGroup == 'inner':
-    #     x_lim = [-1700, 500]
-    #     y_lim = [-2500, 500]
-
-    plot_correlations(ds[:, 0], ds[:, 1], 'x[mm]', 'y[mm]', run_id, key)  #, Xlim=x_lim, Ylim=y_lim
-    energy_bins = 10 ** np.linspace(-7, 0, 400)
-    time_bins = 10 ** np.linspace(1, 8, 400)
-    plot_correlations(ds[:, 5], ds[:, 6], 't[ns]', 'E[GeV]', run_id, key)  #, bins=[time_bins, energy_bins], loglog=True
-    plot_correlations(np.sqrt(ds[:, 0]**2+ds[:, 1]**2),ds[:,4], 'r [mm]', 'p_z [rad]', run_id, key)
 
 
 def split(df):
@@ -364,25 +363,36 @@ def check_run(run_id, innerData, outerData,
     dfDict['combined'] = combinedDF
     dfDict['noLeaks'] = noLeaksDF
 
-    # Hxy, Het, Hrth, Hpp = make_plots(innerDF, "inner", run_id, 'inner')
-    # Hxy, Het, Hrth, Hpp = make_plots(outerDF, "outer", run_id, 'outer')
-    # Hxy, Het, Hrth, Hpp = make_plots(noLeaksDF, "outer", run_id, 'noLeaks')
-    # GHxy, GHet, GHrth, GHpp = make_plots(combinedDF, "outer", run_id, 'combined')
+    Hxy, Het, Hrth, Hpp = make_plots(innerDF, "inner", run_id, 'inner')
+    Hxy, Het, Hrth, Hpp = make_plots(outerDF, "outer", run_id, 'outer')
+    Hxy, Het, Hrth, Hpp = make_plots(noLeaksDF, "outer", run_id, 'noLeaks')
+    GHxy, GHet, GHrth, GHpp = make_plots(combinedDF, "outer", run_id, 'combined')
+    make_polar_features(combinedData)
 
-    # for key in chi2_tests.keys():
-    #     if not os.path.isdir(fig_path+'1dHists/'+key):
-    #         if not os.path.isdir(fig_path+'1dHists'):
-    #             os.mkdir(fig_path+'1dHists')
-    #         os.mkdir(fig_path+'1dHists/'+key)
-    #     for feat in features:
-    #         # exec("chi2_"+key+"[feat] = kstest("+key+"DF[feat],"+key+"Data[feat]).pvalue")
-    #         exec("chi2_" + key + "[feat] = wd(" + key + "DF[feat]," + key + "Data[feat])")
-    #         print(feat)
-    #         exec("plot_1d("+key+"Data,"+key+"DF,feat,chi2_"+key+", fig_path, key)")
-    #     exec("chi2_tests['"+key+"']=chi2_"+key)
-    # chi_obj = json.dumps(chi2_tests, indent=8)
-    # with open(run_dir + "chi2_tests.json", "w") as outfile:
-    #     outfile.write(chi_obj)
+    plot_correlations(combinedDF[' xx'], combinedDF[' yy'], 'x[mm]', 'y[mm]', run_id, key="combined"
+                      , Xlim=[-4000, 4000], Ylim=[-4000, 4000], xData=combinedData[' xx'], yData=combinedData[' yy'])
+    energy_bins = 10 ** np.linspace(-7, 0, 401)
+    time_bins = 10 ** np.linspace(1, 8, 401)
+    plot_correlations(combinedDF[' time'], combinedDF[' eneg'], 't[ns]', 'E[GeV]', run_id, key="combined",
+                      bins=[time_bins, energy_bins], loglog=True, xData=combinedData[' time'], yData=combinedData[' eneg'])
+    plot_correlations(combinedDF[' rx'], combinedDF['theta'], 'r [mm]', 'theta_p [rad]', run_id, key="combined",
+                      xData=combinedData[' rx'], yData=combinedData['theta'])
+    plot_correlations(combinedDF[' phi_p'], combinedDF[' phi_x'], 'phi_p [rad]', 'phi_x [rad]', run_id, key="combined",
+                      xData=combinedData[' phi_p'], yData=combinedData[' phi_x'])
+
+    for key in chi2_tests.keys():
+        if not os.path.isdir(fig_path+'1dHists/'+key):
+            if not os.path.isdir(fig_path+'1dHists'):
+                os.mkdir(fig_path+'1dHists')
+            os.mkdir(fig_path+'1dHists/'+key)
+        for feat in features:
+            exec("chi2_"+key+"[feat] = kstest("+key+"DF[feat],"+key+"Data[feat]).pvalue")
+            exec("print(chi2_"+key+"[feat])")
+            exec("plot_1d("+key+"Data,"+key+"DF,feat,chi2_"+key+", fig_path, key)")
+        exec("chi2_tests['"+key+"']=chi2_"+key)
+    chi_obj = json.dumps(chi2_tests, indent=8)
+    with open(run_dir + "chi2_tests.json", "w") as outfile:
+        outfile.write(chi_obj)
 
     return chi2_tests, dfDict
 

@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 from torch.utils.data import Dataset
 
+
 class ParticleDataset(Dataset):
     def __init__(self, data_path, norm_path, QT, dataGroup):
         super().__init__()
@@ -12,10 +13,10 @@ class ParticleDataset(Dataset):
         self.data[' rp'] = np.sqrt(self.data[' pxx'].values ** 2 + self.data[' pyy'].values ** 2)
         self.data[' phi_p'] = np.arctan2(self.data[' pyy'].values, self.data[' pxx'].values) + np.pi
         if dataGroup == 'inner':
-            self.data = self.data[[" xx", " yy", " rp", " phi_p", " pzz", " time"]]
+            self.data = self.data[[" xx", " yy", " pxx", " pyy", " pzz", " eneg", " time"]]
         if dataGroup == 'outer':
             self.data[' rx'] = np.sqrt(self.data[' xx'].values ** 2 + self.data[' yy'].values ** 2)
-            self.data = self.data[[" xx", " yy", " rp", " phi_p", " pzz", " time"]]
+            self.data = self.data[[" xx", " yy", " pxx", " pyy", " pzz", " eneg", " time"]]
 
         self.norm = pd.read_csv(norm_path, index_col=0)
 
@@ -27,7 +28,7 @@ class ParticleDataset(Dataset):
         self.preprocess = self.data.copy()
 
         self.data[' pzz'] = 1 - self.data[' pzz']
-        self.data[[' rp', ' pzz', ' time']] = -np.log(self.data[[' rp', ' pzz', ' time']])
+        self.data[[' pzz', ' eneg', ' time']] = -np.log(self.data[[' pzz', ' eneg', ' time']])
 
         if dataGroup == 'inner':
             # Similar to y' = (y-0.83)**(5/7), makes sure we get the real root
