@@ -46,11 +46,11 @@ def transform(quantiles, norm, columns, fake_p, dataGroup):
     if dataGroup == 'inner':
         temp[:, 0] = (np.copysign(np.abs(temp[:, 0]) ** (9./5), temp[:, 0])) + 0.73
         temp[:, 1] = np.tan(temp[:, 1])/10 + 0.83
-    temp[:, [2, 4, 5]] = np.exp(-temp[:, [2, 4, 5]])  # if pre15 add , 6 and tab these 2 lines
-    temp[:, 4] = 1 - temp[:, 4]
-    # else:  # for pre15 versions
-    #     temp[:, [3, 5, 6, 7]] = np.exp(-temp[:, [3, 5, 6, 7]])
-    #     temp[:, 5] = 1 - temp[:, 5]
+        temp[:, [2, 6, 4, 5]] = np.exp(-temp[:, [2, 6, 4, 5]])  # if pre15 add , 6 and tab these 2 lines
+        temp[:, 4] = 1 - temp[:, 4]
+    else:  # for pre15 versions
+        temp[:, [3, 5, 6, 7]] = np.exp(-temp[:, [3, 5, 6, 7]])
+        temp[:, 5] = 1 - temp[:, 5]
     df = pd.DataFrame([])
 
     for i, col in enumerate(columns):
@@ -58,7 +58,7 @@ def transform(quantiles, norm, columns, fake_p, dataGroup):
         min = norm['min'][col]
         df[col] = min + (max - min) * temp[:, i]
 
-    df[' phi_x'] = np.arctan2(df[' yy'], df[' xx']) + np.pi
+
 
     # if dataGroup == 'outer':
     #     df[' xx'] = df[' rx'] * np.cos(df[' phi_x'] - np.pi)
@@ -67,8 +67,11 @@ def transform(quantiles, norm, columns, fake_p, dataGroup):
     # el
     # if dataGroup == 'inner':
 
+    df[' phi_x'] = np.arctan2(df[' yy'], df[' xx']) + np.pi
     df[' rx'] = np.sqrt(df[' xx'] ** 2 + df[' yy'] ** 2)
-    df[' eneg'] = np.sqrt(df[' rp']**2+df[' pzz']**2)
+    # df[' eneg'] = np.sqrt(df[' rp']**2+df[' pzz']**2)
+    # df[' rp'] = np.sqrt(df[' pxx']**2+df[' pyy']**2)
+    # df[' phi_p'] = np.arctan2(df[' pyy'], df[' pxx'])+np.pi
     df[' pxx'] = df[' rp'] * np.cos(df[' phi_p'] - np.pi)
     df[' pyy'] = df[' rp'] * np.sin(df[' phi_p'] - np.pi)
     df['theta'] = np.arccos(df[' pzz'] / np.sqrt(df[' pzz'] ** 2 + df[' rp'] ** 2))
