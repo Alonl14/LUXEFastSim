@@ -53,10 +53,11 @@ def transform(quantiles, norm, columns, fake_p, dataGroup):
         temp[:, 5] = 1 - temp[:, 5]
     df = pd.DataFrame([])
 
+    epsilon = 10 ** (-15)
     for i, col in enumerate(columns):
         max = norm['max'][col]
         min = norm['min'][col]
-        df[col] = min + (max - min) * temp[:, i]
+        df[col] = min + (max - min + 2*epsilon) * temp[:, i] - epsilon
 
 
 
@@ -67,14 +68,17 @@ def transform(quantiles, norm, columns, fake_p, dataGroup):
     # el
     # if dataGroup == 'inner':
 
+    m_neutron = 0.9395654133
+
     df[' phi_x'] = np.arctan2(df[' yy'], df[' xx']) + np.pi
     df[' rx'] = np.sqrt(df[' xx'] ** 2 + df[' yy'] ** 2)
-    # df[' eneg'] = np.sqrt(df[' rp']**2+df[' pzz']**2)
+    # df[' eneg'] = np.sqrt(df[' rp']**2+df[' pzz']**2+m_neutron**2)-m_neutron
+    df[' rp'] = np.sqrt((df[' eneg']+m_neutron)**2-m_neutron**2-df[' pzz']**2)
     # df[' rp'] = np.sqrt(df[' eneg']**2-df[' pzz']**2)
     # df[' phi_p'] = np.arctan2(df[' pyy'], df[' pxx'])+np.pi
     df[' pxx'] = df[' rp'] * np.cos(df[' phi_p'] - np.pi)
     df[' pyy'] = df[' rp'] * np.sin(df[' phi_p'] - np.pi)
-    df['theta'] = np.arccos(df[' pzz'] / np.sqrt(df[' pzz']**2+df[' rp']**2))
+    df['theta'] = np.arccos(df[' pzz'] / np.sqrt((df[' eneg']+m_neutron)**2-m_neutron**2))
     return df
 
 
@@ -146,8 +150,8 @@ def make_plots(df, dataGroup, run_id=None, key = None):
         y_lim = [-2500, 500]
 
     Hxy = plot_correlations(df[' xx'], df[' yy'], 'x[mm]', 'y[mm]', run_id, key, Xlim=x_lim, Ylim=y_lim)
-    energy_bins = 10 ** np.linspace(-7, 0, 401)
-    time_bins = 10 ** np.linspace(1, 8, 401)
+    energy_bins = 10 ** np.linspace(-7, 0, 400)
+    time_bins = 10 ** np.linspace(1, 8, 400)
     Het = plot_correlations(df[' time'], df[' eneg'], 't[ns]', 'E[GeV]', run_id, key, bins=[time_bins, energy_bins], loglog=True)
     Hrth = plot_correlations(df[' rx'], df['theta'], 'r [mm]', 'theta_p [rad]', run_id, key)
     Hpp = plot_correlations(df[' phi_p'], df[' phi_x'], 'phi_p [rad]', 'phi_x [rad]', run_id, key)

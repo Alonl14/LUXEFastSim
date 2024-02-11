@@ -13,14 +13,14 @@ class ParticleDataset(Dataset):
         self.data[' rp'] = np.sqrt(self.data[' pxx'].values ** 2 + self.data[' pyy'].values ** 2)
         self.data[' phi_p'] = np.arctan2(self.data[' pyy'].values, self.data[' pxx'].values) + np.pi
         if dataGroup == 'inner':
-            self.data = self.data[[" xx", " yy", ' rp', " phi_p", " pzz", " eneg", " time"]]
+            self.data = self.data[[" xx", " yy", " pxx", " pyy" ' rp', " phi_p", " pzz", " eneg", " time"]]
         if dataGroup == 'outer':
             self.data[' rx'] = np.sqrt(self.data[' xx'].values ** 2 + self.data[' yy'].values ** 2)
-            self.data = self.data[[" rx", " xx", " yy", ' rp', " phi_p", " pzz", " eneg", " time"]]
+            self.data = self.data[[" rx", " xx", " yy", " pxx", " pyy", ' rp', " phi_p", " pzz", " eneg", " time"]]
 
         self.norm = pd.read_csv(norm_path, index_col=0)
 
-        epsilon = 10**(-12)  # Used to normalize all features to be in the range (0,1) non-inclusive.
+        epsilon = 10**(-15)  # Used to normalize all features to be in the range (0,1) non-inclusive.
         for col in self.data.columns:
             self.data[col] = (self.data[col] - self.norm['min'][col] + epsilon) / (self.norm['max'][col] - self.norm['min'][col] + 2 * epsilon)
 
