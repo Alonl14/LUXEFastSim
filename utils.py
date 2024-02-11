@@ -46,7 +46,7 @@ def transform(quantiles, norm, columns, fake_p, dataGroup):
     if dataGroup == 'inner':
         temp[:, 0] = (np.copysign(np.abs(temp[:, 0]) ** (9./5), temp[:, 0])) + 0.73
         temp[:, 1] = np.tan(temp[:, 1])/10 + 0.83
-        temp[:, [2, 6, 4, 5]] = np.exp(-temp[:, [2, 6, 4, 5]])  # if pre15 add , 6 and tab these 2 lines
+        temp[:, [2, 4, 5, 6]] = np.exp(-temp[:, [2, 4, 5, 6]])  # if pre15 add , 6 and tab these 2 lines
         temp[:, 4] = 1 - temp[:, 4]
     else:  # for pre15 versions
         temp[:, [3, 5, 6, 7]] = np.exp(-temp[:, [3, 5, 6, 7]])
@@ -70,11 +70,11 @@ def transform(quantiles, norm, columns, fake_p, dataGroup):
     df[' phi_x'] = np.arctan2(df[' yy'], df[' xx']) + np.pi
     df[' rx'] = np.sqrt(df[' xx'] ** 2 + df[' yy'] ** 2)
     # df[' eneg'] = np.sqrt(df[' rp']**2+df[' pzz']**2)
-    # df[' rp'] = np.sqrt(df[' pxx']**2+df[' pyy']**2)
+    # df[' rp'] = np.sqrt(df[' eneg']**2-df[' pzz']**2)
     # df[' phi_p'] = np.arctan2(df[' pyy'], df[' pxx'])+np.pi
     df[' pxx'] = df[' rp'] * np.cos(df[' phi_p'] - np.pi)
     df[' pyy'] = df[' rp'] * np.sin(df[' phi_p'] - np.pi)
-    df['theta'] = np.arccos(df[' pzz'] / np.sqrt(df[' pzz'] ** 2 + df[' rp'] ** 2))
+    df['theta'] = np.arccos(df[' pzz'] / np.sqrt(df[' pzz']**2+df[' rp']**2))
     return df
 
 
@@ -136,11 +136,11 @@ def make_plots(df, dataGroup, run_id=None, key = None):
     :return: null
     """
     # BEAM TRIM
-    # x_lim = [-4500, 1500]
-    # y_lim = [-3000, 6000]
-    # R CUT
-    x_lim = [-4000, 4000]
-    y_lim = [-4000, 4000]
+    x_lim = [-4500, 1500]
+    y_lim = [-3000, 6000]
+    # # R CUT
+    # x_lim = [-4000, 4000]
+    # y_lim = [-4000, 4000]
     if dataGroup == 'inner':
         x_lim = [-1700, 500]
         y_lim = [-2500, 500]
