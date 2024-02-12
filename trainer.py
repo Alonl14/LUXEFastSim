@@ -119,11 +119,11 @@ class Trainer:
                 addCurrentKLD = addCurrentKLD.detach().numpy()
                 currentKLD += addCurrentKLD
 
+                iters += 1
                 if iters % 100 == 0:
                     print("Iteration #"+str(iters))
                     self.KL_Div = np.append(self.KL_Div, currentKLD/100)
                     currentKLD = 0
-                iters += 1
 
             torch.save(self.genNet.state_dict(), self.outputDir + self.dataGroup + '_Gen_model.pt')
             torch.save(self.discNet.state_dict(), self.outputDir + self.dataGroup + '_Disc_model.pt')

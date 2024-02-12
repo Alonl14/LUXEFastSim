@@ -150,7 +150,7 @@ def make_plots(df, dataGroup, run_id=None, key = None):
         y_lim = [-2500, 500]
 
     Hxy = plot_correlations(df[' xx'], df[' yy'], 'x[mm]', 'y[mm]', run_id, key, Xlim=x_lim, Ylim=y_lim)
-    energy_bins = 10 ** np.linspace(-7, 0, 400)
+    energy_bins = 10 ** np.linspace(-12, 0, 400)
     time_bins = 10 ** np.linspace(1, 8, 400)
     Het = plot_correlations(df[' time'], df[' eneg'], 't[ns]', 'E[GeV]', run_id, key, bins=[time_bins, energy_bins], loglog=True)
     Hrth = plot_correlations(df[' rx'], df['theta'], 'r [mm]', 'theta_p [rad]', run_id, key)
@@ -374,32 +374,32 @@ def check_run(run_id, innerData, outerData,
     Hxy, Het, Hrth, Hpp = make_plots(outerDF, "outer", run_id, 'outer')
     Hxy, Het, Hrth, Hpp = make_plots(noLeaksDF, "outer", run_id, 'noLeaks')
     GHxy, GHet, GHrth, GHpp = make_plots(combinedDF, "outer", run_id, 'combined')
-    make_polar_features(combinedData)
-
-    plot_correlations(combinedDF[' xx'], combinedDF[' yy'], 'x[mm]', 'y[mm]', run_id, key="combined"
-                      , Xlim=[-4000, 4000], Ylim=[-4000, 4000], xData=combinedData[' xx'], yData=combinedData[' yy'])
-    energy_bins = 10 ** np.linspace(-7, 0, 401)
-    time_bins = 10 ** np.linspace(1, 8, 401)
-    plot_correlations(combinedDF[' time'], combinedDF[' eneg'], 't[ns]', 'E[GeV]', run_id, key="combined",
-                      bins=[time_bins, energy_bins], loglog=True, xData=combinedData[' time'], yData=combinedData[' eneg'])
-    plot_correlations(combinedDF[' rx'], combinedDF['theta'], 'r [mm]', 'theta_p [rad]', run_id, key="combined",
-                      xData=combinedData[' rx'], yData=combinedData['theta'])
-    plot_correlations(combinedDF[' phi_p'], combinedDF[' phi_x'], 'phi_p [rad]', 'phi_x [rad]', run_id, key="combined",
-                      xData=combinedData[' phi_p'], yData=combinedData[' phi_x'])
-
-    for key in chi2_tests.keys():
-        if not os.path.isdir(fig_path+'1dHists/'+key):
-            if not os.path.isdir(fig_path+'1dHists'):
-                os.mkdir(fig_path+'1dHists')
-            os.mkdir(fig_path+'1dHists/'+key)
-        for feat in features:
-            exec("chi2_"+key+"[feat] = kstest("+key+"DF[feat],"+key+"Data[feat]).pvalue")
-            exec("print(chi2_"+key+"[feat])")
-            exec("plot_1d("+key+"Data,"+key+"DF,feat,chi2_"+key+", fig_path, key)")
-        exec("chi2_tests['"+key+"']=chi2_"+key)
-    chi_obj = json.dumps(chi2_tests, indent=8)
-    with open(run_dir + "chi2_tests.json", "w") as outfile:
-        outfile.write(chi_obj)
+    # make_polar_features(combinedData)
+    #
+    # plot_correlations(combinedDF[' xx'], combinedDF[' yy'], 'x[mm]', 'y[mm]', run_id, key="combined"
+    #                   , Xlim=[-4000, 4000], Ylim=[-4000, 4000], xData=combinedData[' xx'], yData=combinedData[' yy'])
+    # energy_bins = 10 ** np.linspace(-7, 0, 401)
+    # time_bins = 10 ** np.linspace(1, 8, 401)
+    # plot_correlations(combinedDF[' time'], combinedDF[' eneg'], 't[ns]', 'E[GeV]', run_id, key="combined",
+    #                   bins=[time_bins, energy_bins], loglog=True, xData=combinedData[' time'], yData=combinedData[' eneg'])
+    # plot_correlations(combinedDF[' rx'], combinedDF['theta'], 'r [mm]', 'theta_p [rad]', run_id, key="combined",
+    #                   xData=combinedData[' rx'], yData=combinedData['theta'])
+    # plot_correlations(combinedDF[' phi_p'], combinedDF[' phi_x'], 'phi_p [rad]', 'phi_x [rad]', run_id, key="combined",
+    #                   xData=combinedData[' phi_p'], yData=combinedData[' phi_x'])
+    #
+    # for key in chi2_tests.keys():
+    #     if not os.path.isdir(fig_path+'1dHists/'+key):
+    #         if not os.path.isdir(fig_path+'1dHists'):
+    #             os.mkdir(fig_path+'1dHists')
+    #         os.mkdir(fig_path+'1dHists/'+key)
+    #     for feat in features:
+    #         exec("chi2_"+key+"[feat] = kstest("+key+"DF[feat],"+key+"Data[feat]).pvalue")
+    #         exec("print(chi2_"+key+"[feat])")
+    #         exec("plot_1d("+key+"Data,"+key+"DF,feat,chi2_"+key+", fig_path, key)")
+    #     exec("chi2_tests['"+key+"']=chi2_"+key)
+    # chi_obj = json.dumps(chi2_tests, indent=8)
+    # with open(run_dir + "chi2_tests.json", "w") as outfile:
+    #     outfile.write(chi_obj)
 
     return chi2_tests, dfDict
 
