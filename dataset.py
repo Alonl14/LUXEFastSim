@@ -20,9 +20,18 @@ class ParticleDataset(Dataset):
 
         self.norm = pd.read_csv(norm_path, index_col=0)
 
-        epsilon = 10**(-40)  # Used to normalize all features to be in the range (0,1) non-inclusive.
+        epsilon = 10**(-16)  # Used to normalize all features to be in the range (eps,1-eps) non-inclusive.
+
         for col in self.data.columns:
-            self.data[col] = (self.data[col] - self.norm['min'][col] + epsilon) / (self.norm['max'][col] - self.norm['min'][col] + 2 * epsilon)
+            x_max = self.norm['max'][col]
+            x_min = self.norm['min'][col]
+            if x_min == 0:
+                b = epsilon
+                a = (1-2*epsilon)/x_max
+            else:
+                b = (1-epsilon*(1+x_max/x_min))/(1-x_max/x_min)
+                a = (epsilon-b)/x_min
+            self.data[col] = a * self.data[col] + b
 
         # store values before any transformation
         self.preprocess = self.data.copy()

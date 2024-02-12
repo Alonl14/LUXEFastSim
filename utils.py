@@ -57,11 +57,17 @@ def transform(quantiles, norm, columns, fake_p, dataGroup):
         # temp[:, 5] = 1 - temp[:, 5]
     df = pd.DataFrame([])
 
-    epsilon = 10 ** (-15)
+    epsilon = 10 ** (-16)
     for i, col in enumerate(columns):
-        max = norm['max'][col]
-        min = norm['min'][col]
-        df[col] = min + (max - min + 2*epsilon) * temp[:, i] - epsilon
+        x_max = norm['max'][col]
+        x_min = norm['min'][col]
+        if x_min == 0:
+            b = epsilon
+            a = (1-2*epsilon)/x_max
+        else:
+            b = (1-epsilon*(1+x_max/x_min))/(1-x_max/x_min)
+            a = (epsilon-b)/x_min
+        df[col] = (temp[:, i] - b)/a
 
 
 
