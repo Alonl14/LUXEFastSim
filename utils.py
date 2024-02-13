@@ -82,8 +82,9 @@ def transform(quantiles, norm, columns, fake_p, dataGroup):
 
     df[' phi_x'] = np.arctan2(df[' yy'], df[' xx']) + np.pi
     df[' rx'] = np.sqrt(df[' xx'] ** 2 + df[' yy'] ** 2)
+    df[' pzz'] = -np.sqrt((df[' eneg']+m_neutron)**2-m_neutron**2-df[' rp']**2)
     # df[' eneg'] = np.sqrt(df[' rp']**2+df[' pzz']**2+m_neutron**2)-m_neutron
-    df[' rp'] = np.sqrt((df[' eneg']+m_neutron)**2-m_neutron**2-df[' pzz']**2)
+    # df[' rp'] = np.sqrt((df[' eneg']+m_neutron)**2-m_neutron**2-df[' pzz']**2)
     # df[' rp'] = np.sqrt(df[' eneg']**2-df[' pzz']**2)
     # df[' phi_p'] = np.arctan2(df[' pyy'], df[' pxx'])+np.pi
     df[' pxx'] = df[' rp'] * np.cos(df[' phi_p'] - np.pi)
@@ -421,6 +422,9 @@ def plot_1d(data, DF, feat, ks, fig_path, key):
     if feat == ' time':
         bins = np.logspace(np.log10(np.min(data[feat])), np.log10(np.sort(data[feat]))[-10], 400)
         plt.xscale('log')
+    elif feat == ' eneg':
+        bins = np.logspace(np.log10(np.min(data[feat])), np.log10(np.sort(data[feat]))[-10], 400)
+        plt.xscale('log')
     plt.text(.01, .85, 'distance = '+f'{ks[feat]:.3f}', ha='left', va='top', transform=plt.gca().transAxes)
     plt.hist(DF[feat], bins=bins, density=True, alpha=0.6)
     plt.hist(data[feat], bins=bins, density=True, alpha=0.6)
@@ -433,6 +437,8 @@ def plot_1d(data, DF, feat, ks, fig_path, key):
 def get_distance(data, DF, feat):
     bins = np.linspace(np.min(data[feat]), np.max(data[feat]), 1000)
     if feat == ' time':
+        bins = np.linspace(np.min(data[feat]), np.sort(data[feat])[-10], 1000)
+    elif feat == ' eneg':
         bins = np.linspace(np.min(data[feat]), np.sort(data[feat])[-10], 1000)
     h1 = np.histogram(data[feat], bins=bins, density=True)[0]
     h2 = np.histogram(DF[feat], bins=bins, density=True)[0]

@@ -55,12 +55,12 @@ class Trainer:
 
         print("Starting Training Loop...")
 
-        utils.weights_init(self.genNet)
-        utils.weights_init(self.discNet)
-        # genPath = "/storage/agrp/alonle/GAN_Output/run_14/" + self.dataGroup + '_Gen_model.pt'
-        # discPath = "/storage/agrp/alonle/GAN_Output/run_14/" + self.dataGroup + '_Disc_model.pt'
-        # self.genNet.load_state_dict(torch.load(genPath, map_location=torch.device('cpu')))
-        # self.discNet.load_state_dict(torch.load(discPath, map_location=torch.device('cpu')))
+        # utils.weights_init(self.genNet)
+        # utils.weights_init(self.discNet)
+        genPath = "/storage/agrp/alonle/GAN_Output/run_29/" + self.dataGroup + '_Gen_model.pt'
+        discPath = "/storage/agrp/alonle/GAN_Output/run_29/" + self.dataGroup + '_Disc_model.pt'
+        self.genNet.load_state_dict(torch.load(genPath, map_location=torch.device('cpu')))
+        self.discNet.load_state_dict(torch.load(discPath, map_location=torch.device('cpu')))
 
         self.genNet.to(self.device)
         self.genNet.train()
