@@ -13,10 +13,10 @@ class ParticleDataset(Dataset):
         self.data[' rp'] = np.sqrt(self.data[' pxx'].values ** 2 + self.data[' pyy'].values ** 2)
         self.data[' phi_p'] = np.arctan2(self.data[' pyy'].values, self.data[' pxx'].values) + np.pi
         if dataGroup == 'inner':
-            self.data = self.data[[" xx", " yy", " pxx", " pyy", " rp", " phi_p", " pzz", " eneg", " time"]]  #
+            self.data = self.data[[" xx", " yy", " rp", " phi_p", " eneg", " time"]]  #" rx",  , " pxx", " pyy", " pzz", " pzz"
         if dataGroup == 'outer':
             self.data[' rx'] = np.sqrt(self.data[' xx'].values ** 2 + self.data[' yy'].values ** 2)
-            self.data = self.data[[" rx", " xx", " yy", " pxx", " pyy", " rp", " phi_p", " pzz", " eneg", " time"]]
+            self.data = self.data[[" xx", " yy", " rp", " phi_p", " eneg", " time"]]
 
         self.norm = pd.read_csv(norm_path, index_col=0)
 
@@ -36,8 +36,8 @@ class ParticleDataset(Dataset):
         # store values before any transformation
         self.preprocess = self.data.copy()
 
-        self.data[' pzz'] = 1 - self.data[' pzz']  #
-        self.data[[' pzz', ' rp', ' eneg', ' time']] = -np.log(self.data[[' pzz', ' rp', ' eneg', ' time']])
+        # self.data[' pzz'] = 1 - self.data[' pzz']  #' pzz',
+        self.data[[' rp', ' eneg', ' time']] = -np.log(self.data[[' rp', ' eneg', ' time']])
 
         if dataGroup == 'inner':
             # Similar to y' = (y-0.83)**(5/7), makes sure we get the real root

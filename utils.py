@@ -307,7 +307,7 @@ def generate_trained_df(run_id, trainer):
 
     generator.load_state_dict(torch.load(path, map_location=torch.device('cpu')))
     trainer.genNet = generator
-    factor = 7
+    factor = 1
     return generate_df(trainer, trainer.noiseDim, np.int64(len(trainer.dataset.data)/factor))
 
 
@@ -388,8 +388,8 @@ def check_run(run_id, innerData, outerData,
     make_polar_features(combinedData)
 
     plot_correlations(combinedDF[' xx'], combinedDF[' yy'], 'x[mm]', 'y[mm]', run_id, key="combined"
-                      , Xlim=[-4000, 4000], Ylim=[-4000, 4000], xData=combinedData[' xx'], yData=combinedData[' yy'])
-    energy_bins = 10 ** np.linspace(-7, 0, 401)
+                      , Xlim=[-4500, 1500], Ylim=[-3000, 6000], xData=combinedData[' xx'], yData=combinedData[' yy'])
+    energy_bins = 10 ** np.linspace(-12, 0, 401)
     time_bins = 10 ** np.linspace(1, 8, 401)
     plot_correlations(combinedDF[' time'], combinedDF[' eneg'], 't[ns]', 'E[GeV]', run_id, key="combined",
                       bins=[time_bins, energy_bins], loglog=True, xData=combinedData[' time'], yData=combinedData[' eneg'])
