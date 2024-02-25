@@ -66,10 +66,11 @@ class Trainer:
         self.genNet.train()
         self.discNet.to(self.device)
         self.discNet.train()
+        iters = 0
 
         for epoch in tqdm.tqdm_notebook(range(self.numEpochs), desc=' epochs', position=0):
 
-            avg_error_G, avg_error_D, iters, currentKLD = 0, 0, 0, 0
+            avg_error_G, avg_error_D, currentKLD = 0, 0, 0
 
             for i, data in tqdm.tqdm_notebook(enumerate(self.dataloader, 0), desc=' batch', position=1, leave=False):
                 # Update the discriminator network
@@ -124,9 +125,9 @@ class Trainer:
                 currentKLD += addCurrentKLD
 
                 iters += 1
-                if iters % 100 == 0:
+                if iters % 1000 == 0:
                     print("Iteration #"+str(iters))
-                    self.KL_Div = np.append(self.KL_Div, currentKLD/100)
+                    self.KL_Div = np.append(self.KL_Div, currentKLD/1000)
                     currentKLD = 0
 
             torch.save(self.genNet.state_dict(), self.outputDir + self.dataGroup + '_Gen_model.pt')
