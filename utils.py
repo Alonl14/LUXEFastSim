@@ -46,15 +46,15 @@ def transform(quantiles, norm, columns, fake_p, dataGroup):
     if dataGroup == 'inner':
         temp[:, 0] = (np.copysign(np.abs(temp[:, 0]) ** (9./5), temp[:, 0])) + 0.73
         temp[:, 1] = np.tan(temp[:, 1])/10 + 0.83
-        temp[:, [4, 6, 7, 8]] = np.exp(-temp[:, [4, 6, 7, 8]])
-        temp[:, 6] = 1 - temp[:, 6]
+    temp[:, [2, 4, 5]] = np.exp(-temp[:, [2, 4, 5]])
+        # temp[:, 6] = 1 - temp[:, 6]
         # temp[:, [2, 4, 5, 6]] = np.exp(-temp[:, [2, 4, 5, 6]])  # if pre26 , uncomment
         # temp[:, 4] = 1 - temp[:, 4]  # if pre15 add , 6 and tab these 2 lines
-    else:  # for pre15 versions
-        temp[:, [5, 7, 8, 9]] = np.exp(-temp[:, [5, 7, 8, 9]])
-        temp[:, 7] = 1 - temp[:, 7]
-        # temp[:, [3, 5, 6, 7]] = np.exp(-temp[:, [3, 5, 6, 7]])  # if pre26 , uncomment
-        # temp[:, 5] = 1 - temp[:, 5]
+    # else:  # for pre15 versions
+    #     temp[:, [5, 7, 8, 9]] = np.exp(-temp[:, [5, 7, 8, 9]])
+    #     temp[:, 7] = 1 - temp[:, 7]
+    #     # temp[:, [3, 5, 6, 7]] = np.exp(-temp[:, [3, 5, 6, 7]])  # if pre26 , uncomment
+    #     # temp[:, 5] = 1 - temp[:, 5]
     df = pd.DataFrame([])
 
     epsilon = 10 ** (-16)

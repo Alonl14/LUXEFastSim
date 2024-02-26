@@ -13,10 +13,10 @@ class ParticleDataset(Dataset):
         self.data[' rp'] = np.sqrt(self.data[' pxx'].values ** 2 + self.data[' pyy'].values ** 2)
         self.data[' phi_p'] = np.arctan2(self.data[' pyy'].values, self.data[' pxx'].values) + np.pi
         if dataGroup == 'inner':
-            self.data = self.data[[" xx", " yy", " rp", " phi_p", " eneg", " time"]]  #" rx",  , " pxx", " pyy", " pzz", " pzz"
+            self.data = self.data[[" xx", " yy", " rp", " phi_p", " pxx", " pyy", " pzz", " eneg", " time"]]  #   " pzz"
         if dataGroup == 'outer':
             self.data[' rx'] = np.sqrt(self.data[' xx'].values ** 2 + self.data[' yy'].values ** 2)
-            self.data = self.data[[" xx", " yy", " rp", " phi_p", " eneg", " time"]]
+            self.data = self.data[[" rx", " xx", " yy", " rp", " phi_p", " pxx", " pyy", " pzz", " eneg", " time"]]
 
         self.norm = pd.read_csv(norm_path, index_col=0)
 
