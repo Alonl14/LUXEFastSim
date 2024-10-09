@@ -6,6 +6,7 @@ from matplotlib import pyplot as plt
 import importlib
 import generator
 from generator import (InnerGenerator, OuterGenerator)
+
 # from Archive.pre7generator import OuterGenerator (InnerGenerator, )
 importlib.reload(generator)
 import time
@@ -13,6 +14,7 @@ from scipy.stats import wasserstein_distance as wd
 from scipy.stats import kstest, chisquare
 import json
 import os
+import tqdm
 
 
 def get_kld(real, fake):
@@ -31,7 +33,7 @@ def get_kld(real, fake):
     return current_kld
 
 
-def transform(quantiles, norm, columns, fake_p, dataGroup):
+def transform(norm, columns, fake_p, dataGroup, quantiles=None):
     """
     transform from 'gaussianized' space to actual parameter space
     :param quantiles: The QT object used on the original data
@@ -41,20 +43,25 @@ def transform(quantiles, norm, columns, fake_p, dataGroup):
     :param dataGroup: specify Inner/Outer
     :return: dataframe of generated events
     """
-
-    temp = quantiles.inverse_transform(fake_p)
+    if quantiles is not None:
+        temp = quantiles.inverse_transform(fake_p)
+    else:
+        temp = np.maximum(-10*np.ones_like(fake_p), fake_p)
+        print("no QT")
     if dataGroup == 'inner':
-        temp[:, 0] = (np.copysign(np.abs(temp[:, 0]) ** (9./5), temp[:, 0])) + 0.73
-        temp[:, 1] = np.tan(temp[:, 1])/10 + 0.83
-    temp[:, [2, 4, 5]] = np.exp(-temp[:, [2, 4, 5]])
-        # temp[:, 6] = 1 - temp[:, 6]
-        # temp[:, [2, 4, 5, 6]] = np.exp(-temp[:, [2, 4, 5, 6]])  # if pre26 , uncomment
-        # temp[:, 4] = 1 - temp[:, 4]  # if pre15 add , 6 and tab these 2 lines
+        # temp[:, 0] = (np.copysign(np.abs(temp[:, 0]) ** (9. / 5), temp[:, 0])) + 0.73
+        # temp[:, 1] = np.tan(temp[:, 1]) / 10 + 0.83
+        # temp[:, 4] = 1 - temp[:, 4]
+        temp[:, [2, 6, 7, 8]] = np.exp(-temp[:, [2, 6, 7, 8]])
+        temp[:, 6] = 1 - temp[:, 6]
+    else:
+        temp[:, [3, 5, 8, 9]] = np.exp(-temp[:, [3, 5, 8, 9]])  # if pre26 , uncomment
+        # if pre15 add , 6 and tab these 2 lines
     # else:  # for pre15 versions
     #     temp[:, [5, 7, 8, 9]] = np.exp(-temp[:, [5, 7, 8, 9]])
     #     temp[:, 7] = 1 - temp[:, 7]
     #     # temp[:, [3, 5, 6, 7]] = np.exp(-temp[:, [3, 5, 6, 7]])  # if pre26 , uncomment
-    #     # temp[:, 5] = 1 - temp[:, 5]
+        temp[:, 5] = 1 - temp[:, 5]
     df = pd.DataFrame([])
 
     epsilon = 10 ** (-16)
@@ -63,13 +70,11 @@ def transform(quantiles, norm, columns, fake_p, dataGroup):
         x_min = norm['min'][col]
         if x_min == 0:
             b = epsilon
-            a = (1-2*epsilon)/x_max
+            a = (1 - 2 * epsilon) / x_max
         else:
-            b = (1-epsilon*(1+x_max/x_min))/(1-x_max/x_min)
-            a = (epsilon-b)/x_min
-        df[col] = (temp[:, i] - b)/a
-
-
+            b = (1 - epsilon * (1 + x_max / x_min)) / (1 - x_max / x_min)
+            a = (epsilon - b) / x_min
+        df[col] = (temp[:, i] - b) / a
 
     # if dataGroup == 'outer':
     #     df[' xx'] = df[' rx'] * np.cos(df[' phi_x'] - np.pi)
@@ -82,14 +87,14 @@ def transform(quantiles, norm, columns, fake_p, dataGroup):
 
     df[' phi_x'] = np.arctan2(df[' yy'], df[' xx']) + np.pi
     df[' rx'] = np.sqrt(df[' xx'] ** 2 + df[' yy'] ** 2)
-    df[' pzz'] = -np.sqrt((df[' eneg']+m_neutron)**2-m_neutron**2-df[' rp']**2)
+    df[' pzz'] = -np.sqrt((df[' eneg'] + m_neutron) ** 2 - m_neutron ** 2 - df[' rp'] ** 2)
     # df[' eneg'] = np.sqrt(df[' rp']**2+df[' pzz']**2+m_neutron**2)-m_neutron
     # df[' rp'] = np.sqrt((df[' eneg']+m_neutron)**2-m_neutron**2-df[' pzz']**2)
     # df[' rp'] = np.sqrt(df[' eneg']**2-df[' pzz']**2)
     # df[' phi_p'] = np.arctan2(df[' pyy'], df[' pxx'])+np.pi
     df[' pxx'] = df[' rp'] * np.cos(df[' phi_p'] - np.pi)
     df[' pyy'] = df[' rp'] * np.sin(df[' phi_p'] - np.pi)
-    df['theta'] = np.arccos(df[' pzz'] / np.sqrt((df[' eneg']+m_neutron)**2-m_neutron**2))
+    df['theta'] = np.arccos(df[' pzz'] / np.sqrt((df[' eneg'] + m_neutron) ** 2 - m_neutron ** 2))
     return df
 
 
@@ -102,12 +107,14 @@ def plot_correlations(x, y, xlabel, ylabel, run_id, key,
         plt.pcolormesh(X, Y, H.T, norm="log")
     else:
         if type(bins[0]) == int:
-            bins = [np.linspace(xData.min(),xData.max(),401), np.linspace(yData.min(),yData.max(),401) ]
-        H1, xb1, yb1 = np.histogram2d(xData, yData, bins=bins, range=[[xData.min(), xData.max()], [yData.min(), yData.max()]], density=True)
-        H2, xb2, yb2 = np.histogram2d(x, y, bins=bins, range=[[xData.min(), xData.max()], [yData.min(), yData.max()]], density=True)
+            bins = [np.linspace(xData.min(), xData.max(), 401), np.linspace(yData.min(), yData.max(), 401)]
+        H1, xb1, yb1 = np.histogram2d(xData, yData, bins=bins,
+                                      range=[[xData.min(), xData.max()], [yData.min(), yData.max()]], density=True)
+        H2, xb2, yb2 = np.histogram2d(x, y, bins=bins, range=[[xData.min(), xData.max()], [yData.min(), yData.max()]],
+                                      density=True)
         X, Y = np.meshgrid(xb2, yb2)
         plt.figure(dpi=250)
-        COM = ((H2-H1)**2/(H1+0.0000000001)).T
+        COM = ((H2 - H1) ** 2 / (H1 + 0.0000000001)).T
         plt.pcolormesh(X, Y, COM, norm='log')
         chi2 = 0
         for i in range(400):
@@ -116,7 +123,6 @@ def plot_correlations(x, y, xlabel, ylabel, run_id, key,
                 binY = np.diff(yb1)
                 chi2 += COM[i, j] * binX[i] * binY[j]
         print(chi2)
-
 
     if loglog:
         plt.xscale('log')
@@ -131,18 +137,18 @@ def plot_correlations(x, y, xlabel, ylabel, run_id, key,
     plt.colorbar()
     if xData is None:
         if run_id is not None:
-            path = 'Output/run_'+run_id+'/plots/2dHists'
-            if not os.path.isdir(path+'/'+key):
+            path = 'Output/run_' + run_id + '/plots/2dHists'
+            if not os.path.isdir(path + '/' + key):
                 if not os.path.isdir(path):
                     os.mkdir(path)
-                os.mkdir(path+'/'+key)
-            plt.savefig(path+'/'+key+'/'+xlabel+'-'+ylabel+'.png')
+                os.mkdir(path + '/' + key)
+            plt.savefig(path + '/' + key + '/' + xlabel + '-' + ylabel + '.png')
     plt.show()
     if xData is None:
         return H
 
 
-def make_plots(df, dataGroup, run_id=None, key = None):
+def make_plots(df, dataGroup, run_id=None, key=None):
     """
     Takes a dataframe and its data group and makes correlation plots for x-y,E-t,r_x-theta,phi_x-phi_p
     :param df: dataframe containing both polar and cartesian forms of data
@@ -163,7 +169,8 @@ def make_plots(df, dataGroup, run_id=None, key = None):
     Hxy = plot_correlations(df[' xx'], df[' yy'], 'x[mm]', 'y[mm]', run_id, key, Xlim=x_lim, Ylim=y_lim)
     energy_bins = 10 ** np.linspace(-12, 0, 400)
     time_bins = 10 ** np.linspace(1, 8, 400)
-    Het = plot_correlations(df[' time'], df[' eneg'], 't[ns]', 'E[GeV]', run_id, key, bins=[time_bins, energy_bins], loglog=True)
+    Het = plot_correlations(df[' time'], df[' eneg'], 't[ns]', 'E[GeV]', run_id, key, bins=[time_bins, energy_bins],
+                            loglog=True)
     Hrth = plot_correlations(df[' rx'], df['theta'], 'r [mm]', 'theta_p [rad]', run_id, key)
     Hpp = plot_correlations(df[' phi_p'], df[' phi_x'], 'phi_p [rad]', 'phi_x [rad]', run_id, key)
     return Hxy, Het, Hrth, Hpp
@@ -232,21 +239,21 @@ def plot_features(ds):
         fig.suptitle(col)
 
         ax1.hist(ds.preprocess[col], bins=400)
-        ax2.hist(ds.preqt[:, i], bins=400)
+        # ax2.hist(ds.preqt[:, i], bins=400)
         ax3.hist(ds.data[:, i], bins=400)
-        ax4.plot(ds.quantiles.quantiles_[:, i])
+        # ax4.plot(ds.quantiles.quantiles_[:, i])
 
         feature = '{:8}'.format(col)
 
-        norm = np.max(get_q(ds)[:, i])
-        slope = np.max(get_q(ds)[1:, i] - get_q(ds)[:-1, i]) / norm
-        curvature = np.max(get_q(ds)[2:, i] - 2 * get_q(ds)[1:-1, i] + get_q(ds)[:-2, i]) / norm
-
-        print(feature + '%.4f     %.4f' % (slope, curvature))
+        # norm = np.max(get_q(ds)[:, i])
+        # slope = np.max(get_q(ds)[1:, i] - get_q(ds)[:-1, i]) / norm
+        # curvature = np.max(get_q(ds)[2:, i] - 2 * get_q(ds)[1:-1, i] + get_q(ds)[:-2, i]) / norm
+        #
+        # print(feature + '%.4f     %.4f' % (slope, curvature))
         # print("\n")
 
         ax1.set_yscale('log')
-        ax2.set_yscale('log')
+        # ax2.set_yscale('log')
         ax3.set_yscale('log')
         plt.show()
 
@@ -262,8 +269,11 @@ def generate_df(trainer, noiseDim, numEvents):
     generated_data = generated_data.detach().numpy()
     ds = trainer.dataset
     param_list = ds.preprocess.columns
-    generated_df = transform(ds.quantiles, ds.norm, param_list,
-                             generated_data, trainer.dataGroup)
+    try:
+        generated_df = transform(ds.norm, param_list, generated_data, trainer.dataGroup, quantiles=ds.quantiles)
+    except AttributeError:
+        print("No quantiles found in ds, assuming applyQT=0")
+        generated_df = transform(ds.norm, param_list, generated_data, trainer.dataGroup)
     return generated_df
 
 
@@ -279,10 +289,10 @@ def weights_init(m):
 def combine(innerT, outerT, real_df=None, inner=None, outer=None):
     if real_df is not None:
         inner, outer = split(real_df)
-    numEvents = (len(inner)+len(outer))/10
-    q_in = len(inner)/(len(inner)+len(outer))
-    inner_events = np.int64(np.floor(numEvents*q_in))
-    outer_events = np.int64(np.ceil(numEvents*(1-q_in)))
+    numEvents = (len(inner) + len(outer)) / 10
+    q_in = len(inner) / (len(inner) + len(outer))
+    inner_events = np.int64(np.floor(numEvents * q_in))
+    outer_events = np.int64(np.ceil(numEvents * (1 - q_in)))
     print(inner_events, outer_events)
     inner_df = generate_df(innerT, innerT.noiseDim, inner_events)
     outer_df = generate_df(outerT, outerT.noiseDim, outer_events)
@@ -303,12 +313,12 @@ def generate_trained_df(run_id, trainer):
         generator = nn.DataParallel(OuterGenerator(trainer.noiseDim))
     else:
         generator = nn.DataParallel(InnerGenerator(trainer.noiseDim))
-    path = "Output/run_" + run_id + "/" + trainer.dataGroup +"_Gen_model.pt"
+    path = "Output/run_" + run_id + "/" + trainer.dataGroup + "_Gen_model.pt"
 
     generator.load_state_dict(torch.load(path, map_location=torch.device('cpu')))
     trainer.genNet = generator
-    factor = 1
-    return generate_df(trainer, trainer.noiseDim, np.int64(len(trainer.dataset.data)/factor))
+    factor = 10
+    return generate_df(trainer, trainer.noiseDim, np.int64(len(trainer.dataset.data) / factor))
 
 
 def check_run(run_id, innerData, outerData,
@@ -385,6 +395,7 @@ def check_run(run_id, innerData, outerData,
     Hxy, Het, Hrth, Hpp = make_plots(outerDF, "outer", run_id, 'outer')
     Hxy, Het, Hrth, Hpp = make_plots(noLeaksDF, "outer", run_id, 'noLeaks')
     GHxy, GHet, GHrth, GHpp = make_plots(combinedDF, "outer", run_id, 'combined')
+
     make_polar_features(combinedData)
 
     plot_correlations(combinedDF[' xx'], combinedDF[' yy'], 'x[mm]', 'y[mm]', run_id, key="combined"
@@ -398,19 +409,19 @@ def check_run(run_id, innerData, outerData,
     plot_correlations(combinedDF[' phi_p'], combinedDF[' phi_x'], 'phi_p [rad]', 'phi_x [rad]', run_id, key="combined",
                       xData=combinedData[' phi_p'], yData=combinedData[' phi_x'])
 
-    for key in chi2_tests.keys():
-        if not os.path.isdir(fig_path+'1dHists/'+key):
-            if not os.path.isdir(fig_path+'1dHists'):
-                os.mkdir(fig_path+'1dHists')
-            os.mkdir(fig_path+'1dHists/'+key)
-        for feat in features:
-            exec("chi2_"+key+"[feat] = kstest("+key+"DF[feat],"+key+"Data[feat]).pvalue")
-            exec("print(chi2_"+key+"[feat])")
-            exec("plot_1d("+key+"Data,"+key+"DF,feat,chi2_"+key+", fig_path, key)")
-        exec("chi2_tests['"+key+"']=chi2_"+key)
-    chi_obj = json.dumps(chi2_tests, indent=8)
-    with open(run_dir + "chi2_tests.json", "w") as outfile:
-        outfile.write(chi_obj)
+    # for key in chi2_tests.keys():
+    #     if not os.path.isdir(fig_path+'1dHists/'+key):
+    #         if not os.path.isdir(fig_path+'1dHists'):
+    #             os.mkdir(fig_path+'1dHists')
+    #         os.mkdir(fig_path+'1dHists/'+key)
+    #     for feat in features:
+    #         exec("chi2_"+key+"[feat] = kstest("+key+"DF[feat],"+key+"Data[feat]).pvalue")
+    #         exec("print(chi2_"+key+"[feat])")
+    #         exec("plot_1d("+key+"Data,"+key+"DF,feat,chi2_"+key+", fig_path, key)")
+    #     exec("chi2_tests['"+key+"']=chi2_"+key)
+    # chi_obj = json.dumps(chi2_tests, indent=8)
+    # with open(run_dir + "chi2_tests.json", "w") as outfile:
+    #     outfile.write(chi_obj)
 
     return chi2_tests, dfDict
 
@@ -425,13 +436,12 @@ def plot_1d(data, DF, feat, ks, fig_path, key):
     elif feat == ' eneg':
         bins = np.logspace(np.log10(np.min(data[feat])), np.log10(np.sort(data[feat]))[-10], 400)
         plt.xscale('log')
-    plt.text(.01, .85, 'distance = '+f'{ks[feat]:.3f}', ha='left', va='top', transform=plt.gca().transAxes)
+    plt.text(.01, .85, 'distance = ' + f'{ks[feat]:.3f}', ha='left', va='top', transform=plt.gca().transAxes)
     plt.hist(DF[feat], bins=bins, density=True, alpha=0.6)
     plt.hist(data[feat], bins=bins, density=True, alpha=0.6)
     plt.legend(["Generated data", "FullSim data"])
     plt.title(feat)
     plt.savefig(fig_path + '1dHists/' + key + '/' + feat.strip().capitalize())
-
 
 
 def get_distance(data, DF, feat):
@@ -447,8 +457,8 @@ def get_distance(data, DF, feat):
         if h1[i] == 0 and h2[i] == 0:
             mean += 0
         else:
-            mean += np.abs(h2[i]-h1[i])/(h1[i]+h2[i])
-    return mean/len(h1)
+            mean += np.abs(h2[i] - h1[i]) / (h1[i] + h2[i])
+    return mean / len(h1)
 
 
 def get_time(end_time, beg_time=np.zeros(9)):
@@ -459,3 +469,87 @@ def get_time(end_time, beg_time=np.zeros(9)):
     :return:
     """
     return time.asctime(time.struct_time(np.abs(np.int64(end_time) - np.int64(beg_time))))[11:19]
+
+
+# takes log of energy and time, normalizes everything
+def prep_matrix(x):
+    x[[2, 4, 5], :] = np.log(x[[2, 4, 5], :])
+    for d in range(np.shape(x)[0]):
+        x[d, :] = x[d, :] - np.min(x[d, :]) / (np.max(x[d, :]) - np.min(x[d, :]))
+    return x
+
+
+# calculates the Euclidean distance matrix for two np arrays x and y
+def euclidean_distance_matrix(x, y):
+    D_XY = np.zeros([np.shape(x)[1], np.shape(y)[1]])
+    shape = np.shape(D_XY)
+    for i in range(shape[0]):
+        for j in range(i, shape[1]):
+            D_XY[i, j] = np.linalg.norm(x[:, i] - y[:, j])
+            D_XY[j, i] = D_XY[i, j]
+    return D_XY
+
+
+# shuffles indexes based on permutation
+def permutation_indices(n_x, n_y):
+    n = n_x + n_y
+    idx_w = np.arange(n)
+    idx_g = np.concatenate((np.arange(n_x), np.arange(n_y)))
+    idx_p1 = np.random.choice(n_x + n_y, n_x, replace=False)
+    idx_p2 = np.setdiff1d(idx_w, idx_p1)
+    i_1 = idx_g[idx_p1[idx_p1 < n_x]]
+    i_1s = np.arange(len(i_1))
+    i_2 = idx_g[idx_p1[idx_p1 >= n_x]]
+    i_2s = np.arange(len(i_1), n_x)
+    j_1 = idx_g[idx_p2[idx_p2 < n_x]]
+    j_1s = np.arange(len(j_1))
+    j_2 = idx_g[idx_p2[idx_p2 >= n_x]]
+    j_2s = np.arange(len(j_1), n_y)
+    return i_1, i_2, i_1s, i_2s, j_1, j_2, j_1s, j_2s
+
+
+def get_perm_p_value(x, y, n_permutations, log_norm=True, progress=True):
+    if log_norm:
+        x_norm = prep_matrix(x)
+        y_norm = prep_matrix(y)
+    else:
+        x_norm = np.copy(x)
+        y_norm = np.copy(y)
+
+    beg_time = time.localtime()
+    D_XX = euclidean_distance_matrix(x_norm, x_norm)
+    D_XY = euclidean_distance_matrix(x_norm, y_norm)
+    D_YX = D_XY.T
+    D_YY = euclidean_distance_matrix(y_norm, y_norm)
+    n_x = np.shape(x)[1]
+    n_y = np.shape(y)[1]
+    ED_observed = 2 * np.sum(D_XY) / (n_x * n_y) - np.sum(D_XX) / n_x ** 2 - np.sum(D_YY) / n_y ** 2
+    end_time = time.localtime()
+    # print("Calculated ED in ", get_time(beg_time,end_time))
+    null_hyp_ED_dist = np.zeros(n_permutations)
+    if progress:
+        permutations_iter = tqdm.tqdm_notebook(range(n_permutations), desc='permutation')
+    else:
+        permutations_iter = range(n_permutations)
+    for i in permutations_iter:
+        [i_1, i_2, i_1s, i_2s,
+         j_1, j_2, j_1s, j_2s] = permutation_indices(n_x, n_y)
+
+        D_XXs = np.zeros_like(D_XX)
+        D_XXs[np.ix_(i_1s, i_1s)] = D_XX[np.ix_(i_1, i_1)]
+        D_XXs[np.ix_(i_1s, i_2s)] = D_XY[np.ix_(i_1, i_2)]
+        D_XXs[np.ix_(i_2s, i_1s)] = D_YX[np.ix_(i_2, i_1)]
+        D_XXs[np.ix_(i_2s, i_2s)] = D_YY[np.ix_(i_2, i_2)]
+        D_YYs = np.zeros_like(D_YY)
+        D_YYs[np.ix_(j_1s, j_1s)] = D_XX[np.ix_(j_1, j_1)]
+        D_YYs[np.ix_(j_1s, j_2s)] = D_XY[np.ix_(j_1, j_2)]
+        D_YYs[np.ix_(j_2s, j_1s)] = D_YX[np.ix_(j_2, j_1)]
+        D_YYs[np.ix_(j_2s, j_2s)] = D_YY[np.ix_(j_2, j_2)]
+        D_XYs = np.zeros_like(D_XY)
+        D_XYs[np.ix_(i_1s, j_1s)] = D_XX[np.ix_(i_1, j_1)]
+        D_XYs[np.ix_(i_1s, j_2s)] = D_XY[np.ix_(i_1, j_2)]
+        D_XYs[np.ix_(i_2s, j_1s)] = D_YX[np.ix_(i_2, j_1)]
+        D_XYs[np.ix_(i_2s, j_2s)] = D_YY[np.ix_(i_2, j_2)]
+        null_hyp_ED_dist[i] = 2 * np.mean(D_XYs) - np.mean(D_XXs) - np.mean(D_YYs)
+    p_value = (n_permutations - np.sum(null_hyp_ED_dist >= ED_observed)) / (n_permutations + 1)
+    return p_value, null_hyp_ED_dist, ED_observed

@@ -50,6 +50,7 @@ class Trainer:
         self.G_Losses = np.array([])
         self.D_Losses = np.array([])
         self.KL_Div = np.array([])
+
     def run(self):
         generated_df = pd.DataFrame([])
 
