@@ -46,7 +46,7 @@ def transform(norm, columns, fake_p, dataGroup, quantiles=None):
     if quantiles is not None:
         temp = quantiles.inverse_transform(fake_p)
     else:
-        temp = np.maximum(-10*np.ones_like(fake_p), fake_p)
+        temp = np.maximum(-10 * np.ones_like(fake_p), fake_p)
         print("no QT")
     if dataGroup == 'inner':
         # temp[:, 0] = (np.copysign(np.abs(temp[:, 0]) ** (9. / 5), temp[:, 0])) + 0.73
@@ -57,10 +57,10 @@ def transform(norm, columns, fake_p, dataGroup, quantiles=None):
     else:
         temp[:, [3, 5, 8, 9]] = np.exp(-temp[:, [3, 5, 8, 9]])  # if pre26 , uncomment
         # if pre15 add , 6 and tab these 2 lines
-    # else:  # for pre15 versions
-    #     temp[:, [5, 7, 8, 9]] = np.exp(-temp[:, [5, 7, 8, 9]])
-    #     temp[:, 7] = 1 - temp[:, 7]
-    #     # temp[:, [3, 5, 6, 7]] = np.exp(-temp[:, [3, 5, 6, 7]])  # if pre26 , uncomment
+        # else:  # for pre15 versions
+        #     temp[:, [5, 7, 8, 9]] = np.exp(-temp[:, [5, 7, 8, 9]])
+        #     temp[:, 7] = 1 - temp[:, 7]
+        #     # temp[:, [3, 5, 6, 7]] = np.exp(-temp[:, [3, 5, 6, 7]])  # if pre26 , uncomment
         temp[:, 5] = 1 - temp[:, 5]
     df = pd.DataFrame([])
 
@@ -403,7 +403,8 @@ def check_run(run_id, innerData, outerData,
     energy_bins = 10 ** np.linspace(-12, 0, 401)
     time_bins = 10 ** np.linspace(1, 8, 401)
     plot_correlations(combinedDF[' time'], combinedDF[' eneg'], 't[ns]', 'E[GeV]', run_id, key="combined",
-                      bins=[time_bins, energy_bins], loglog=True, xData=combinedData[' time'], yData=combinedData[' eneg'])
+                      bins=[time_bins, energy_bins], loglog=True, xData=combinedData[' time'],
+                      yData=combinedData[' eneg'])
     plot_correlations(combinedDF[' rx'], combinedDF['theta'], 'r [mm]', 'theta_p [rad]', run_id, key="combined",
                       xData=combinedData[' rx'], yData=combinedData['theta'])
     plot_correlations(combinedDF[' phi_p'], combinedDF[' phi_x'], 'phi_p [rad]', 'phi_x [rad]', run_id, key="combined",
@@ -471,9 +472,13 @@ def get_time(end_time, beg_time=np.zeros(9)):
     return time.asctime(time.struct_time(np.abs(np.int64(end_time) - np.int64(beg_time))))[11:19]
 
 
+import warnings
+
+
 # takes log of energy and time, normalizes everything
 def prep_matrix(x):
     x[[2, 4, 5], :] = np.log(x[[2, 4, 5], :])
+
     for d in range(np.shape(x)[0]):
         x[d, :] = x[d, :] - np.min(x[d, :]) / (np.max(x[d, :]) - np.min(x[d, :]))
     return x
@@ -484,9 +489,8 @@ def euclidean_distance_matrix(x, y):
     D_XY = np.zeros([np.shape(x)[1], np.shape(y)[1]])
     shape = np.shape(D_XY)
     for i in range(shape[0]):
-        for j in range(i, shape[1]):
+        for j in range(shape[1]):
             D_XY[i, j] = np.linalg.norm(x[:, i] - y[:, j])
-            D_XY[j, i] = D_XY[i, j]
     return D_XY
 
 
@@ -510,8 +514,10 @@ def permutation_indices(n_x, n_y):
 
 def get_perm_p_value(x, y, n_permutations, log_norm=True, progress=True):
     if log_norm:
-        x_norm = prep_matrix(x)
-        y_norm = prep_matrix(y)
+        x_norm = np.copy(x)
+        x_norm = prep_matrix(x_norm)
+        y_norm = np.copy(y)
+        y_norm = prep_matrix(y_norm)
     else:
         x_norm = np.copy(x)
         y_norm = np.copy(y)
