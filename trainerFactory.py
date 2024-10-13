@@ -1,47 +1,39 @@
-from sklearn.preprocessing import QuantileTransformer as qt
 import dataset
 import importlib
-importlib.reload(dataset)
-from dataset import ParticleDataset, NoQTDataset
 import generator
-importlib.reload(generator)
-from generator import InnerGenerator, OuterGenerator
-# from Archive.pre7generator import InnerGenerator, OuterGenerator
-from discriminator import InnerDiscriminator, OuterDiscriminator
-from torch.utils.data import DataLoader
-import torch.optim as optim
-import torch
-import torch.nn as nn
-from trainer import Trainer
+import discriminator
 import time
 import utils
+import torch
+from torch.utils.data import DataLoader
+import torch.optim as optim
+import torch.nn as nn
+from trainer import Trainer
+
+# FOR LOCAL TESTING
+importlib.reload(dataset)
+from dataset import ParticleDataset
+importlib.reload(generator)
+from generator import InnerGenerator, OuterGenerator
+importlib.reload(discriminator)
+from discriminator import InnerDiscriminator, OuterDiscriminator
 
 
 def create_trainer(cfg):
     beg_time = time.localtime()
     print(f"Creating trainer at : {utils.get_time(beg_time)}")
-    if cfg["applyQT"]:
-        print("Creating QT...")
-        QT = qt(output_distribution='normal', n_quantiles=cfg['nQuantiles'], subsample=cfg['subsample'])
-        QT_time = time.localtime()
-        print(f"QT created, time elapsed : {utils.get_time(QT_time, beg_time)}")
-        print("making dataset...")
-        dataset = ParticleDataset(cfg['data'], cfg['dataNorm'], QT, cfg['dataGroup'])
-        dataset_time = time.localtime()
-        print(f"dataset created, time elapsed : {utils.get_time(QT_time, dataset_time)}")
-        print("making data loader...")
-        dataloader = DataLoader(dataset, batch_size=cfg['batchSize'], shuffle=True)
-        dataloader_time = time.localtime()
-        print(f"data loader created, time elapsed : {utils.get_time(dataloader_time, dataset_time)}")
-    else:
-        print("making dataset...")
-        dataset = NoQTDataset(cfg['data'], cfg['dataNorm'], cfg['dataGroup'])
-        dataset_time = time.localtime()
-        print(f"dataset created, time elapsed : {utils.get_time(beg_time, dataset_time)}")
-        print("making data loader...")
-        dataloader = DataLoader(dataset, batch_size=cfg['batchSize'], shuffle=True)
-        dataloader_time = time.localtime()
-        print(f"data loader created, time elapsed : {utils.get_time(dataloader_time, dataset_time)}")
+    print("making dataset...")
+
+    particle_ds = ParticleDataset(cfg)
+    dataset_time = time.localtime()
+
+    print(f"dataset created, time elapsed : {utils.get_time(beg_time, dataset_time)}")
+    print("making data loader...")
+
+    dataloader = DataLoader(particle_ds, batch_size=cfg['batchSize'], shuffle=True)
+    dataloader_time = time.localtime()
+
+    print(f"data loader created, time elapsed : {utils.get_time(dataloader_time, dataset_time)}")
     device = torch.device(cfg['device'])
     print(f'Using {device} as device')
     if cfg['dataGroup'] == 'inner':
@@ -62,7 +54,7 @@ def create_trainer(cfg):
         'discNet': discNet,
         'outputDir': cfg['outputDir'],
         'dataloader': dataloader,
-        'dataset': dataset,
+        'dataset': particle_ds,
         'dataGroup': cfg['dataGroup'],
         'numEpochs': cfg['numEpochs'],
         'device': device,
@@ -81,4 +73,3 @@ def create_trainer(cfg):
 
 class TrainerFactory:
     pass
-

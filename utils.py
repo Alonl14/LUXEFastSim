@@ -4,6 +4,8 @@ import pandas as pd
 import numpy as np
 from matplotlib import pyplot as plt
 import importlib
+
+import dataset
 import generator
 from generator import (InnerGenerator, OuterGenerator)
 
@@ -64,17 +66,10 @@ def transform(norm, columns, fake_p, dataGroup, quantiles=None):
         temp[:, 5] = 1 - temp[:, 5]
     df = pd.DataFrame([])
 
-    epsilon = 10 ** (-16)
     for i, col in enumerate(columns):
         x_max = norm['max'][col]
         x_min = norm['min'][col]
-        if x_min == 0:
-            b = epsilon
-            a = (1 - 2 * epsilon) / x_max
-        else:
-            b = (1 - epsilon * (1 + x_max / x_min)) / (1 - x_max / x_min)
-            a = (epsilon - b) / x_min
-        df[col] = (temp[:, i] - b) / a
+        df[col] = dataset.normalize(df[col], x_min, x_max, inverse=True)
 
     # if dataGroup == 'outer':
     #     df[' xx'] = df[' rx'] * np.cos(df[' phi_x'] - np.pi)
