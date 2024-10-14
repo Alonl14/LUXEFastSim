@@ -45,6 +45,7 @@ class Trainer:
         self.device = cfgDict['device']
         self.nCrit = cfgDict['nCrit']
         self.Lambda = cfgDict['Lambda']
+        self.applyQT = cfgDict['applyQT']
 
         self.trainedGen = torch.Tensor([])
         self.G_Losses = np.array([])
@@ -52,16 +53,10 @@ class Trainer:
         self.KL_Div = np.array([])
 
     def run(self):
-        generated_df = pd.DataFrame([])
-
         print("Starting Training Loop...")
 
         utils.weights_init(self.genNet)
         utils.weights_init(self.discNet)
-        # genPath = "/storage/agrp/alonle/GAN_Output/run_29/" + self.dataGroup + '_Gen_model.pt'
-        # discPath = "/storage/agrp/alonle/GAN_Output/run_29/" + self.dataGroup + '_Disc_model.pt'
-        # self.genNet.load_state_dict(torch.load(genPath, map_location=torch.device('cpu')))
-        # self.discNet.load_state_dict(torch.load(discPath, map_location=torch.device('cpu')))
 
         self.genNet.to(self.device)
         self.genNet.train()
@@ -81,7 +76,7 @@ class Trainer:
                 for crit_train in range(self.nCrit):
                     # Train with all-real batch
                     self.discNet.zero_grad()
-                    b_size = len(data)
+                    batch_size = len(data)
                     real_data = data.to(self.device)
 
                     output = self.discNet(real_data)
@@ -89,7 +84,8 @@ class Trainer:
                     err_D_real = -torch.mean(output)
 
                     # Train with all-fake batch
-                    noise = torch.randn(b_size, self.noiseDim, device=self.device)
+                    noise = torch.randn(batch_size, self.noiseDim, device=self.device)
+
                     fake_p = self.genNet(noise)
 
                     output = self.discNet(fake_p.detach())
@@ -139,4 +135,3 @@ class Trainer:
             avg_error_D = avg_error_D/iters
             self.D_Losses = np.append(self.D_Losses, avg_error_D)
             print(f'{epoch}/{self.numEpochs}\tLoss_D: {avg_error_D:.4f}\tLoss_G: {avg_error_G:.4f}')
-        return generated_df

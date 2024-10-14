@@ -7,7 +7,7 @@ import importlib
 
 import dataset
 import generator
-from generator import (InnerGenerator, OuterGenerator)
+from generator import Generator
 
 # from Archive.pre7generator import OuterGenerator (InnerGenerator, )
 importlib.reload(generator)
@@ -93,54 +93,49 @@ def transform(norm, columns, fake_p, dataGroup, quantiles=None):
     return df
 
 
+def add_features(df):
+
+    m_neutron = 0.9395654133
+
+    df[' phi_x'] = np.arctan2(df[' yy'], df[' xx']) + np.pi
+    df[' rx'] = np.sqrt(df[' xx'] ** 2 + df[' yy'] ** 2)
+    df[' pzz'] = -np.sqrt((df[' eneg'] + m_neutron) ** 2 - m_neutron ** 2 - df[' rp'] ** 2)
+    # df[' eneg'] = np.sqrt(df[' rp']**2+df[' pzz']**2+m_neutron**2)-m_neutron
+    # df[' rp'] = np.sqrt((df[' eneg']+m_neutron)**2-m_neutron**2-df[' pzz']**2)
+    # df[' rp'] = np.sqrt(df[' eneg']**2-df[' pzz']**2)
+    # df[' phi_p'] = np.arctan2(df[' pyy'], df[' pxx'])+np.pi
+    df[' pxx'] = df[' rp'] * np.cos(df[' phi_p'] - np.pi)
+    df[' pyy'] = df[' rp'] * np.sin(df[' phi_p'] - np.pi)
+    df['theta'] = np.arccos(df[' pzz'] / np.sqrt((df[' eneg'] + m_neutron) ** 2 - m_neutron ** 2))
+
+
 def plot_correlations(x, y, xlabel, ylabel, run_id, key,
-                      bins=[400, 400], loglog=False, Xlim=None, Ylim=None, xData=None, yData=None):
-    if xData is None and yData is None:
-        H, xb, yb = np.histogram2d(x, y, bins=bins, range=[[x.min(), x.max()], [y.min(), y.max()]], density=True)
-        X, Y = np.meshgrid(xb, yb)
-        plt.figure(dpi=250)
-        plt.pcolormesh(X, Y, H.T, norm="log")
-    else:
-        if type(bins[0]) == int:
-            bins = [np.linspace(xData.min(), xData.max(), 401), np.linspace(yData.min(), yData.max(), 401)]
-        H1, xb1, yb1 = np.histogram2d(xData, yData, bins=bins,
-                                      range=[[xData.min(), xData.max()], [yData.min(), yData.max()]], density=True)
-        H2, xb2, yb2 = np.histogram2d(x, y, bins=bins, range=[[xData.min(), xData.max()], [yData.min(), yData.max()]],
-                                      density=True)
-        X, Y = np.meshgrid(xb2, yb2)
-        plt.figure(dpi=250)
-        COM = ((H2 - H1) ** 2 / (H1 + 0.0000000001)).T
-        plt.pcolormesh(X, Y, COM, norm='log')
-        chi2 = 0
-        for i in range(400):
-            for j in range(400):
-                binX = np.diff(xb1)
-                binY = np.diff(yb1)
-                chi2 += COM[i, j] * binX[i] * binY[j]
-        print(chi2)
+                      bins=[400, 400], loglog=False, Xlim=None, Ylim=None):
+    H, xb, yb = np.histogram2d(x, y, bins=bins, range=[[x.min(), x.max()], [y.min(), y.max()]], density=True)
+    X, Y = np.meshgrid(xb, yb)
+    plt.figure(dpi=250)
+    plt.pcolormesh(X, Y, H.T, norm="log")
 
     if loglog:
         plt.xscale('log')
         plt.yscale('log')
-    if Xlim is not None:
-        plt.xlim(Xlim)
-    if Ylim is not None:
-        plt.ylim(Ylim)
+    # if Xlim is not None:
+    #     plt.xlim(Xlim)
+    # if Ylim is not None:
+    #     plt.ylim(Ylim)
     plt.xlabel(xlabel)
     plt.ylabel(ylabel)
     plt.grid(True)
     plt.colorbar()
-    if xData is None:
-        if run_id is not None:
-            path = 'Output/run_' + run_id + '/plots/2dHists'
-            if not os.path.isdir(path + '/' + key):
-                if not os.path.isdir(path):
-                    os.mkdir(path)
-                os.mkdir(path + '/' + key)
-            plt.savefig(path + '/' + key + '/' + xlabel + '-' + ylabel + '.png')
+    if run_id is not None:
+        path = 'Output/run_' + run_id + '/plots/2dHists'
+        if not os.path.isdir(path + '/' + key):
+            if not os.path.isdir(path):
+                os.mkdir(path)
+            os.mkdir(path + '/' + key)
+        plt.savefig(path + '/' + key + '/' + xlabel + '-' + ylabel + '.png')
     plt.show()
-    if xData is None:
-        return H
+    return H
 
 
 def make_plots(df, dataGroup, run_id=None, key=None):
@@ -152,16 +147,16 @@ def make_plots(df, dataGroup, run_id=None, key=None):
     :return: null
     """
     # BEAM TRIM
-    x_lim = [-4500, 1500]
-    y_lim = [-3000, 6000]
+    # x_lim = [-4500, 1500]
+    # y_lim = [-3000, 6000]
     # # R CUT
     # x_lim = [-4000, 4000]
     # y_lim = [-4000, 4000]
-    if dataGroup == 'inner':
-        x_lim = [-1700, 500]
-        y_lim = [-2500, 500]
+    # if dataGroup == 'inner':
+    #     x_lim = [-1700, 500]
+    #     y_lim = [-2500, 500]
 
-    Hxy = plot_correlations(df[' xx'], df[' yy'], 'x[mm]', 'y[mm]', run_id, key, Xlim=x_lim, Ylim=y_lim)
+    Hxy = plot_correlations(df[' xx'], df[' yy'], 'x[mm]', 'y[mm]', run_id, key) # , Xlim=x_lim, Ylim=y_lim
     energy_bins = 10 ** np.linspace(-12, 0, 400)
     time_bins = 10 ** np.linspace(1, 8, 400)
     Het = plot_correlations(df[' time'], df[' eneg'], 't[ns]', 'E[GeV]', run_id, key, bins=[time_bins, energy_bins],
@@ -253,22 +248,29 @@ def plot_features(ds):
         plt.show()
 
 
-def generate_df(trainer, noiseDim, numEvents):
+def generate_df(generator_net, numEvents, cfg):
     """
-    Create dataframe using net containing numEvents
-    :return: generated dataframe
+    :param generator_net:
+    :param numEvents:
+    :param cfg:
+    :return: numpy array of generated data
     """
-    noise = torch.randn(numEvents, noiseDim, device='cpu')
-    trainer.genNet.to('cpu')
-    generated_data = trainer.genNet(noise)
+    noise = torch.randn(numEvents, cfg['noiseDim'], device='cpu')
+    generator_net.to('cpu')
+    generated_data = generator_net(noise)
     generated_data = generated_data.detach().numpy()
-    ds = trainer.dataset
-    param_list = ds.preprocess.columns
-    try:
-        generated_df = transform(ds.norm, param_list, generated_data, trainer.dataGroup, quantiles=ds.quantiles)
-    except AttributeError:
-        print("No quantiles found in ds, assuming applyQT=0")
-        generated_df = transform(ds.norm, param_list, generated_data, trainer.dataGroup)
+
+    ds = dataset.ParticleDataset(cfg)
+    features = cfg['features'].keys()
+    empty_arr = np.empty((0, len(features)))
+    ds.data = pd.DataFrame(empty_arr, columns=features)
+    data_values = ds.quantiles.inverse_transform(generated_data) if ds.quantiles is not None else generated_data
+    for i, feature in enumerate(features):
+        ds.data[feature] = data_values[:, i]
+        print("ds.data[feature]:", len(ds.data[feature]))
+    ds.apply_transformation(cfg, inverse=True)
+    generated_df = ds.data.copy()
+    add_features(generated_df)
     return generated_df
 
 
@@ -297,72 +299,80 @@ def combine(innerT, outerT, real_df=None, inner=None, outer=None):
     return generated_df
 
 
-def generate_trained_df(run_id, trainer):
+def generate_fake_real(run_id, cfg):
     """
     Given a run id load the trained model in run_id dir to its respective trainer and return the generated dataframe
-    :param run_id: run_id
-    :param trainer
+    :param run_id: run id
+    :param cfg: relevant config file
     :return:
     """
-    if trainer.dataGroup == "outer":
-        generator = nn.DataParallel(OuterGenerator(trainer.noiseDim))
-    else:
-        generator = nn.DataParallel(InnerGenerator(trainer.noiseDim))
-    path = "Output/run_" + run_id + "/" + trainer.dataGroup + "_Gen_model.pt"
+    numFeatures = len(cfg["features"].keys())
+    generator_net = nn.DataParallel(Generator(cfg["noiseDim"], numFeatures=numFeatures))
 
-    generator.load_state_dict(torch.load(path, map_location=torch.device('cpu')))
-    trainer.genNet = generator
+    path = "Output/run_" + run_id + "/" + cfg["dataGroup"] + "_Gen_model.pt"
+
+    generator_net.load_state_dict(torch.load(path, map_location=torch.device('cpu')))
     factor = 10
-    return generate_df(trainer, trainer.noiseDim, np.int64(len(trainer.dataset.data) / factor))
+    truth_data = pd.read_csv(cfg["data_path"])
+    print(cfg["data_path"])
+    n_events = truth_data.shape[0]
+    return generate_df(generator_net, np.int64(n_events / factor), cfg), truth_data
 
 
-def check_run(run_id, innerData, outerData,
-              innerTrainer=None, outerTrainer=None):
+def check_run(run_id):
     run_dir = 'Output/run_' + run_id + '/'
     fig_path = run_dir + 'plots'
     if not os.path.isdir(fig_path):
         os.mkdir(fig_path)
     fig_path += '/'
 
-    if (innerTrainer is not None) and (outerTrainer is not None):
-        innerDF = generate_trained_df(run_id, innerTrainer)
-        outerDF = generate_trained_df(run_id, outerTrainer)
-    else:
-        innerDF = pd.read_csv(run_dir + 'innerDF.csv')
-        outerDF = pd.read_csv(run_dir + 'outerDF.csv')
+    with open(run_dir + "cfg_inner.json", 'r') as inner_file:
+        cfg_inner = json.loads(inner_file.read())
+    with open(run_dir + "cfg_outer.json", 'r') as outer_file:
+        cfg_outer = json.loads(outer_file.read())
 
-    iKLPath = run_dir + "KL_in.npy"
-    oKLPath = run_dir + "KL_out.npy"
-    iDLPath = run_dir + "D_Losses_in.npy"
-    oDLPath = run_dir + "D_Losses_out.npy"
-    innerKLDiv = np.load(iKLPath)
-    outerKLDiv = np.load(oKLPath)
-    innerDLosses = np.load(iDLPath)
-    outerDLosses = np.load(oDLPath)
+    # TODO: Think of a different condition to check if a df is needed to be produced
+    # if (innerTrainer is not None) and (outerTrainer is not None):
 
-    plt.figure(dpi=200)
-    plt.title("Inner KL divergence")
-    plt.grid(True, which='both', color='0.65', linestyle='-')
-    plt.plot(innerKLDiv)
-    plt.yscale('log')
-    plt.savefig(fig_path + 'innerKLDiv.png')
-    plt.figure(dpi=200)
-    plt.title("Outer KL divergence")
-    plt.grid(True, which='both', color='0.65', linestyle='-')
-    plt.plot(outerKLDiv)
-    plt.yscale('log')
-    plt.savefig(fig_path + 'outerKLDiv.png')
-    plt.figure(dpi=200)
-    plt.title("Inner Discriminator Losses")
-    plt.grid(True, which='both', color='0.65', linestyle='-')
-    plt.plot(innerDLosses)
-    plt.savefig(fig_path + 'innerDLosses.png')
-    plt.figure(dpi=200)
-    plt.title("Outer Discriminator Losses")
-    plt.grid(True, which='both', color='0.65', linestyle='-')
-    plt.plot(outerDLosses)
-    plt.savefig(fig_path + 'outerDLosses.png')
-    plt.show()
+    innerDF, innerData = generate_fake_real(run_id, cfg_inner)
+    outerDF, outerData = generate_fake_real(run_id, cfg_outer)
+
+    # else:
+    #     innerDF = pd.read_csv(run_dir + 'innerDF.csv')
+    #     outerDF = pd.read_csv(run_dir + 'outerDF.csv')
+
+    # iKLPath = run_dir + "KL_in.npy"
+    # oKLPath = run_dir + "KL_out.npy"
+    # iDLPath = run_dir + "D_Losses_in.npy"
+    # oDLPath = run_dir + "D_Losses_out.npy"
+    # innerKLDiv = np.load(iKLPath)
+    # outerKLDiv = np.load(oKLPath)
+    # innerDLosses = np.load(iDLPath)
+    # outerDLosses = np.load(oDLPath)
+
+    # plt.figure(dpi=200)
+    # plt.title("Inner KL divergence")
+    # plt.grid(True, which='both', color='0.65', linestyle='-')
+    # plt.plot(innerKLDiv)
+    # plt.yscale('log')
+    # plt.savefig(fig_path + 'innerKLDiv.png')
+    # plt.figure(dpi=200)
+    # plt.title("Outer KL divergence")
+    # plt.grid(True, which='both', color='0.65', linestyle='-')
+    # plt.plot(outerKLDiv)
+    # plt.yscale('log')
+    # plt.savefig(fig_path + 'outerKLDiv.png')
+    # plt.figure(dpi=200)
+    # plt.title("Inner Discriminator Losses")
+    # plt.grid(True, which='both', color='0.65', linestyle='-')
+    # plt.plot(innerDLosses)
+    # plt.savefig(fig_path + 'innerDLosses.png')
+    # plt.figure(dpi=200)
+    # plt.title("Outer Discriminator Losses")
+    # plt.grid(True, which='both', color='0.65', linestyle='-')
+    # plt.plot(outerDLosses)
+    # plt.savefig(fig_path + 'outerDLosses.png')
+    # plt.show()
 
     features = [' xx', ' yy', ' pxx', ' pyy', ' pzz', ' eneg', ' time', 'theta']
     chi2_tests = {'inner': {}, 'outer': {}, 'combined': {}, 'noLeaks': {}}
@@ -394,30 +404,22 @@ def check_run(run_id, innerData, outerData,
     make_polar_features(combinedData)
 
     plot_correlations(combinedDF[' xx'], combinedDF[' yy'], 'x[mm]', 'y[mm]', run_id, key="combined"
-                      , Xlim=[-4500, 1500], Ylim=[-3000, 6000], xData=combinedData[' xx'], yData=combinedData[' yy'])
+                      , Xlim=[-4500, 1500], Ylim=[-3000, 6000])
     energy_bins = 10 ** np.linspace(-12, 0, 401)
     time_bins = 10 ** np.linspace(1, 8, 401)
     plot_correlations(combinedDF[' time'], combinedDF[' eneg'], 't[ns]', 'E[GeV]', run_id, key="combined",
-                      bins=[time_bins, energy_bins], loglog=True, xData=combinedData[' time'],
-                      yData=combinedData[' eneg'])
-    plot_correlations(combinedDF[' rx'], combinedDF['theta'], 'r [mm]', 'theta_p [rad]', run_id, key="combined",
-                      xData=combinedData[' rx'], yData=combinedData['theta'])
-    plot_correlations(combinedDF[' phi_p'], combinedDF[' phi_x'], 'phi_p [rad]', 'phi_x [rad]', run_id, key="combined",
-                      xData=combinedData[' phi_p'], yData=combinedData[' phi_x'])
+                      bins=[time_bins, energy_bins], loglog=True)
+    plot_correlations(combinedDF[' rx'], combinedDF['theta'], 'r [mm]', 'theta_p [rad]', run_id, key="combined")
+    plot_correlations(combinedDF[' phi_p'], combinedDF[' phi_x'], 'phi_p [rad]', 'phi_x [rad]', run_id, key="combined")
 
-    # for key in chi2_tests.keys():
-    #     if not os.path.isdir(fig_path+'1dHists/'+key):
-    #         if not os.path.isdir(fig_path+'1dHists'):
-    #             os.mkdir(fig_path+'1dHists')
-    #         os.mkdir(fig_path+'1dHists/'+key)
-    #     for feat in features:
-    #         exec("chi2_"+key+"[feat] = kstest("+key+"DF[feat],"+key+"Data[feat]).pvalue")
-    #         exec("print(chi2_"+key+"[feat])")
-    #         exec("plot_1d("+key+"Data,"+key+"DF,feat,chi2_"+key+", fig_path, key)")
-    #     exec("chi2_tests['"+key+"']=chi2_"+key)
-    # chi_obj = json.dumps(chi2_tests, indent=8)
-    # with open(run_dir + "chi2_tests.json", "w") as outfile:
-    #     outfile.write(chi_obj)
+    for key in chi2_tests.keys():
+        if not os.path.isdir(fig_path+'1dHists/'+key):
+            if not os.path.isdir(fig_path+'1dHists'):
+                os.mkdir(fig_path+'1dHists')
+            os.mkdir(fig_path+'1dHists/'+key)
+        for feat in features:
+            exec("plot_1d("+key+"Data,"+key+"DF,feat,chi2_"+key+", fig_path, key)")
+        exec("chi2_tests['"+key+"']=chi2_"+key)
 
     return chi2_tests, dfDict
 
@@ -554,3 +556,11 @@ def get_perm_p_value(x, y, n_permutations, log_norm=True, progress=True):
         null_hyp_ED_dist[i] = 2 * np.mean(D_XYs) - np.mean(D_XXs) - np.mean(D_YYs)
     p_value = (n_permutations - np.sum(null_hyp_ED_dist >= ED_observed)) / (n_permutations + 1)
     return p_value, null_hyp_ED_dist, ED_observed
+
+
+def save_cfg(cfg):
+    inner_obj = json.dumps(cfg, indent=12)
+
+    # Writing to sample.json
+    with open(cfg['outputDir'] + "cfg_" + cfg['dataGroup'] + ".json", "w") as outfile:
+        outfile.write(inner_obj)

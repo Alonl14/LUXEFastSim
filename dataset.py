@@ -4,6 +4,7 @@ from torch.utils.data import Dataset
 from sklearn.preprocessing import QuantileTransformer as qt
 import copy
 
+
 class ParticleDataset(Dataset):
     def __init__(self, cfg):
         super().__init__()
@@ -28,42 +29,47 @@ class ParticleDataset(Dataset):
         self.data = self.data[cfg["features"].keys()]
 
         self.preprocess = self.data.copy()
-        # self.preprocess = copy.deepcopy(self.data)
 
         self.norm = pd.read_csv(cfg['norm_path'], index_col=0)
         self.apply_transformation(cfg)
 
+        # mps doesn't work with double-percision floats, cuda does
+        data_type = np.float32 if cfg['device'] == 'mps' else np.float64
         # store values before quantile transformation, the used quantiles, and the data itself
         if cfg['applyQT']:
             self.preqt = self.data.values
             self.quantiles = QT.fit(self.data)
             self.data = QT.fit_transform(self.data)
-            self.data = self.data.astype(np.float64)
+            self.data = self.data.astype(data_type)
         else:
-            self.data = self.data.values.astype(np.float64)
-
-
+            self.data = self.data.values.astype(data_type)
 
     @property
     def registry(self):
         return self._registry
 
     def apply_transformation(self, cfg, inverse=False):
+        """
+        Applies transformations to data before feeding it to QT / training
+        :param cfg: config for that specific run
+        :param inverse: if True applies the inverse transformations listed in cfg
+        :return:
+        """
 
         eps = cfg["epsilon"]
 
-        # normalize all features to be in [eps, 1-eps]
-        for col in self.data.columns:
-            x_max = self.norm['max'][col]
-            x_min = self.norm['min'][col]
-            self.data[col] = normalize(self.data[col], x_min, x_max, eps, inverse)
-
-        # make all transformations
+        # make all transformations, if inverse flip the function list since (f(g(x)))^-1 = g^-1(f^-1(x))
         for feature, function_list in cfg["features"].items():
-            for f in function_list:
+            x_max = self.norm['max'][feature]
+            x_min = self.norm['min'][feature]
+            if not inverse:
+                self.data[feature] = normalize(self.data[feature], x_min, x_max, eps, inverse)
+            functions = function_list[::-1] if inverse else function_list[:]
+            for f in functions:
                 print(f"applying {f} to {feature}")
                 self.data[feature] = self.registry[f](self.data[feature], eps, inverse)
-                print(f"my_log(eps): {my_log(eps,eps,False)}, my_log(1-eps): {my_log(1-eps,eps,False)}")
+            if inverse:
+                self.data[feature] = normalize(self.data[feature], x_min, x_max, eps, inverse)
 
     def __getitem__(self, item):
         return self.data[item, :]
@@ -103,11 +109,10 @@ def my_log(data, epsilon, inverse):
     :return: log(a*data+b) with a,b s.t. result is still in [eps, 1-eps]
     """
 
-    a = (np.log((1-epsilon)/epsilon))**(-1)
+    a = (np.log((1 - epsilon) / epsilon)) ** (-1)
     b = epsilon - a * np.log(epsilon)
-    print(f"a: {a},b: {b}")
-    return a*np.log(data) + b if not inverse else np.exp((data - b) / a)
+    return a * np.log(data) + b if not inverse else np.exp((data - b) / a)
 
 
 def flip(data, epsilon, inverse):
-    return 1-data
+    return 1 - data

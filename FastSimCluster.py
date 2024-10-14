@@ -26,15 +26,6 @@ numEpochs = int(sys.argv[1])
 cfg_inner["numEpochs"] = numEpochs
 cfg_outer["numEpochs"] = numEpochs
 
-inner_obj = json.dumps(cfg_inner, indent=12)
-outer_obj = json.dumps(cfg_outer, indent=12)
-
-# Writing to sample.json
-with open(sys.argv[2] + "cfg_inner_cluster.json", "w") as outfile:
-    outfile.write(inner_obj)
-with open(sys.argv[2] + "cfg_outer_cluster.json", "w") as outfile:
-    outfile.write(outer_obj)
-
 #LOCAL TESTING
 # cfg_inner["data_path"] = 'TrainData/neutron_inner_1M.csv'
 # cfg_outer["data_path"] = 'TrainData/neutron_outer_5M.csv'
@@ -70,17 +61,12 @@ np.save(outer_trainer.outputDir+'KL_out.npy', KL_out)
 np.save(inner_trainer.outputDir+'D_losses_in.npy', inner_trainer.D_Losses)
 np.save(outer_trainer.outputDir+'D_losses_out.npy', outer_trainer.D_Losses)
 
-generation_time_a = time.localtime()
-n_events = 1000000
-inner_df = utils.generate_df(inner_trainer, cfg_inner["noiseDim"], n_events)
-outer_df = utils.generate_df(outer_trainer, cfg_outer["noiseDim"], 10*n_events)
-generation_time_b = time.localtime()
-print(f'Created {11*n_events} in {utils.get_time(generation_time_a,generation_time_b)}')
-
-inner_df.to_csv(inner_trainer.outputDir+'inner_df.csv')
-outer_df.to_csv(outer_trainer.outputDir+'outer_df.csv')
-
-# with open(inner_trainer.outputDir+"outer_trainer.pkl", "wb") as f:
-#     pickle.dump(inner_trainer, f)
-# with open(outer_trainer.outputDir+"outer_trainer.pkl", "wb") as g:
-#     pickle.dump(outer_trainer, g)
+# generation_time_a = time.localtime()
+# n_events = 1000000
+# inner_df = utils.generate_df(inner_trainer, cfg_inner["noiseDim"], n_events)
+# outer_df = utils.generate_df(outer_trainer, cfg_outer["noiseDim"], 10*n_events)
+# generation_time_b = time.localtime()
+# print(f'Created {11*n_events} in {utils.get_time(generation_time_a,generation_time_b)}')
+# 
+# inner_df.to_csv(inner_trainer.outputDir+'inner_df.csv')
+# outer_df.to_csv(outer_trainer.outputDir+'outer_df.csv')
