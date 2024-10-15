@@ -94,7 +94,6 @@ def transform(norm, columns, fake_p, dataGroup, quantiles=None):
 
 
 def add_features(df):
-
     m_neutron = 0.9395654133
 
     df[' phi_x'] = np.arctan2(df[' yy'], df[' xx']) + np.pi
@@ -119,10 +118,10 @@ def plot_correlations(x, y, xlabel, ylabel, run_id, key,
     if loglog:
         plt.xscale('log')
         plt.yscale('log')
-    # if Xlim is not None:
-    #     plt.xlim(Xlim)
-    # if Ylim is not None:
-    #     plt.ylim(Ylim)
+    if Xlim is not None:
+        plt.xlim(Xlim)
+    if Ylim is not None:
+        plt.ylim(Ylim)
     plt.xlabel(xlabel)
     plt.ylabel(ylabel)
     plt.grid(True)
@@ -147,16 +146,16 @@ def make_plots(df, dataGroup, run_id=None, key=None):
     :return: null
     """
     # BEAM TRIM
-    # x_lim = [-4500, 1500]
-    # y_lim = [-3000, 6000]
+    x_lim = [-4500, 1500]
+    y_lim = [-3000, 6000]
     # # R CUT
     # x_lim = [-4000, 4000]
     # y_lim = [-4000, 4000]
-    # if dataGroup == 'inner':
-    #     x_lim = [-1700, 500]
-    #     y_lim = [-2500, 500]
+    if dataGroup == 'inner':
+        x_lim = [-1700, 500]
+        y_lim = [-2500, 500]
 
-    Hxy = plot_correlations(df[' xx'], df[' yy'], 'x[mm]', 'y[mm]', run_id, key) # , Xlim=x_lim, Ylim=y_lim
+    Hxy = plot_correlations(df[' xx'], df[' yy'], 'x[mm]', 'y[mm]', run_id, key)  # , Xlim=x_lim, Ylim=y_lim
     energy_bins = 10 ** np.linspace(-12, 0, 400)
     time_bins = 10 ** np.linspace(1, 8, 400)
     Het = plot_correlations(df[' time'], df[' eneg'], 't[ns]', 'E[GeV]', run_id, key, bins=[time_bins, energy_bins],
@@ -209,7 +208,7 @@ def make_polar_features(df):
     df[' rp'] = np.sqrt(df[' pxx'] ** 2 + df[' pyy'] ** 2)
     df[' phi_x'] = np.arctan2(df[' yy'], df[' xx']) + np.pi
     df[' phi_p'] = np.arctan2(df[' pyy'], df[' pxx']) + np.pi
-    df['theta'] = df['theta'] = np.arccos(df[' pzz'] / np.sqrt(df[' pzz'] ** 2 + df[' rp'] ** 2))
+    df['theta'] = np.arccos(df[' pzz'] / np.sqrt(df[' pzz'] ** 2 + df[' rp'] ** 2))
 
 
 def get_q(ds):
@@ -340,6 +339,24 @@ def check_run(run_id):
     innerDF, innerData = generate_fake_real(run_id, cfg_inner)
     outerDF, outerData = generate_fake_real(run_id, cfg_outer)
 
+    print("getting batch ED...")
+    inner_null_values, inner_H1_values = get_batch_ed_histograms(innerDF.values, innerData.values)
+    outer_null_values, outer_H1_values = get_batch_ed_histograms(outerDF.values, outerData.values)
+    plt.figure(dpi=200)
+    plt.title("inner ED histograms")
+    plt.grid(True, which='both', color='0.65', linestyle='-')
+    plt.hist(inner_null_values, density=True, alpha=0.6)
+    plt.hist(inner_H1_values, density=True, alpha=0.6)
+    plt.yscale('log')
+    plt.savefig(fig_path + 'inner_histograms.png')
+    plt.figure(dpi=200)
+    plt.title("outer ED histograms")
+    plt.grid(True, which='both', color='0.65', linestyle='-')
+    plt.hist(outer_null_values, density=True, alpha=0.6)
+    plt.hist(outer_H1_values, density=True, alpha=0.6)
+    plt.yscale('log')
+    plt.savefig(fig_path + 'outer_histograms.png')
+    print("finished with batch ED.")
     # else:
     #     innerDF = pd.read_csv(run_dir + 'innerDF.csv')
     #     outerDF = pd.read_csv(run_dir + 'outerDF.csv')
@@ -404,7 +421,7 @@ def check_run(run_id):
     Hxy, Het, Hrth, Hpp = make_plots(noLeaksDF, "outer", run_id, 'noLeaks')
     GHxy, GHet, GHrth, GHpp = make_plots(combinedDF, "outer", run_id, 'combined')
 
-    make_polar_features(combinedData)
+    # make_polar_features(combinedData)
 
     plot_correlations(combinedDF[' xx'], combinedDF[' yy'], 'x[mm]', 'y[mm]', run_id, key="combined"
                       , Xlim=[-4500, 1500], Ylim=[-3000, 6000])
@@ -416,13 +433,13 @@ def check_run(run_id):
     plot_correlations(combinedDF[' phi_p'], combinedDF[' phi_x'], 'phi_p [rad]', 'phi_x [rad]', run_id, key="combined")
 
     for key in chi2_tests.keys():
-        if not os.path.isdir(fig_path+'1dHists/'+key):
-            if not os.path.isdir(fig_path+'1dHists'):
-                os.mkdir(fig_path+'1dHists')
-            os.mkdir(fig_path+'1dHists/'+key)
+        if not os.path.isdir(fig_path + '1dHists/' + key):
+            if not os.path.isdir(fig_path + '1dHists'):
+                os.mkdir(fig_path + '1dHists')
+            os.mkdir(fig_path + '1dHists/' + key)
         for feat in features:
-            exec("plot_1d("+key+"Data,"+key+"DF,feat,chi2_"+key+", fig_path, key)")
-        exec("chi2_tests['"+key+"']=chi2_"+key)
+            exec("plot_1d(" + key + "Data," + key + "DF,feat,chi2_" + key + ", fig_path, key)")
+        exec("chi2_tests['" + key + "']=chi2_" + key)
 
     return chi2_tests, dfDict
 
@@ -561,6 +578,46 @@ def get_perm_p_value(x, y, n_permutations, log_norm=True, progress=True):
     return p_value, null_hyp_ED_dist, ED_observed
 
 
+def get_batch_ed_histograms(x, y, batch_size=100):
+    """
+    get histograms of energy distance for batches of data with itself (null) and data with generated data (h1)
+    :param x: data in the shape [num_features, num_samples]
+    :param y: data in the shape [num_features, num_samples]
+    :param log_norm:
+    :param batch_size:
+    :return: null values, H1 values
+    """
+    x_batches = get_batches(x, batch_size)
+    y_batches = get_batches(y, batch_size)
+    y_prime_batches = y_batches.copy()
+    np.random.shuffle(y_prime_batches)
+    n_batches = len(x_batches)
+    ED_null = np.zeros(n_batches)
+    ED_H1 = np.zeros(n_batches)
+    for i in range(n_batches):
+        x_batch, y_batch, y_prime_batch = (x_batches[i], y_batches[i], y_prime_batches[i])
+        ED_null[i] = get_ed(x_batch, y_batch)
+        ED_H1[i] = get_ed(y_prime_batch, y_batch)
+    return ED_null, ED_H1
+
+
+def get_batches(array, batch_size):
+    batch_list = []
+    i = 0
+    while i + batch_size < np.shape(array)[1]:
+        batch_list.append(array[i:i+batch_size])
+        i += batch_size
+    return batch_list
+
+
+def get_ed(x, y):
+    D_XX = euclidean_distance_matrix(x, x)
+    D_XY = euclidean_distance_matrix(x, y)
+    D_YY = euclidean_distance_matrix(y, y)
+    n_x = np.shape(x)[1]
+    n_y = np.shape(y)[1]
+    return 2 * np.sum(D_XY) / (n_x * n_y) - np.sum(D_XX) / n_x ** 2 - np.sum(D_YY) / n_y ** 2
+
 def save_cfg(cfg):
     inner_obj = json.dumps(cfg, indent=12)
 
@@ -577,4 +634,4 @@ def fix_path(cfg, feature):
     :return:
     """
     file_name = cfg[feature].split("/")[-1]
-    cfg[feature] = "TrainData/"+file_name
+    cfg[feature] = "TrainData/" + file_name
