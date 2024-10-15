@@ -314,7 +314,6 @@ def generate_fake_real(run_id, cfg):
     generator_net.load_state_dict(torch.load(path, map_location=torch.device('cpu')))
     factor = 10
     truth_data = pd.read_csv(cfg["data_path"])
-    print(cfg["data_path"])
     n_events = truth_data.shape[0]
     return generate_df(generator_net, np.int64(n_events / factor), cfg), truth_data
 
@@ -331,6 +330,10 @@ def check_run(run_id):
     with open(run_dir + "cfg_outer.json", 'r') as outer_file:
         cfg_outer = json.loads(outer_file.read())
 
+    fix_path(cfg_inner, "data_path")
+    fix_path(cfg_inner, "norm_path")
+    fix_path(cfg_outer, "data_path")
+    fix_path(cfg_outer, "norm_path")
     # TODO: Think of a different condition to check if a df is needed to be produced
     # if (innerTrainer is not None) and (outerTrainer is not None):
 
@@ -564,3 +567,14 @@ def save_cfg(cfg):
     # Writing to sample.json
     with open(cfg['outputDir'] + "cfg_" + cfg['dataGroup'] + ".json", "w") as outfile:
         outfile.write(inner_obj)
+
+
+def fix_path(cfg, feature):
+    """
+    TEMPORARY, just to fix paths when going back from cluster to local
+    :param cfg:
+    :param feature:
+    :return:
+    """
+    file_name = cfg[feature].split("/")[-1]
+    cfg[feature] = "TrainData/"+file_name

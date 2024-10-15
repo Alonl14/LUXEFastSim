@@ -1,0 +1,27 @@
+{
+    "applyQT": 0,
+    "nQuantiles": 100000,
+    "subsample": 1000000,
+    "data_path": "/storage/agrp/alonle/GAN_InputSample/inner_Trim.csv",
+    "norm_path": "/storage/agrp/alonle/GAN_InputSample/inner_Trim_norm.csv",
+    "outputDir": "",
+    "dataGroup": "inner",
+    "pdg": 2112,
+    "batchSize": 1024,
+    "noiseDim": 100,
+    "numEpochs": 1,
+    "device": "cuda",
+    "nCrit": 5,
+    "Lambda": 0.01,
+    "learningRate": 0.0001,
+    "features": {
+                  " xx"   : [],
+                  " yy"   : [],
+                  " rp"   : ["log"],
+                  " phi_p": [],
+                  " eneg" : ["log"],
+                  " pzz" :  ["flip", "log"],
+                  " time" : ["log"]
+                },
+    "epsilon": 1e-16
+}
