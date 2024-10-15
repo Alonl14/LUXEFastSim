@@ -67,6 +67,6 @@ np.save(outer_trainer.outputDir+'D_losses_out.npy', outer_trainer.D_Losses)
 # outer_df = utils.generate_df(outer_trainer, cfg_outer["noiseDim"], 10*n_events)
 # generation_time_b = time.localtime()
 # print(f'Created {11*n_events} in {utils.get_time(generation_time_a,generation_time_b)}')
-# 
+#
 # inner_df.to_csv(inner_trainer.outputDir+'inner_df.csv')
 # outer_df.to_csv(outer_trainer.outputDir+'outer_df.csv')

@@ -34,7 +34,7 @@ class ParticleDataset(Dataset):
         self.apply_transformation(cfg)
 
         # mps doesn't work with double-percision floats, cuda does
-        data_type = np.float32 if cfg['device'] == 'mps' else np.float64
+        data_type = np.float32
         # store values before quantile transformation, the used quantiles, and the data itself
         if cfg['applyQT']:
             self.preqt = self.data.values
