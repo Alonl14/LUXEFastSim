@@ -66,7 +66,6 @@ class ParticleDataset(Dataset):
                 self.data[feature] = normalize(self.data[feature], x_min, x_max, eps, inverse)
             functions = function_list[::-1] if inverse else function_list[:]
             for f in functions:
-                print(f"applying {f} to {feature}")
                 self.data[feature] = self.registry[f](self.data[feature], eps, inverse)
             if inverse:
                 self.data[feature] = normalize(self.data[feature], x_min, x_max, eps, inverse)

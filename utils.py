@@ -4,7 +4,7 @@ import pandas as pd
 import numpy as np
 from matplotlib import pyplot as plt
 import importlib
-
+import random
 import dataset
 import generator
 from generator import Generator
@@ -98,14 +98,19 @@ def add_features(df):
 
     df[' phi_x'] = np.arctan2(df[' yy'], df[' xx']) + np.pi
     df[' rx'] = np.sqrt(df[' xx'] ** 2 + df[' yy'] ** 2)
-    df[' pzz'] = -np.sqrt((df[' eneg'] + m_neutron) ** 2 - m_neutron ** 2 - df[' rp'] ** 2)
+    # TODO: The np.abs is TEMPORARY since network is under-trained,
+    #       needs to be removed for future versions
+    df[' pzz'] = -np.sqrt(np.abs((df[' eneg'] + m_neutron) ** 2 - m_neutron ** 2 - df[' rp'] ** 2))
     # df[' eneg'] = np.sqrt(df[' rp']**2+df[' pzz']**2+m_neutron**2)-m_neutron
     # df[' rp'] = np.sqrt((df[' eneg']+m_neutron)**2-m_neutron**2-df[' pzz']**2)
     # df[' rp'] = np.sqrt(df[' eneg']**2-df[' pzz']**2)
     # df[' phi_p'] = np.arctan2(df[' pyy'], df[' pxx'])+np.pi
     df[' pxx'] = df[' rp'] * np.cos(df[' phi_p'] - np.pi)
     df[' pyy'] = df[' rp'] * np.sin(df[' phi_p'] - np.pi)
-    df['theta'] = np.arccos(df[' pzz'] / np.sqrt((df[' eneg'] + m_neutron) ** 2 - m_neutron ** 2))
+    # TODO: The np.maximum is TEMPORARY since network is under-trained,
+    #       needs to be removed for future versions
+    df['theta'] = np.arccos(np.maximum(-1*np.ones_like(df[' pzz'].values),
+                                       df[' pzz'] / np.sqrt((df[' eneg'] + m_neutron) ** 2 - m_neutron ** 2)))
 
 
 def plot_correlations(x, y, xlabel, ylabel, run_id, key,
@@ -266,7 +271,6 @@ def generate_df(generator_net, numEvents, cfg):
     data_values = ds.quantiles.inverse_transform(generated_data) if ds.quantiles is not None else generated_data
     for i, feature in enumerate(features):
         ds.data[feature] = data_values[:, i]
-        print("ds.data[feature]:", len(ds.data[feature]))
     ds.apply_transformation(cfg, inverse=True)
     generated_df = ds.data.copy()
     add_features(generated_df)
@@ -333,28 +337,33 @@ def check_run(run_id):
     fix_path(cfg_inner, "norm_path")
     fix_path(cfg_outer, "data_path")
     fix_path(cfg_outer, "norm_path")
-    # TODO: Think of a different condition to check if a df is needed to be produced
-    # if (innerTrainer is not None) and (outerTrainer is not None):
 
+    # TODO: Think of a different condition to check if a df is needed to be produced
     innerDF, innerData = generate_fake_real(run_id, cfg_inner)
     outerDF, outerData = generate_fake_real(run_id, cfg_outer)
-
+    innerData = innerData[innerDF.columns]
+    outerData = outerData[outerDF.columns]
     print("getting batch ED...")
-    inner_null_values, inner_H1_values = get_batch_ed_histograms(innerDF.values, innerData.values)
-    outer_null_values, outer_H1_values = get_batch_ed_histograms(outerDF.values, outerData.values)
+    print(innerDF)
+    # TODO: for some reason null_values are nans
+    inner_null_values, inner_H1_values = get_batch_ed_histograms(innerDF.values.T[:, :10000],
+                                                                 innerData.values.T[:, :10000])
+    outer_null_values, outer_H1_values = get_batch_ed_histograms(outerDF.values.T[:, :10000],
+                                                                 outerData.values.T[:, :10000])
+    print(np.shape(innerDF.values), np.shape(outerDF.values))
+    print("inner", inner_null_values, inner_H1_values)
+    print("outer", outer_null_values, outer_H1_values)
     plt.figure(dpi=200)
     plt.title("inner ED histograms")
     plt.grid(True, which='both', color='0.65', linestyle='-')
     plt.hist(inner_null_values, density=True, alpha=0.6)
     plt.hist(inner_H1_values, density=True, alpha=0.6)
-    plt.yscale('log')
     plt.savefig(fig_path + 'inner_histograms.png')
     plt.figure(dpi=200)
     plt.title("outer ED histograms")
     plt.grid(True, which='both', color='0.65', linestyle='-')
     plt.hist(outer_null_values, density=True, alpha=0.6)
     plt.hist(outer_H1_values, density=True, alpha=0.6)
-    plt.yscale('log')
     plt.savefig(fig_path + 'outer_histograms.png')
     print("finished with batch ED.")
     # else:
@@ -416,30 +425,30 @@ def check_run(run_id):
     dfDict['combined'] = combinedDF
     dfDict['noLeaks'] = noLeaksDF
 
-    Hxy, Het, Hrth, Hpp = make_plots(innerDF, "inner", run_id, 'inner')
-    Hxy, Het, Hrth, Hpp = make_plots(outerDF, "outer", run_id, 'outer')
-    Hxy, Het, Hrth, Hpp = make_plots(noLeaksDF, "outer", run_id, 'noLeaks')
-    GHxy, GHet, GHrth, GHpp = make_plots(combinedDF, "outer", run_id, 'combined')
+    # Hxy, Het, Hrth, Hpp = make_plots(innerDF, "inner", run_id, 'inner')
+    # Hxy, Het, Hrth, Hpp = make_plots(outerDF, "outer", run_id, 'outer')
+    # Hxy, Het, Hrth, Hpp = make_plots(noLeaksDF, "outer", run_id, 'noLeaks')
+    # GHxy, GHet, GHrth, GHpp = make_plots(combinedDF, "outer", run_id, 'combined')
 
     # make_polar_features(combinedData)
-
-    plot_correlations(combinedDF[' xx'], combinedDF[' yy'], 'x[mm]', 'y[mm]', run_id, key="combined"
-                      , Xlim=[-4500, 1500], Ylim=[-3000, 6000])
-    energy_bins = 10 ** np.linspace(-12, 0, 401)
-    time_bins = 10 ** np.linspace(1, 8, 401)
-    plot_correlations(combinedDF[' time'], combinedDF[' eneg'], 't[ns]', 'E[GeV]', run_id, key="combined",
-                      bins=[time_bins, energy_bins], loglog=True)
-    plot_correlations(combinedDF[' rx'], combinedDF['theta'], 'r [mm]', 'theta_p [rad]', run_id, key="combined")
-    plot_correlations(combinedDF[' phi_p'], combinedDF[' phi_x'], 'phi_p [rad]', 'phi_x [rad]', run_id, key="combined")
-
-    for key in chi2_tests.keys():
-        if not os.path.isdir(fig_path + '1dHists/' + key):
-            if not os.path.isdir(fig_path + '1dHists'):
-                os.mkdir(fig_path + '1dHists')
-            os.mkdir(fig_path + '1dHists/' + key)
-        for feat in features:
-            exec("plot_1d(" + key + "Data," + key + "DF,feat,chi2_" + key + ", fig_path, key)")
-        exec("chi2_tests['" + key + "']=chi2_" + key)
+    #
+    # plot_correlations(combinedDF[' xx'], combinedDF[' yy'], 'x[mm]', 'y[mm]', run_id, key="combined"
+    #                   , Xlim=[-4500, 1500], Ylim=[-3000, 6000])
+    # energy_bins = 10 ** np.linspace(-12, 0, 401)
+    # time_bins = 10 ** np.linspace(1, 8, 401)
+    # plot_correlations(combinedDF[' time'], combinedDF[' eneg'], 't[ns]', 'E[GeV]', run_id, key="combined",
+    #                   bins=[time_bins, energy_bins], loglog=True)
+    # plot_correlations(combinedDF[' rx'], combinedDF['theta'], 'r [mm]', 'theta_p [rad]', run_id, key="combined")
+    # plot_correlations(combinedDF[' phi_p'], combinedDF[' phi_x'], 'phi_p [rad]', 'phi_x [rad]', run_id, key="combined")
+    #
+    # for key in chi2_tests.keys():
+    #     if not os.path.isdir(fig_path + '1dHists/' + key):
+    #         if not os.path.isdir(fig_path + '1dHists'):
+    #             os.mkdir(fig_path + '1dHists')
+    #         os.mkdir(fig_path + '1dHists/' + key)
+    #     for feat in features:
+    #         exec("plot_1d(" + key + "Data," + key + "DF,feat,chi2_" + key + ", fig_path, key)")
+    #     exec("chi2_tests['" + key + "']=chi2_" + key)
 
     return chi2_tests, dfDict
 
@@ -590,11 +599,13 @@ def get_batch_ed_histograms(x, y, batch_size=100):
     x_batches = get_batches(x, batch_size)
     y_batches = get_batches(y, batch_size)
     y_prime_batches = y_batches.copy()
-    np.random.shuffle(y_prime_batches)
+    random.shuffle(y_prime_batches)
     n_batches = len(x_batches)
     ED_null = np.zeros(n_batches)
     ED_H1 = np.zeros(n_batches)
     for i in range(n_batches):
+        if i == 1:
+            print("x_batch:", x_batch)
         x_batch, y_batch, y_prime_batch = (x_batches[i], y_batches[i], y_prime_batches[i])
         ED_null[i] = get_ed(x_batch, y_batch)
         ED_H1[i] = get_ed(y_prime_batch, y_batch)
@@ -605,7 +616,7 @@ def get_batches(array, batch_size):
     batch_list = []
     i = 0
     while i + batch_size < np.shape(array)[1]:
-        batch_list.append(array[i:i+batch_size])
+        batch_list.append(array[:, i:i+batch_size])
         i += batch_size
     return batch_list
 
@@ -617,6 +628,7 @@ def get_ed(x, y):
     n_x = np.shape(x)[1]
     n_y = np.shape(y)[1]
     return 2 * np.sum(D_XY) / (n_x * n_y) - np.sum(D_XX) / n_x ** 2 - np.sum(D_YY) / n_y ** 2
+
 
 def save_cfg(cfg):
     inner_obj = json.dumps(cfg, indent=12)
