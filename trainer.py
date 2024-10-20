@@ -87,7 +87,6 @@ class Trainer:
                     noise = torch.randn(batch_size, self.noiseDim, device=self.device)
 
                     fake_p = self.genNet(noise)
-
                     output = self.discNet(fake_p.detach())
                     err_D_fake = torch.mean(output)
                     fake_p.to(self.device)
