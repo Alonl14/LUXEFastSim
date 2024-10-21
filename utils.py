@@ -299,7 +299,7 @@ def generate_fake_real_dfs(run_id, cfg):
 
 
 def check_run(run_id):
-
+    plt.ioff()
     run_dir = 'Output/run_' + run_id + '/'
     fig_path = run_dir + 'plots'
     if not os.path.isdir(fig_path):
@@ -318,17 +318,19 @@ def check_run(run_id):
     fix_path(cfg_outer, "norm_path")
 
     # TODO: Think of a different condition to check if a df is needed to be produced
-    innerFakeDF, innerRealDF = generate_fake_real_dfs(run_id, cfg_inner)
-    outerFakeDF, outerRealDF = generate_fake_real_dfs(run_id, cfg_outer)
-
+    generation_time_a = time.localtime()
+    innerDF, innerData = generate_fake_real_dfs(run_id, cfg_inner)
+    outerDF, outerData = generate_fake_real_dfs(run_id, cfg_outer)
+    generation_time_b = time.localtime()
+    print(f'Created DFs in {get_time(generation_time_a, generation_time_b)}')
     print("getting batch ED...")
     # TODO: for some reason null_values are nans
 
-    inner_null_values, inner_H1_values = get_batch_ed_histograms(innerFakeDF.loc[:10000, cfg_inner['features'].keys()],
-                                                                 innerRealDF.loc[:10000, cfg_inner['features'].keys()],
+    inner_null_values, inner_H1_values = get_batch_ed_histograms(innerDF.loc[:, cfg_inner['features'].keys()],
+                                                                 innerData.loc[:len(innerDF), cfg_inner['features'].keys()],
                                                                  batch_size=100)
-    outer_null_values, outer_H1_values = get_batch_ed_histograms(outerFakeDF.loc[:10000, cfg_outer['features'].keys()],
-                                                                 outerRealDF.loc[:10000, cfg_outer['features'].keys()],
+    outer_null_values, outer_H1_values = get_batch_ed_histograms(outerDF.loc[:, cfg_outer['features'].keys()],
+                                                                 outerData.loc[:len(outerDF), cfg_outer['features'].keys()],
                                                                  batch_size=100)
     make_ed_fig(inner_null_values, inner_H1_values, 'inner', False, fig_path)
     make_ed_fig(outer_null_values, outer_H1_values, 'outer', True, fig_path)
@@ -337,85 +339,83 @@ def check_run(run_id):
     #     innerDF = pd.read_csv(run_dir + 'innerDF.csv')
     #     outerDF = pd.read_csv(run_dir + 'outerDF.csv')
 
-    # iKLPath = run_dir + "KL_in.npy"
-    # oKLPath = run_dir + "KL_out.npy"
-    # iDLPath = run_dir + "D_Losses_in.npy"
-    # oDLPath = run_dir + "D_Losses_out.npy"
-    # innerKLDiv = np.load(iKLPath)
-    # outerKLDiv = np.load(oKLPath)
-    # innerDLosses = np.load(iDLPath)
-    # outerDLosses = np.load(oDLPath)
+    iKLPath = run_dir + "KL_in.npy"
+    oKLPath = run_dir + "KL_out.npy"
+    iDLPath = run_dir + "D_Losses_in.npy"
+    oDLPath = run_dir + "D_Losses_out.npy"
+    innerKLDiv = np.load(iKLPath)
+    outerKLDiv = np.load(oKLPath)
+    innerDLosses = np.load(iDLPath)
+    outerDLosses = np.load(oDLPath)
 
-    # plt.figure(dpi=200)
-    # plt.title("Inner KL divergence")
-    # plt.grid(True, which='both', color='0.65', linestyle='-')
-    # plt.plot(innerKLDiv)
-    # plt.yscale('log')
-    # plt.savefig(fig_path + 'innerKLDiv.png')
-    # plt.figure(dpi=200)
-    # plt.title("Outer KL divergence")
-    # plt.grid(True, which='both', color='0.65', linestyle='-')
-    # plt.plot(outerKLDiv)
-    # plt.yscale('log')
-    # plt.savefig(fig_path + 'outerKLDiv.png')
-    # plt.figure(dpi=200)
-    # plt.title("Inner Discriminator Losses")
-    # plt.grid(True, which='both', color='0.65', linestyle='-')
-    # plt.plot(innerDLosses)
-    # plt.savefig(fig_path + 'innerDLosses.png')
-    # plt.figure(dpi=200)
-    # plt.title("Outer Discriminator Losses")
-    # plt.grid(True, which='both', color='0.65', linestyle='-')
-    # plt.plot(outerDLosses)
-    # plt.savefig(fig_path + 'outerDLosses.png')
-    # plt.show()
+    plt.figure(dpi=200)
+    plt.title("Inner KL divergence")
+    plt.grid(True, which='both', color='0.65', linestyle='-')
+    plt.plot(innerKLDiv)
+    plt.yscale('log')
+    plt.savefig(fig_path + 'innerKLDiv.png')
+    plt.figure(dpi=200)
+    plt.title("Outer KL divergence")
+    plt.grid(True, which='both', color='0.65', linestyle='-')
+    plt.plot(outerKLDiv)
+    plt.yscale('log')
+    plt.savefig(fig_path + 'outerKLDiv.png')
+    plt.figure(dpi=200)
+    plt.title("Inner Discriminator Losses")
+    plt.grid(True, which='both', color='0.65', linestyle='-')
+    plt.plot(innerDLosses)
+    plt.savefig(fig_path + 'innerDLosses.png')
+    plt.figure(dpi=200)
+    plt.title("Outer Discriminator Losses")
+    plt.grid(True, which='both', color='0.65', linestyle='-')
+    plt.plot(outerDLosses)
+    plt.savefig(fig_path + 'outerDLosses.png')
 
     features = [' xx', ' yy', ' pxx', ' pyy', ' pzz', ' eneg', ' time', 'theta']
-    chi2_tests = {'inner': {}} #, 'outer': {}, 'combined': {}, 'noLeaks': {}}
-    # dfDict = {'inner': {}, 'outer': {}, 'combined': {}, 'noLeaks': {}}
-    # chi2_inner = {' xx': 0, ' yy': 0, ' pxx': 0, ' pyy': 0,
-    #               ' pzz': 0, ' eneg': 0, ' time': 0, 'theta': 0}
-    # chi2_outer = chi2_inner.copy()
-    # chi2_combined = chi2_inner.copy()
-    # chi2_noLeaks = chi2_inner.copy()
-    # innerData, outerData = innerData[features], outerData[features]
-    # combinedData = pd.concat([innerData, outerData])
-    # combinedDF = pd.concat([innerDF, outerDF])
-    # noLeaksData = combinedData.copy()
-    # posIn = ((innerDF[' xx'] < 500) * (innerDF[' xx'] > -1700) * (innerDF[' yy'] < 500))
-    # posOut = ((outerDF[' xx'] < 500) * (outerDF[' xx'] > -1700) * (outerDF[' yy'] < 500))
-    # noLeakInner = innerDF[posIn]
-    # noLeakOuter = outerDF[~posOut]
-    # noLeaksDF = pd.concat([noLeakInner, noLeakOuter])
-    # dfDict['inner'] = innerDF
-    # dfDict['outer'] = outerDF
-    # dfDict['combined'] = combinedDF
-    # dfDict['noLeaks'] = noLeaksDF
+    chi2_tests = {'inner': {}, 'outer': {}, 'combined': {}, 'noLeaks': {}}
+    dfDict = {'inner': {}, 'outer': {}, 'combined': {}, 'noLeaks': {}}
+    chi2_inner = {' xx': 0, ' yy': 0, ' pxx': 0, ' pyy': 0,
+                  ' pzz': 0, ' eneg': 0, ' time': 0, 'theta': 0}
+    chi2_outer = chi2_inner.copy()
+    chi2_combined = chi2_inner.copy()
+    chi2_noLeaks = chi2_inner.copy()
+    combinedData = pd.concat([innerData, outerData])
+    combinedDF = pd.concat([innerDF, outerDF])
+    noLeaksData = combinedData.copy()
+    posIn = ((innerDF[' xx'] < 500) * (innerDF[' xx'] > -1700) * (innerDF[' yy'] < 500))
+    posOut = ((outerDF[' xx'] < 500) * (outerDF[' xx'] > -1700) * (outerDF[' yy'] < 500))
+    noLeakInner = innerDF[posIn]
+    noLeakOuter = outerDF[~posOut]
+    noLeaksDF = pd.concat([noLeakInner, noLeakOuter])
+    dfDict['inner'] = innerDF
+    dfDict['outer'] = outerDF
+    dfDict['combined'] = combinedDF
+    dfDict['noLeaks'] = noLeaksDF
 
-    # Hxy, Het, Hrth, Hpp = make_plots(innerFakeDF, "inner", run_id, 'inner')
-    # Hxy, Het, Hrth, Hpp = make_plots(outerDF, "outer", run_id, 'outer')
-    # Hxy, Het, Hrth, Hpp = make_plots(noLeaksDF, "outer", run_id, 'noLeaks')
-    # GHxy, GHet, GHrth, GHpp = make_plots(combinedDF, "outer", run_id, 'combined')
+    Hxy, Het, Hrth, Hpp = make_plots(innerDF, "inner", run_id, 'inner')
+    Hxy, Het, Hrth, Hpp = make_plots(outerDF, "outer", run_id, 'outer')
+    Hxy, Het, Hrth, Hpp = make_plots(noLeaksDF, "outer", run_id, 'noLeaks')
+    GHxy, GHet, GHrth, GHpp = make_plots(combinedDF, "outer", run_id, 'combined')
 
     # make_polar_features(combinedData)
     #
-    # plot_correlations(combinedDF[' xx'], combinedDF[' yy'], 'x[mm]', 'y[mm]', run_id, key="combined"
-    #                   , Xlim=[-4500, 1500], Ylim=[-3000, 6000])
-    # energy_bins = 10 ** np.linspace(-12, 0, 401)
-    # time_bins = 10 ** np.linspace(1, 8, 401)
-    # plot_correlations(combinedDF[' time'], combinedDF[' eneg'], 't[ns]', 'E[GeV]', run_id, key="combined",
-    #                   bins=[time_bins, energy_bins], loglog=True)
-    # plot_correlations(combinedDF[' rx'], combinedDF['theta'], 'r [mm]', 'theta_p [rad]', run_id, key="combined")
-    # plot_correlations(combinedDF[' phi_p'], combinedDF[' phi_x'], 'phi_p [rad]', 'phi_x [rad]', run_id, key="combined")
+    plot_correlations(combinedDF[' xx'], combinedDF[' yy'], 'x[mm]', 'y[mm]', run_id, key="combined"
+                      , Xlim=[-4500, 1500], Ylim=[-3000, 6000])
+    energy_bins = 10 ** np.linspace(-12, 0, 401)
+    time_bins = 10 ** np.linspace(1, 8, 401)
+    plot_correlations(combinedDF[' time'], combinedDF[' eneg'], 't[ns]', 'E[GeV]', run_id, key="combined",
+                      bins=[time_bins, energy_bins], loglog=True)
+    plot_correlations(combinedDF[' rx'], combinedDF['theta'], 'r [mm]', 'theta_p [rad]', run_id, key="combined")
+    plot_correlations(combinedDF[' phi_p'], combinedDF[' phi_x'], 'phi_p [rad]', 'phi_x [rad]', run_id, key="combined")
     #
-    # for key in chi2_tests.keys():
-    #     if not os.path.isdir(fig_path + '1dHists/' + key):
-    #         if not os.path.isdir(fig_path + '1dHists'):
-    #             os.mkdir(fig_path + '1dHists')
-    #         os.mkdir(fig_path + '1dHists/' + key)
-    #     for feat in features:
-    #         exec("plot_1d(" + key + "Data," + key + "DF,feat,chi2_" + key + ", fig_path, key)")
-    #     exec("chi2_tests['" + key + "']=chi2_" + key)
+    for key in chi2_tests.keys():
+        if not os.path.isdir(fig_path + '1dHists/' + key):
+            if not os.path.isdir(fig_path + '1dHists'):
+                os.mkdir(fig_path + '1dHists')
+            os.mkdir(fig_path + '1dHists/' + key)
+        for feat in features:
+            exec("plot_1d(" + key + "Data," + key + "DF,feat,chi2_" + key + ", fig_path, key)")
+        exec("chi2_tests['" + key + "']=chi2_" + key)
 
     # return chi2_tests, dfDict
 
@@ -631,5 +631,3 @@ def make_ed_fig(null, H1, group, show, fig_path):
     axs.set_title(f"{group} ED histogram, ks test p-value:{ks_test.pvalue:.2f}")
     axs.legend(["null", "H1"])
     fig.savefig(fig_path + group + '_histograms.png')
-    if show:
-        fig.show()
