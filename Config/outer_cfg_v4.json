@@ -1,5 +1,5 @@
 {
-    "applyQT": 0,
+    "applyQT": 1,
     "nQuantiles": 100000,
     "subsample": 1000000,
     "data_path": "/storage/agrp/alonle/GAN_InputSample/outer_r_cut.csv",
@@ -17,6 +17,7 @@
     "features": {
                   " xx"   : [],
                   " yy"   : [],
+                  " rx"   : ["log"],
                   " rp"   : ["log"],
                   " phi_p": [],
                   " eneg" : ["log"],

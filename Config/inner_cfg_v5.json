@@ -1,5 +1,5 @@
 {
-    "applyQT": 0,
+    "applyQT": 1,
     "nQuantiles": 100000,
     "subsample": 1000000,
     "data_path": "/storage/agrp/alonle/GAN_InputSample/inner_r_cut.csv",
@@ -7,7 +7,7 @@
     "outputDir": "",
     "dataGroup": "inner",
     "pdg": 2112,
-    "batchSize": 1024,
+    "batchSize": 512,
     "noiseDim": 100,
     "numEpochs": 1,
     "device": "cuda",
