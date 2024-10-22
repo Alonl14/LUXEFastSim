@@ -62,16 +62,3 @@ np.save(inner_trainer.outputDir+'KL_in.npy', KL_in)
 np.save(outer_trainer.outputDir+'KL_out.npy', KL_out)
 np.save(inner_trainer.outputDir+'D_losses_in.npy', inner_trainer.D_Losses)
 np.save(outer_trainer.outputDir+'D_losses_out.npy', outer_trainer.D_Losses)
-
-generation_time_a = time.localtime()
-n_events = 10000
-inner_df = utils.generate_df(inner_trainer, cfg_inner["noiseDim"], n_events)
-outer_df = utils.generate_df(outer_trainer, cfg_outer["noiseDim"], 30*n_events)
-generation_time_b = time.localtime()
-print(f'Created {11*n_events} in {utils.get_time(generation_time_a,generation_time_b)}')
-
-hist_time_a = time.localtime()
-n_events = 10000
-a, b = utils.get_batch_ed_histograms()
-hist_time_b = time.localtime()
-print(f'Created {11*n_events} in {utils.get_time(hist_time_a,hist_time_b)}')

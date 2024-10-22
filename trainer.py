@@ -3,15 +3,6 @@ import numpy as np
 import pandas as pd
 import tqdm
 import utils
-from numpy import random
-# from torch.nn.parallel import DistributedDataParallel as DDP
-# from torch.distributed import init_process_group, destroy_process_group
-# import os
-#
-#
-# def ddp_setup():
-#     init_process_group(backend="mps")
-#     torch.mps.set_device(int(os.environ["LOCAL_RANK"]))
 
 
 def get_gradient(crit, real, fake,
@@ -62,11 +53,11 @@ class Trainer:
         self.genNet.train()
         self.discNet.to(self.device)
         self.discNet.train()
-        iters = 0
+        total_data_size = len(self.dataset)
 
         for epoch in tqdm.tqdm_notebook(range(self.numEpochs), desc=' epochs', position=0):
 
-            avg_error_G, avg_error_D, currentKLD = 0, 0, 0
+            avg_error_G, avg_error_D, currentKLD, iters = 0, 0, 0, 0
 
             for i, data in tqdm.tqdm_notebook(enumerate(self.dataloader, 0), desc=' batch', position=1, leave=False):
                 # Update the discriminator network
@@ -89,13 +80,11 @@ class Trainer:
                     fake_p = self.genNet(noise)
                     output = self.discNet(fake_p.detach())
                     err_D_fake = torch.mean(output)
-                    fake_p.to(self.device)
 
                     epsilon = torch.rand(1, device=self.device, requires_grad=True)
                     gradient = get_gradient(self.discNet, real_data, fake_p.detach(), epsilon)
                     gradient_norm = gradient.norm(2, dim=1)
-                    penalty = self.Lambda * torch.mean(torch.norm(gradient_norm - 1))
-
+                    penalty = self.Lambda * torch.mean((gradient_norm - 1)**2)
                     err_D = err_D_real + err_D_fake + penalty
                     err_D.backward()
                     crit_err_D += err_D.item()
@@ -121,9 +110,9 @@ class Trainer:
                 currentKLD += addCurrentKLD
 
                 iters += 1
-                if iters % 1000 == 0:
+                if iters % int(total_data_size/(10*batch_size)) == 0:  # Record KL_div 10 times per epoch
                     print("Iteration #"+str(iters))
-                    self.KL_Div = np.append(self.KL_Div, currentKLD/1000)
+                    self.KL_Div = np.append(self.KL_Div, currentKLD*100*batch_size/total_data_size)
                     currentKLD = 0
 
             torch.save(self.genNet.state_dict(), self.outputDir + self.dataGroup + '_Gen_model.pt')
@@ -132,5 +121,5 @@ class Trainer:
             avg_error_G = avg_error_G/iters
             self.G_Losses = np.append(self.G_Losses, avg_error_G)
             avg_error_D = avg_error_D/iters
-            self.D_Losses = np.append(self.D_Losses, avg_error_D)
+            self.D_Losses = np.append(self.D_Losses, -avg_error_D)
             print(f'{epoch}/{self.numEpochs}\tLoss_D: {avg_error_D:.4f}\tLoss_G: {avg_error_G:.4f}')
