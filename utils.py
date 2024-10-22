@@ -45,7 +45,7 @@ def get_kld(real, fake, bins=20):
     # Calculate KL divergence
     current_kld = torch.nn.functional.kl_div(
         torch.log(target_hist),  # Log of the target (real data)
-        current_hist,  # Current histogram (fake data)
+        torch.log(current_hist),  # Current histogram (fake data)
         reduction='batchmean',  # Mean KL divergence over all bins
         log_target=True  # target_hist is already a log probability
     )

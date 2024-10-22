@@ -18,6 +18,7 @@ importlib.reload(discriminator)
 from discriminator import Discriminator
 importlib.reload(trainer)
 from trainer import Trainer
+from torch.utils.data import random_split
 
 
 def create_trainer(cfg):
@@ -31,12 +32,20 @@ def create_trainer(cfg):
     dataset_time = time.localtime()
 
     print(f"dataset created, time elapsed : {utils.get_time(beg_time, dataset_time)}")
-    print("making data loader...")
+    print("splitting dataset into train and validation sets...")
 
-    dataloader = DataLoader(particle_ds, batch_size=cfg['batchSize'], shuffle=True)
+    val_size = int(0.2 * len(particle_ds))  # 20% for validation
+    train_size = len(particle_ds) - val_size
+    train_ds, val_ds = random_split(particle_ds, [train_size, val_size])
+
+    print("making data loaders...")
+
+    dataloader = DataLoader(train_ds, batch_size=cfg['batchSize'], shuffle=True)
+    val_dataloader = DataLoader(val_ds, batch_size=cfg['batchSize'], shuffle=False)
+
     dataloader_time = time.localtime()
 
-    print(f"data loader created, time elapsed : {utils.get_time(dataloader_time, dataset_time)}")
+    print(f"data loaders created, time elapsed : {utils.get_time(dataloader_time, dataset_time)}")
     device = torch.device(cfg['device'])
     print(f'Using {device} as device')
 
@@ -53,6 +62,7 @@ def create_trainer(cfg):
         'discNet': discNet,
         'outputDir': cfg['outputDir'],
         'dataloader': dataloader,
+        'valDataloader': val_dataloader,  # Add validation dataloader
         'dataset': particle_ds,
         'dataGroup': cfg['dataGroup'],
         'numEpochs': cfg['numEpochs'],
