@@ -52,13 +52,12 @@ class Trainer:
         self.genNet.train()
         self.discNet.to(self.device)
         self.discNet.train()
-        total_data_size = len(self.dataset)
 
-        for epoch in tqdm.tqdm_notebook(range(self.numEpochs), desc=' epochs', position=0):
+        for epoch in tqdm.tqdm(range(self.numEpochs), desc=' epochs', position=0):
             avg_error_G, avg_error_D, currentKLD, iters = 0, 0, 0, 0
             total_batches = len(self.dataloader)
             kl_log_interval = max(1, total_batches // 10)
-            for i, data in tqdm.tqdm_notebook(enumerate(self.dataloader, 0), desc=' batch', position=1, leave=False):
+            for i, data in tqdm.tqdm(enumerate(self.dataloader, 0), desc=' batch', position=1, leave=False):
                 # Training Phase (same as before)
                 crit_err_D = 0
 
@@ -103,7 +102,6 @@ class Trainer:
                 iters += 1
                 if iters % kl_log_interval == 0:  # Record KL_div 10 times per epoch
                     print(f"Iteration #{iters}")
-                    print(kl_log_interval, total_batches)
                     self.KL_Div = np.append(self.KL_Div, currentKLD/kl_log_interval)
                     currentKLD = 0
 

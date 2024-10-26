@@ -13,7 +13,7 @@
     "device": "cuda",
     "nCrit": 5,
     "Lambda": 0.01,
-    "learningRate": 0.001,
+    "learningRate": 0.0001,
     "features": {
                   " xx"   : [],
                   " yy"   : [],

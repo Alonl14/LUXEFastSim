@@ -354,8 +354,8 @@ def check_run(run_id):
     inner_null_values, inner_H1_values = get_batch_ed_histograms(innerDF.loc[:, cfg_inner['features'].keys()],
                                                                  innerData.loc[:len(innerDF), cfg_inner['features'].keys()],
                                                                  batch_size=100)
-    outer_null_values, outer_H1_values = get_batch_ed_histograms(outerDF.loc[:, cfg_outer['features'].keys()],
-                                                                 outerData.loc[:len(outerDF), cfg_outer['features'].keys()],
+    outer_null_values, outer_H1_values = get_batch_ed_histograms(outerDF.loc[:len(innerDF), cfg_outer['features'].keys()],
+                                                                 outerData.loc[:len(innerDF), cfg_outer['features'].keys()],
                                                                  batch_size=100)
     make_ed_fig(inner_null_values, inner_H1_values, 'inner', False, fig_path)
     make_ed_fig(outer_null_values, outer_H1_values, 'outer', True, fig_path)
@@ -600,7 +600,7 @@ def get_batch_ed_histograms(x, y, batch_size=1000):
     ED_null = np.zeros(n_batches)
     ED_H1 = np.zeros(n_batches)
 
-    for i in range(n_batches):
+    for i in tqdm.tqdm_notebook(range(n_batches)):
         x_batch, y_batch, y_prime_batch = (x_batches[i], y_batches[i], y_prime_batches[i])
         ED_null[i] = get_ed(x_batch, y_batch)
         ED_H1[i] = get_ed(y_prime_batch, y_batch)
