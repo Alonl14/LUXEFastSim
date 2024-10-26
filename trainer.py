@@ -96,13 +96,11 @@ class Trainer:
                 avg_error_G += err_G.item()
                 avg_error_D += crit_err_D / self.nCrit
 
-                addCurrentKLD = utils.get_kld(real_data, fake_p)
-                currentKLD += addCurrentKLD.detach().numpy()
-
                 iters += 1
                 if iters % kl_log_interval == 0:  # Record KL_div 10 times per epoch
                     print(f"Iteration #{iters}")
-                    self.KL_Div = np.append(self.KL_Div, currentKLD/kl_log_interval)
+                    addCurrentKLD = utils.get_kld(real_data, fake_p)
+                    self.KL_Div = np.append(self.KL_Div, addCurrentKLD.detach().numpy())
                     currentKLD = 0
 
             # Validation Phase
