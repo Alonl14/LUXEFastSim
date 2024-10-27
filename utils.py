@@ -366,12 +366,29 @@ def check_run(run_id):
 
     iKLPath = run_dir + "KL_in.npy"
     oKLPath = run_dir + "KL_out.npy"
+
     iDLPath = run_dir + "D_Losses_in.npy"
     oDLPath = run_dir + "D_Losses_out.npy"
+    iVDLPath = run_dir + "Val_D_Losses_in.npy"
+    oVDLPath = run_dir + "Val_D_Losses_out.npy"
+
+    iGLPath = run_dir + "G_Losses_in.npy"
+    oGLPath = run_dir + "G_Losses_out.npy"
+    iVGLPath = run_dir + "Val_G_Losses_in.npy"
+    oVGLPath = run_dir + "Val_G_Losses_out.npy"
+
     innerKLDiv = np.load(iKLPath)
     outerKLDiv = np.load(oKLPath)
+
     innerDLosses = np.load(iDLPath)
     outerDLosses = np.load(oDLPath)
+    innerValDLosses = np.load(iVDLPath)
+    outerValDLosses = np.load(oVDLPath)
+
+    innerGLosses = np.load(iGLPath)
+    outerGLosses = np.load(oGLPath)
+    innerValGLosses = np.load(iVGLPath)
+    outerValGLosses = np.load(oVGLPath)
 
     plt.figure(dpi=200)
     plt.title("Inner KL divergence")
@@ -386,15 +403,34 @@ def check_run(run_id):
     plt.yscale('log')
     plt.savefig(fig_path + 'outerKLDiv.png')
     plt.figure(dpi=200)
-    plt.title("Inner Discriminator Losses")
+    plt.title("Inner Critic Losses")
     plt.grid(True, which='both', color='0.65', linestyle='-')
     plt.plot(innerDLosses)
+    plt.plot(innerValDLosses)
+    plt.legend(["training", "validation"])
     plt.savefig(fig_path + 'innerDLosses.png')
     plt.figure(dpi=200)
-    plt.title("Outer Discriminator Losses")
+    plt.title("Outer Critic Losses")
     plt.grid(True, which='both', color='0.65', linestyle='-')
     plt.plot(outerDLosses)
+    plt.plot(outerValDLosses)
+    plt.legend(["training", "validation"])
     plt.savefig(fig_path + 'outerDLosses.png')
+
+    plt.figure(dpi=200)
+    plt.title("Inner Generator Losses")
+    plt.grid(True, which='both', color='0.65', linestyle='-')
+    plt.plot(innerGLosses)
+    plt.plot(innerValGLosses)
+    plt.legend(["training", "validation"])
+    plt.savefig(fig_path + 'innerGLosses.png')
+    plt.figure(dpi=200)
+    plt.title("Outer Generator Losses")
+    plt.grid(True, which='both', color='0.65', linestyle='-')
+    plt.plot(outerGLosses)
+    plt.plot(outerValGLosses)
+    plt.legend(["training", "validation"])
+    plt.savefig(fig_path + 'outerGLosses.png')
 
     features = [' xx', ' yy', ' pxx', ' pyy', ' pzz', ' eneg', ' time', 'theta']
     chi2_tests = {'inner': {}, 'outer': {}, 'combined': {}, 'noLeaks': {}}
