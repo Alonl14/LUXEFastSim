@@ -14,8 +14,7 @@ class ParticleDataset(Dataset):
         self._registry = {"log": my_log,
                           "flip": flip}
 
-        if cfg['applyQT']:
-            QT = qt(output_distribution='normal', n_quantiles=cfg['nQuantiles'], subsample=cfg['subsample'])
+        QT = qt(output_distribution='normal', n_quantiles=cfg['nQuantiles'], subsample=cfg['subsample'])
 
         self.data = pd.read_csv(cfg['data_path'])
 
@@ -35,10 +34,12 @@ class ParticleDataset(Dataset):
 
         # mps doesn't work with double-percision floats, cuda does
         data_type = np.float32
+        # store quantiles for inverse (applyQT=0) or apply to data (applyQT=1)
+        self.quantiles = QT.fit(self.data)
+
         # store values before quantile transformation, the used quantiles, and the data itself
         if cfg['applyQT']:
             self.preqt = self.data.values
-            self.quantiles = QT.fit(self.data)
             self.data = QT.fit_transform(self.data)
             self.data = self.data.astype(data_type)
         else:

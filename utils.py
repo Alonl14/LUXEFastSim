@@ -123,11 +123,11 @@ def make_plots(df, dataGroup, run_id=None, key=None):
     :return: null
     """
     # BEAM TRIM
-    x_lim = [-4500, 1500]
-    y_lim = [-3000, 6000]
+    # x_lim = [-4500, 1500]
+    # y_lim = [-3000, 6000]
     # # R CUT
-    # x_lim = [-4000, 4000]
-    # y_lim = [-4000, 4000]
+    x_lim = [-4000, 4000]
+    y_lim = [-4000, 4000]
     if dataGroup == 'inner':
         x_lim = [-1700, 500]
         y_lim = [-2500, 500]
@@ -231,16 +231,26 @@ def generate_df(generator_net, numEvents, cfg):
     :param cfg:
     :return: numpy array of generated data
     """
-    noise = torch.randn(numEvents, cfg['noiseDim'], device='cpu')
+
+    ds = dataset.ParticleDataset(cfg)
+
+    if cfg['applyQT']:
+        noise = torch.randn(numEvents, cfg['noiseDim'], device='cpu')
+    else:
+        print("here")
+        noise = np.float32(np.random.randn(numEvents, cfg['noiseDim']))
+        noise = ds.quantiles.inverse_transform(noise)
+        noise = torch.from_numpy(noise)
+        noise = noise.to('cpu')
+
     generator_net.to('cpu')
     generated_data = generator_net(noise)
     generated_data = generated_data.detach().numpy()
 
-    ds = dataset.ParticleDataset(cfg)
     features = cfg['features'].keys()
     empty_arr = np.empty((0, len(features)))
     ds.data = pd.DataFrame(empty_arr, columns=features)
-    data_values = ds.quantiles.inverse_transform(generated_data) if ds.quantiles is not None else generated_data
+    data_values = ds.quantiles.inverse_transform(generated_data) if cfg['applyQT'] else generated_data
     for i, feature in enumerate(features):
         ds.data[feature] = data_values[:, i]
     ds.apply_transformation(cfg, inverse=True)

@@ -50,6 +50,10 @@ def create_trainer(cfg):
     print(f'Using {device} as device')
 
     numFeatures = len(cfg["features"].keys())
+
+    # For the inverseQT sampling to work we need :
+    cfg['noiseDim'] = numFeatures
+
     genNet = Generator(noiseDim=cfg['noiseDim'], numFeatures=numFeatures)
     discNet = Discriminator(numFeatures=numFeatures)
 
@@ -72,8 +76,8 @@ def create_trainer(cfg):
         'applyQT': cfg['applyQT']
     }
 
-    genOptimizer = optim.Adam(cfgDict['genNet'].parameters(), lr=cfg['learningRate'], betas=(0.5, 0.999))
-    discOptimizer = optim.Adam(cfgDict['discNet'].parameters(), lr=cfg['learningRate'], betas=(0.5, 0.999))
+    genOptimizer = optim.Adam(cfgDict['genNet'].parameters(), lr=cfg['criticLearningRate'], betas=(0.5, 0.999))
+    discOptimizer = optim.Adam(cfgDict['discNet'].parameters(), lr=cfg['generatorLearningRate'], betas=(0.5, 0.999))
 
     cfgDict['genOptimizer'] = genOptimizer
     cfgDict['discOptimizer'] = discOptimizer

@@ -12,7 +12,7 @@
     "numEpochs": 25,
     "device": "mps",
     "nCrit": 2,
-    "Lambda": 0.001,
+    "Lambda": 0.004,
     "criticLearningRate": 0.0001,
     "generatorLearningRate": 0.00005,
     "features": {

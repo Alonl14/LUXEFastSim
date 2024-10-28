@@ -3,6 +3,10 @@ import numpy as np
 import tqdm
 import utils
 
+import warnings
+warnings.filterwarnings("ignore", category=UserWarning, message=".*does not have valid feature names.*")
+warnings.filterwarnings("ignore", category=UserWarning,
+                        message=".*You can silence this warning by not passing in num_features.*")
 
 def get_gradient(crit, real, fake, epsilon):
     mixed_images = real * epsilon + fake * (1 - epsilon)
@@ -57,7 +61,7 @@ class Trainer:
             avg_error_G, avg_error_D, currentKLD, iters = 0, 0, 0, 0
             total_batches = len(self.dataloader)
             kl_log_interval = max(1, total_batches // 10)
-            for i, data in tqdm.tqdm(enumerate(self.dataloader, 0), desc=' batch', position=1, leave=False):
+            for i, data in enumerate(self.dataloader, 0):
                 # Training Phase (same as before)
                 crit_err_D = 0
 
@@ -70,7 +74,13 @@ class Trainer:
                     output = self.discNet(real_data)
                     err_D_real = -torch.mean(output)
 
-                    noise = torch.randn(batch_size, self.noiseDim, device=self.device)
+                    if self.applyQT:
+                        noise = torch.randn(batch_size, self.noiseDim, device=self.device)
+                    else:
+                        noise = np.float32(np.random.randn(batch_size, self.noiseDim))
+                        noise = self.dataset.quantiles.inverse_transform(noise)
+                        noise = torch.from_numpy(noise)
+                        noise = noise.to(self.device)
                     fake_p = self.genNet(noise)
                     output = self.discNet(fake_p.detach())
                     err_D_fake = torch.mean(output)
@@ -135,7 +145,13 @@ class Trainer:
                 output = self.discNet(real_data)
                 err_D_real = -torch.mean(output)
 
-                noise = torch.randn(batch_size, self.noiseDim, device=self.device)
+                if self.applyQT:
+                    noise = torch.randn(batch_size, self.noiseDim, device=self.device)
+                else:
+                    noise = np.float32(np.random.randn(batch_size, self.noiseDim))
+                    noise = self.dataset.quantiles.inverse_transform(noise)
+                    noise = torch.from_numpy(noise)
+                    noise = noise.to(self.device)
                 fake_p = self.genNet(noise)
                 output = self.discNet(fake_p)
                 err_D_fake = torch.mean(output)
