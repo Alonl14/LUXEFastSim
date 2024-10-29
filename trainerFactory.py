@@ -52,7 +52,8 @@ def create_trainer(cfg):
     numFeatures = len(cfg["features"].keys())
 
     # For the inverseQT sampling to work we need :
-    cfg['noiseDim'] = numFeatures
+    if not cfg['applyQT']:
+        cfg['noiseDim'] = numFeatures
 
     genNet = Generator(noiseDim=cfg['noiseDim'], numFeatures=numFeatures)
     discNet = Discriminator(numFeatures=numFeatures)

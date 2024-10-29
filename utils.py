@@ -383,15 +383,15 @@ def check_run(run_id, path=None):
     iKLPath = run_dir + "KL_in.npy"
     oKLPath = run_dir + "KL_out.npy"
 
-    iDLPath = run_dir + "D_Losses_in.npy"
-    oDLPath = run_dir + "D_Losses_out.npy"
-    iVDLPath = run_dir + "Val_D_Losses_in.npy"
-    oVDLPath = run_dir + "Val_D_Losses_out.npy"
+    iDLPath = run_dir + "D_losses_in.npy"
+    oDLPath = run_dir + "D_losses_out.npy"
+    iVDLPath = run_dir + "Val_D_losses_in.npy"
+    oVDLPath = run_dir + "Val_D_losses_out.npy"
 
-    iGLPath = run_dir + "G_Losses_in.npy"
-    oGLPath = run_dir + "G_Losses_out.npy"
-    iVGLPath = run_dir + "Val_G_Losses_in.npy"
-    oVGLPath = run_dir + "Val_G_Losses_out.npy"
+    iGLPath = run_dir + "G_losses_in.npy"
+    oGLPath = run_dir + "G_losses_out.npy"
+    iVGLPath = run_dir + "Val_G_losses_in.npy"
+    oVGLPath = run_dir + "Val_G_losses_out.npy"
 
     innerKLDiv = np.load(iKLPath)
     outerKLDiv = np.load(oKLPath)
