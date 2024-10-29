@@ -105,11 +105,14 @@ def plot_correlations(x, y, xlabel, ylabel, run_id, key,
     plt.colorbar()
     if run_id is not None:
         hist_path = path + 'plots/2dHists'
-        if not os.path.isdir(path + key):
-            if not os.path.isdir(path):
-                os.mkdir(path)
-            os.mkdir(path + key)
-        plt.savefig(path + key + '/' + xlabel + '-' + ylabel + '.png')
+        if not os.path.isdir(hist_path + '/' + key):
+            if not os.path.isdir(hist_path):
+                os.mkdir(hist_path)
+            os.mkdir(hist_path + '/' + key)
+        plt.savefig(hist_path + '/' + key + '/' + xlabel + '-' + ylabel + '.png')
+    else:
+        hist_path = "/storage/agrp/alonle/GAN_Output"
+        plt.savefig(hist_path + '/' + key + '/' + xlabel + '-' + ylabel + '.png')
     return H
 
 
