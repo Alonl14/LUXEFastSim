@@ -351,10 +351,11 @@ def check_run(run_id, path=None):
         cfg_outer = json.loads(outer_file.read())
 
     # Specifically for data and norm files, changes the path to local
-    fix_path(cfg_inner, "data_path")
-    fix_path(cfg_inner, "norm_path")
-    fix_path(cfg_outer, "data_path")
-    fix_path(cfg_outer, "norm_path")
+    if path is None:
+        fix_path(cfg_inner, "data_path")
+        fix_path(cfg_inner, "norm_path")
+        fix_path(cfg_outer, "data_path")
+        fix_path(cfg_outer, "norm_path")
 
     # TODO: Think of a different condition to check if a df is needed to be produced
     generation_time_a = time.localtime()
