@@ -86,7 +86,7 @@ def add_features(df, pdg):
 
 
 def plot_correlations(x, y, xlabel, ylabel, run_id, key,
-                      bins=[400, 400], loglog=False, Xlim=None, Ylim=None):
+                      bins=[400, 400], loglog=False, Xlim=None, Ylim=None, path=None):
     H, xb, yb = np.histogram2d(x, y, bins=bins, range=[[x.min(), x.max()], [y.min(), y.max()]], density=True)
     X, Y = np.meshgrid(xb, yb)
     plt.figure(dpi=250)
@@ -104,16 +104,16 @@ def plot_correlations(x, y, xlabel, ylabel, run_id, key,
     plt.grid(True)
     plt.colorbar()
     if run_id is not None:
-        path = 'Output/run_' + run_id + '/plots/2dHists'
-        if not os.path.isdir(path + '/' + key):
+        hist_path = path + 'plots/2dHists'
+        if not os.path.isdir(path + key):
             if not os.path.isdir(path):
                 os.mkdir(path)
-            os.mkdir(path + '/' + key)
-        plt.savefig(path + '/' + key + '/' + xlabel + '-' + ylabel + '.png')
+            os.mkdir(path + key)
+        plt.savefig(path + key + '/' + xlabel + '-' + ylabel + '.png')
     return H
 
 
-def make_plots(df, dataGroup, run_id=None, key=None):
+def make_plots(df, dataGroup, run_id=None, key=None, path=None):
     """
     Takes a dataframe and its data group and makes correlation plots for x-y,E-t,r_x-theta,phi_x-phi_p
     :param df: dataframe containing both polar and cartesian forms of data
@@ -131,13 +131,13 @@ def make_plots(df, dataGroup, run_id=None, key=None):
         x_lim = [-1700, 500]
         y_lim = [-2500, 500]
 
-    Hxy = plot_correlations(df[' xx'], df[' yy'], 'x[mm]', 'y[mm]', run_id, key)  # , Xlim=x_lim, Ylim=y_lim
+    Hxy = plot_correlations(df[' xx'], df[' yy'], 'x[mm]', 'y[mm]', run_id, key, path=path)  # , Xlim=x_lim, Ylim=y_lim
     energy_bins = 10 ** np.linspace(-12, 0, 400)
     time_bins = 10 ** np.linspace(1, 8, 400)
     Het = plot_correlations(df[' time'], df[' eneg'], 't[ns]', 'E[GeV]', run_id, key, bins=[time_bins, energy_bins],
-                            loglog=True)
-    Hrth = plot_correlations(df[' rx'], df['theta'], 'r [mm]', 'theta_p [rad]', run_id, key)
-    Hpp = plot_correlations(df[' phi_p'], df[' phi_x'], 'phi_p [rad]', 'phi_x [rad]', run_id, key)
+                            loglog=True, path=path)
+    Hrth = plot_correlations(df[' rx'], df['theta'], 'r [mm]', 'theta_p [rad]', run_id, key, path=path)
+    Hpp = plot_correlations(df[' phi_p'], df[' phi_x'], 'phi_p [rad]', 'phi_x [rad]', run_id, key, path=path)
     return Hxy, Het, Hrth, Hpp
 
 
@@ -469,22 +469,11 @@ def check_run(run_id, path=None):
     dfDict['combined'] = combinedDF
     dfDict['noLeaks'] = noLeaksDF
 
-    Hxy, Het, Hrth, Hpp = make_plots(innerDF, "inner", run_id, 'inner')
-    Hxy, Het, Hrth, Hpp = make_plots(outerDF, "outer", run_id, 'outer')
-    Hxy, Het, Hrth, Hpp = make_plots(noLeaksDF, "outer", run_id, 'noLeaks')
-    GHxy, GHet, GHrth, GHpp = make_plots(combinedDF, "outer", run_id, 'combined')
+    Hxy, Het, Hrth, Hpp = make_plots(innerDF, "inner", run_id, 'inner', run_dir)
+    Hxy, Het, Hrth, Hpp = make_plots(outerDF, "outer", run_id, 'outer', run_dir)
+    Hxy, Het, Hrth, Hpp = make_plots(noLeaksDF, "outer", run_id, 'noLeaks', run_dir)
+    GHxy, GHet, GHrth, GHpp = make_plots(combinedDF, "outer", run_id, 'combined', run_dir)
 
-    # make_polar_features(combinedData)
-    #
-    plot_correlations(combinedDF[' xx'], combinedDF[' yy'], 'x[mm]', 'y[mm]', run_id, key="combined"
-                      , Xlim=[-4500, 1500], Ylim=[-3000, 6000])
-    energy_bins = 10 ** np.linspace(-12, 0, 401)
-    time_bins = 10 ** np.linspace(1, 8, 401)
-    plot_correlations(combinedDF[' time'], combinedDF[' eneg'], 't[ns]', 'E[GeV]', run_id, key="combined",
-                      bins=[time_bins, energy_bins], loglog=True)
-    plot_correlations(combinedDF[' rx'], combinedDF['theta'], 'r [mm]', 'theta_p [rad]', run_id, key="combined")
-    plot_correlations(combinedDF[' phi_p'], combinedDF[' phi_x'], 'phi_p [rad]', 'phi_x [rad]', run_id, key="combined")
-    #
     for key in chi2_tests.keys():
         if not os.path.isdir(fig_path + '1dHists/' + key):
             if not os.path.isdir(fig_path + '1dHists'):
