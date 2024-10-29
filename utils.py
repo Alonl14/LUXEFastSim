@@ -110,7 +110,6 @@ def plot_correlations(x, y, xlabel, ylabel, run_id, key,
                 os.mkdir(path)
             os.mkdir(path + '/' + key)
         plt.savefig(path + '/' + key + '/' + xlabel + '-' + ylabel + '.png')
-    plt.show()
     return H
 
 
@@ -333,9 +332,14 @@ def generate_fake_real_dfs(run_id, cfg):
     return fake_df, real_df
 
 
-def check_run(run_id):
+def check_run(run_id, path=None):
     plt.ioff()
-    run_dir = 'Output/run_' + run_id + '/'
+    if path is None:
+        print("Local path")
+        run_dir = 'Output/run_' + run_id + '/'
+    else:
+        print("Cluster path")
+        run_dir = path + '/run_' + run_id + '/'
     fig_path = run_dir + 'plots'
     if not os.path.isdir(fig_path):
         os.mkdir(fig_path)
