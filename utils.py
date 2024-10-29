@@ -384,108 +384,108 @@ def check_run(run_id, path=None):
     #     innerDF = pd.read_csv(run_dir + 'innerDF.csv')
     #     outerDF = pd.read_csv(run_dir + 'outerDF.csv')
 
-    iKLPath = run_dir + "KL_in.npy"
-    oKLPath = run_dir + "KL_out.npy"
-
-    iDLPath = run_dir + "D_losses_in.npy"
-    oDLPath = run_dir + "D_losses_out.npy"
-    iVDLPath = run_dir + "Val_D_losses_in.npy"
-    oVDLPath = run_dir + "Val_D_losses_out.npy"
-
-    iGLPath = run_dir + "G_losses_in.npy"
-    oGLPath = run_dir + "G_losses_out.npy"
-    iVGLPath = run_dir + "Val_G_losses_in.npy"
-    oVGLPath = run_dir + "Val_G_losses_out.npy"
-
-    innerKLDiv = np.load(iKLPath)
-    outerKLDiv = np.load(oKLPath)
-
-    innerDLosses = np.load(iDLPath)
-    outerDLosses = np.load(oDLPath)
-    innerValDLosses = np.load(iVDLPath)
-    outerValDLosses = np.load(oVDLPath)
-
-    innerGLosses = np.load(iGLPath)
-    outerGLosses = np.load(oGLPath)
-    innerValGLosses = np.load(iVGLPath)
-    outerValGLosses = np.load(oVGLPath)
-
-    plt.figure(dpi=200)
-    plt.title("Inner KL divergence")
-    plt.grid(True, which='both', color='0.65', linestyle='-')
-    plt.plot(innerKLDiv)
-    plt.yscale('log')
-    plt.savefig(fig_path + 'innerKLDiv.png')
-    plt.figure(dpi=200)
-    plt.title("Outer KL divergence")
-    plt.grid(True, which='both', color='0.65', linestyle='-')
-    plt.plot(outerKLDiv)
-    plt.yscale('log')
-    plt.savefig(fig_path + 'outerKLDiv.png')
-    plt.figure(dpi=200)
-    plt.title("Inner Critic Losses")
-    plt.grid(True, which='both', color='0.65', linestyle='-')
-    plt.plot(innerDLosses)
-    plt.plot(innerValDLosses)
-    plt.legend(["training", "validation"])
-    plt.savefig(fig_path + 'innerDLosses.png')
-    plt.figure(dpi=200)
-    plt.title("Outer Critic Losses")
-    plt.grid(True, which='both', color='0.65', linestyle='-')
-    plt.plot(outerDLosses)
-    plt.plot(outerValDLosses)
-    plt.legend(["training", "validation"])
-    plt.savefig(fig_path + 'outerDLosses.png')
-
-    plt.figure(dpi=200)
-    plt.title("Inner Generator Losses")
-    plt.grid(True, which='both', color='0.65', linestyle='-')
-    plt.plot(innerGLosses)
-    plt.plot(innerValGLosses)
-    plt.legend(["training", "validation"])
-    plt.savefig(fig_path + 'innerGLosses.png')
-    plt.figure(dpi=200)
-    plt.title("Outer Generator Losses")
-    plt.grid(True, which='both', color='0.65', linestyle='-')
-    plt.plot(outerGLosses)
-    plt.plot(outerValGLosses)
-    plt.legend(["training", "validation"])
-    plt.savefig(fig_path + 'outerGLosses.png')
-
-    features = [' xx', ' yy', ' pxx', ' pyy', ' pzz', ' eneg', ' time', 'theta']
-    chi2_tests = {'inner': {}, 'outer': {}, 'combined': {}, 'noLeaks': {}}
-    dfDict = {'inner': {}, 'outer': {}, 'combined': {}, 'noLeaks': {}}
-    chi2_inner = {' xx': 0, ' yy': 0, ' pxx': 0, ' pyy': 0,
-                  ' pzz': 0, ' eneg': 0, ' time': 0, 'theta': 0}
-    chi2_outer = chi2_inner.copy()
-    chi2_combined = chi2_inner.copy()
-    chi2_noLeaks = chi2_inner.copy()
-    combinedData = pd.concat([innerData, outerData])
-    combinedDF = pd.concat([innerDF, outerDF])
-    noLeaksData = combinedData.copy()
-    posIn = ((innerDF[' xx'] < 500) * (innerDF[' xx'] > -1700) * (innerDF[' yy'] < 500))
-    posOut = ((outerDF[' xx'] < 500) * (outerDF[' xx'] > -1700) * (outerDF[' yy'] < 500))
-    noLeakInner = innerDF[posIn]
-    noLeakOuter = outerDF[~posOut]
-    noLeaksDF = pd.concat([noLeakInner, noLeakOuter])
-    dfDict['inner'] = innerDF
-    dfDict['outer'] = outerDF
-    dfDict['combined'] = combinedDF
-    dfDict['noLeaks'] = noLeaksDF
-
-    Hxy, Het, Hrth, Hpp = make_plots(innerDF, "inner", run_id, 'inner', run_dir)
-    Hxy, Het, Hrth, Hpp = make_plots(outerDF, "outer", run_id, 'outer', run_dir)
-    Hxy, Het, Hrth, Hpp = make_plots(noLeaksDF, "outer", run_id, 'noLeaks', run_dir)
-    GHxy, GHet, GHrth, GHpp = make_plots(combinedDF, "outer", run_id, 'combined', run_dir)
-
-    for key in chi2_tests.keys():
-        if not os.path.isdir(fig_path + '1dHists/' + key):
-            if not os.path.isdir(fig_path + '1dHists'):
-                os.mkdir(fig_path + '1dHists')
-            os.mkdir(fig_path + '1dHists/' + key)
-        for feat in features:
-            exec("plot_1d(" + key + "Data," + key + "DF,feat,chi2_" + key + ", fig_path, key)")
-        exec("chi2_tests['" + key + "']=chi2_" + key)
+    # iKLPath = run_dir + "KL_in.npy"
+    # oKLPath = run_dir + "KL_out.npy"
+    #
+    # iDLPath = run_dir + "D_losses_in.npy"
+    # oDLPath = run_dir + "D_losses_out.npy"
+    # iVDLPath = run_dir + "Val_D_losses_in.npy"
+    # oVDLPath = run_dir + "Val_D_losses_out.npy"
+    #
+    # iGLPath = run_dir + "G_losses_in.npy"
+    # oGLPath = run_dir + "G_losses_out.npy"
+    # iVGLPath = run_dir + "Val_G_losses_in.npy"
+    # oVGLPath = run_dir + "Val_G_losses_out.npy"
+    #
+    # innerKLDiv = np.load(iKLPath)
+    # outerKLDiv = np.load(oKLPath)
+    #
+    # innerDLosses = np.load(iDLPath)
+    # outerDLosses = np.load(oDLPath)
+    # innerValDLosses = np.load(iVDLPath)
+    # outerValDLosses = np.load(oVDLPath)
+    #
+    # innerGLosses = np.load(iGLPath)
+    # outerGLosses = np.load(oGLPath)
+    # innerValGLosses = np.load(iVGLPath)
+    # outerValGLosses = np.load(oVGLPath)
+    #
+    # plt.figure(dpi=200)
+    # plt.title("Inner KL divergence")
+    # plt.grid(True, which='both', color='0.65', linestyle='-')
+    # plt.plot(innerKLDiv)
+    # plt.yscale('log')
+    # plt.savefig(fig_path + 'innerKLDiv.png')
+    # plt.figure(dpi=200)
+    # plt.title("Outer KL divergence")
+    # plt.grid(True, which='both', color='0.65', linestyle='-')
+    # plt.plot(outerKLDiv)
+    # plt.yscale('log')
+    # plt.savefig(fig_path + 'outerKLDiv.png')
+    # plt.figure(dpi=200)
+    # plt.title("Inner Critic Losses")
+    # plt.grid(True, which='both', color='0.65', linestyle='-')
+    # plt.plot(innerDLosses)
+    # plt.plot(innerValDLosses)
+    # plt.legend(["training", "validation"])
+    # plt.savefig(fig_path + 'innerDLosses.png')
+    # plt.figure(dpi=200)
+    # plt.title("Outer Critic Losses")
+    # plt.grid(True, which='both', color='0.65', linestyle='-')
+    # plt.plot(outerDLosses)
+    # plt.plot(outerValDLosses)
+    # plt.legend(["training", "validation"])
+    # plt.savefig(fig_path + 'outerDLosses.png')
+    #
+    # plt.figure(dpi=200)
+    # plt.title("Inner Generator Losses")
+    # plt.grid(True, which='both', color='0.65', linestyle='-')
+    # plt.plot(innerGLosses)
+    # plt.plot(innerValGLosses)
+    # plt.legend(["training", "validation"])
+    # plt.savefig(fig_path + 'innerGLosses.png')
+    # plt.figure(dpi=200)
+    # plt.title("Outer Generator Losses")
+    # plt.grid(True, which='both', color='0.65', linestyle='-')
+    # plt.plot(outerGLosses)
+    # plt.plot(outerValGLosses)
+    # plt.legend(["training", "validation"])
+    # plt.savefig(fig_path + 'outerGLosses.png')
+    #
+    # features = [' xx', ' yy', ' pxx', ' pyy', ' pzz', ' eneg', ' time', 'theta']
+    # chi2_tests = {'inner': {}, 'outer': {}, 'combined': {}, 'noLeaks': {}}
+    # dfDict = {'inner': {}, 'outer': {}, 'combined': {}, 'noLeaks': {}}
+    # chi2_inner = {' xx': 0, ' yy': 0, ' pxx': 0, ' pyy': 0,
+    #               ' pzz': 0, ' eneg': 0, ' time': 0, 'theta': 0}
+    # chi2_outer = chi2_inner.copy()
+    # chi2_combined = chi2_inner.copy()
+    # chi2_noLeaks = chi2_inner.copy()
+    # combinedData = pd.concat([innerData, outerData])
+    # combinedDF = pd.concat([innerDF, outerDF])
+    # noLeaksData = combinedData.copy()
+    # posIn = ((innerDF[' xx'] < 500) * (innerDF[' xx'] > -1700) * (innerDF[' yy'] < 500))
+    # posOut = ((outerDF[' xx'] < 500) * (outerDF[' xx'] > -1700) * (outerDF[' yy'] < 500))
+    # noLeakInner = innerDF[posIn]
+    # noLeakOuter = outerDF[~posOut]
+    # noLeaksDF = pd.concat([noLeakInner, noLeakOuter])
+    # dfDict['inner'] = innerDF
+    # dfDict['outer'] = outerDF
+    # dfDict['combined'] = combinedDF
+    # dfDict['noLeaks'] = noLeaksDF
+    #
+    # Hxy, Het, Hrth, Hpp = make_plots(innerDF, "inner", run_id, 'inner', run_dir)
+    # Hxy, Het, Hrth, Hpp = make_plots(outerDF, "outer", run_id, 'outer', run_dir)
+    # Hxy, Het, Hrth, Hpp = make_plots(noLeaksDF, "outer", run_id, 'noLeaks', run_dir)
+    # GHxy, GHet, GHrth, GHpp = make_plots(combinedDF, "outer", run_id, 'combined', run_dir)
+    #
+    # for key in chi2_tests.keys():
+    #     if not os.path.isdir(fig_path + '1dHists/' + key):
+    #         if not os.path.isdir(fig_path + '1dHists'):
+    #             os.mkdir(fig_path + '1dHists')
+    #         os.mkdir(fig_path + '1dHists/' + key)
+    #     for feat in features:
+    #         exec("plot_1d(" + key + "Data," + key + "DF,feat,chi2_" + key + ", fig_path, key)")
+    #     exec("chi2_tests['" + key + "']=chi2_" + key)
 
     # return chi2_tests, dfDict
 
