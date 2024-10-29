@@ -112,7 +112,7 @@ def plot_correlations(x, y, xlabel, ylabel, run_id, key,
         plt.savefig(hist_path + '/' + key + '/' + xlabel + '-' + ylabel + '.png')
     else:
         hist_path = "/storage/agrp/alonle/GAN_Output"
-        plt.savefig(hist_path + '/' + key + '/' + xlabel + '-' + ylabel + '.png')
+        plt.savefig(hist_path + '/' + key + xlabel + '-' + ylabel + '.png')
     return H
 
 
@@ -321,6 +321,7 @@ def generate_fake_real_dfs(run_id, cfg, run_dir):
 
     # Create a generator based on the model's number of parameters used
     numFeatures = len(cfg["features"].keys())
+    cfg["noiseDim"] = numFeatures
     generator_net = nn.DataParallel(Generator(cfg["noiseDim"], numFeatures=numFeatures))
 
     # Load parameters
@@ -633,7 +634,9 @@ def get_batch_ed_histograms(x, y, batch_size=1000):
         # Just so that any of the features won't take over the metric
         if f in [' rp', ' eneg', ' time']:
             x[f] = np.log(x[f])
+            y[f] = np.log(y[f])
         x[f] = (x[f] - np.mean(x[f])) / np.std(x[f])
+        y[f] = (y[f] - np.mean(y[f])) / np.std(y[f])
 
     x_batches = get_batches(x.values, batch_size)
     y_batches = get_batches(y.values, batch_size)
