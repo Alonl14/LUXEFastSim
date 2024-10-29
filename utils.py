@@ -307,11 +307,12 @@ def combine(innerT, outerT, real_df=None, inner=None, outer=None):
     return generated_df
 
 
-def generate_fake_real_dfs(run_id, cfg):
+def generate_fake_real_dfs(run_id, cfg, run_dir):
     """
     Given a run id load the trained model in run_id dir to its respective trainer and return the generated dataframe
     :param run_id: run id
     :param cfg: relevant config file
+    :param run_dir: local is none / cluster is path to run dir
     :return:
     """
 
@@ -320,8 +321,8 @@ def generate_fake_real_dfs(run_id, cfg):
     generator_net = nn.DataParallel(Generator(cfg["noiseDim"], numFeatures=numFeatures))
 
     # Load parameters
-    path = "Output/run_" + run_id + "/" + cfg["dataGroup"] + "_Gen_model.pt"
-    generator_net.load_state_dict(torch.load(path, map_location=torch.device('cpu')))
+    model_path = run_dir + "/" + cfg["dataGroup"] + "_Gen_model.pt"
+    generator_net.load_state_dict(torch.load(model_path, map_location=torch.device('cpu')))
 
     # TODO: remove factor, find a different way to ease local data generation
     # Read data used for training
@@ -359,8 +360,8 @@ def check_run(run_id, path=None):
 
     # TODO: Think of a different condition to check if a df is needed to be produced
     generation_time_a = time.localtime()
-    innerDF, innerData = generate_fake_real_dfs(run_id, cfg_inner)
-    outerDF, outerData = generate_fake_real_dfs(run_id, cfg_outer)
+    innerDF, innerData = generate_fake_real_dfs(run_id, cfg_inner, run_dir)
+    outerDF, outerData = generate_fake_real_dfs(run_id, cfg_outer, run_dir)
     generation_time_b = time.localtime()
     print(f'Created DFs in {get_time(generation_time_a, generation_time_b)}')
     print("getting batch ED...")
