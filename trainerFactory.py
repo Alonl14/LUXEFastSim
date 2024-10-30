@@ -46,7 +46,10 @@ def create_trainer(cfg):
     dataloader_time = time.localtime()
 
     print(f"data loaders created, time elapsed : {utils.get_time(dataloader_time, dataset_time)}")
-    device = torch.device(cfg['device'])
+    if torch.cuda.is_available():
+        device = 'cuda'
+    else:
+        device = torch.device(cfg['device'])
     print(f'Using {device} as device')
 
     numFeatures = len(cfg["features"].keys())
