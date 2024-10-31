@@ -321,11 +321,11 @@ def generate_fake_real_dfs(run_id, cfg, run_dir):
 
     # Create a generator based on the model's number of parameters used
     numFeatures = len(cfg["features"].keys())
-    cfg["noiseDim"] = numFeatures
+    # cfg["noiseDim"] = numFeatures
     generator_net = nn.DataParallel(Generator(cfg["noiseDim"], numFeatures=numFeatures))
 
     # Load parameters
-    model_path = run_dir + "/" + cfg["dataGroup"] + "_Gen_model.pt"
+    model_path = run_dir + cfg["dataGroup"] + "_Gen_model.pt"
     generator_net.load_state_dict(torch.load(model_path, map_location=torch.device('cpu')))
 
     # TODO: remove factor, find a different way to ease local data generation
@@ -647,7 +647,7 @@ def get_batch_ed_histograms(x, y, batch_size=1000):
     ED_null = np.zeros(n_batches)
     ED_H1 = np.zeros(n_batches)
 
-    for i in tqdm.tqdm_notebook(range(n_batches)):
+    for i in tqdm.tqdm(range(n_batches)):
         x_batch, y_batch, y_prime_batch = (x_batches[i], y_batches[i], y_prime_batches[i])
         ED_null[i] = get_ed(x_batch, y_batch)
         ED_H1[i] = get_ed(y_prime_batch, y_batch)
