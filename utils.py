@@ -63,9 +63,28 @@ def add_features(df, pdg):
 
     # dict format is {pdg : particle mass in GeV}
 
-    mass_dict = {2112: 0.9395654133,
-                 22: 0,
-                 11: 0.00051099893}
+    mass_dict = {
+        11: 0.000510998946,  # Electron mass
+        -11: 0.000510998946,  # Positron mass
+        12: 0.0,  # Neutrino (approximately massless)
+        -12: 0.0,  # Anti-Neutrino (approximately massless)
+        13: 0.105658374500,  # Muon mass
+        -13: 0.105658374500,  # Anti-Muon mass
+        14: 0.0,  # Muon-Neutrino (approximately massless)
+        -14: 0.0,  # Anti-Muon-Neutrino (approximately massless)
+        22: 0.0,  # Photon (massless)
+        130: 0.497611000000,  # K0-L (Kaon Long) mass
+        211: 0.139570390000,  # Pion+ mass
+        -211: 0.139570390000,  # Pion- mass
+        2112: 0.939565413300,  # Neutron mass
+        2212: 0.938272088160,  # Proton mass
+        1000010020: 1.87561294257,  # Deuteron mass
+        1000020040: 3.72737937890,  # Alpha particle (Helium-4 nucleus) mass
+        1000030070: 6.53383320600,  # Li-7 (Lithium-7 nucleus) mass
+        1000060120: 11.1779291758,  # C-12 (Carbon-12 nucleus) mass
+        1000080160: 14.8950000000,  # O-16 (Oxygen-16 nucleus) mass
+        1000260540: 50.1200000000  # Fe-54 (Iron-54 nucleus) mass
+    }
 
     mass = mass_dict[pdg]
     df[' phi_x'] = np.arctan2(df[' yy'], df[' xx']) + np.pi
