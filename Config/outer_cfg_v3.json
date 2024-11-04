@@ -13,8 +13,8 @@
     "device": "cpu",
     "nCrit": 2,
     "Lambda": 0.002,
-    "criticLearningRate": 0.0001,
-    "generatorLearningRate": 5e-05,
+    "criticLearningRate": 5e-05,
+    "generatorLearningRate": 0.0001,
     "features": {
         " xx": [],
         " yy": [],
