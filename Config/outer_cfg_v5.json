@@ -25,6 +25,10 @@
             "log"
         ],
         " phi_p": [],
+        " pzz": [
+            "flip",
+            "log"
+        ],
         " eneg": [
             "log"
         ],
