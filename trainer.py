@@ -101,7 +101,6 @@ class Trainer:
 
                 n_generator = 1
                 # If average G_loss is order of magnitude above the critic loss, train it up to 4 additional times
-                print(f"crit_err_G: {crit_err_G}, crit_err_D: {crit_err_D}")
                 while n_generator == 1 or (crit_err_G / n_generator > -10 * crit_err_D / self.nCrit and n_generator < 5):
                     if n_generator > 1:  # You don't need to regenerate noise for the first step
                         if self.applyQT:
