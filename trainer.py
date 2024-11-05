@@ -146,7 +146,7 @@ class Trainer:
             self.Val_D_Losses = np.append(self.Val_D_Losses, -val_error_D)
             print(f'{epoch}/{self.numEpochs}\tLoss_D: {-avg_error_D:.4f}\tLoss_G: {avg_error_G:.4f}')
             print(f'Validation Loss_D: {-val_error_D:.4f}\tValidation Loss_G: {val_error_G:.4f}')
-            print(f"Performed {average_generator_training} generator step/s on avg")
+            print(f"Performed {average_generator_training/iters} generator step/s on avg")
 
     def validate(self):
         self.genNet.eval()
