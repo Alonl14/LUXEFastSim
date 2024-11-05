@@ -5,7 +5,7 @@ import numpy as np
 from matplotlib import pyplot as plt
 import random
 import dataset
-from generator import Generator
+from generator import Generator, Generator2
 import time
 import json
 import os
@@ -326,7 +326,13 @@ def generate_fake_real_dfs(run_id, cfg, run_dir):
 
     # Load parameters
     model_path = run_dir + cfg["dataGroup"] + "_Gen_model.pt"
-    generator_net.load_state_dict(torch.load(model_path, map_location=torch.device('cpu')))
+    try:
+        generator_net.load_state_dict(torch.load(model_path, map_location=torch.device('cpu')))
+    except RuntimeError as e:
+        print("Error loading model state_dict:", e)
+        print("Switching model")
+        generator_net = nn.DataParallel(Generator2(cfg["noiseDim"], numFeatures=numFeatures))
+        generator_net.load_state_dict(torch.load(model_path, map_location=torch.device('cpu')))
 
     # TODO: remove factor, find a different way to ease local data generation
     # Read data used for training

@@ -58,17 +58,17 @@ class Trainer:
         self.discNet.train()
 
         for epoch in tqdm.tqdm(range(self.numEpochs), desc=' epochs', position=0):
+            average_generator_training = 0
             avg_error_G, avg_error_D, currentKLD, iters = 0, 0, 0, 0
             total_batches = len(self.dataloader)
             kl_log_interval = max(1, total_batches // 10)
             for i, data in enumerate(self.dataloader, 0):
                 # Training Phase (same as before)
-                crit_err_D = 0
-
+                crit_err_D, err_D_fake, fake_p = 0, 0, 0
+                batch_size = len(data)
                 for crit_train in range(self.nCrit):
                     # Train discriminator
                     self.discNet.zero_grad()
-                    batch_size = len(data)
                     real_data = data.to(self.device)
 
                     output = self.discNet(real_data)
@@ -82,28 +82,46 @@ class Trainer:
                         noise = torch.from_numpy(noise)
                         noise = noise.to(self.device)
                     fake_p = self.genNet(noise)
-                    output = self.discNet(fake_p.detach())
+                    output = self.discNet(fake_p)
                     err_D_fake = torch.mean(output)
 
                     epsilon = torch.rand(1, device=self.device, requires_grad=True)
-                    gradient = get_gradient(self.discNet, real_data, fake_p.detach(), epsilon)
+                    gradient = get_gradient(self.discNet, real_data, fake_p, epsilon)
                     gradient_norm = gradient.norm(2, dim=1)
                     penalty = self.Lambda * torch.mean((gradient_norm - 1) ** 2)
                     err_D = err_D_real + err_D_fake + penalty
+
                     err_D.backward()
                     crit_err_D += err_D.item()
 
                     self.discOptimizer.step()
 
                 # Update generator
-                self.genNet.zero_grad()
-                output = self.discNet(fake_p)
-                err_G = -torch.mean(output)
-                err_G.backward()
-                self.genOptimizer.step()
+                crit_err_G = -err_D_fake
 
+                n_generator = 1
+                # If average G_loss is order of magnitude above the critic loss, train it up to 4 additional times
+                print(f"crit_err_G: {crit_err_G}, crit_err_D: {crit_err_D}")
+                while n_generator == 1 or (crit_err_G / n_generator > -10 * crit_err_D / self.nCrit and n_generator < 5):
+                    if n_generator > 1:  # You don't need to regenerate noise for the first step
+                        if self.applyQT:
+                            noise = torch.randn(batch_size, self.noiseDim, device=self.device)
+                        else:
+                            noise = np.float32(np.random.randn(batch_size, self.noiseDim))
+                            noise = self.dataset.quantiles.inverse_transform(noise)
+                            noise = torch.from_numpy(noise)
+                            noise = noise.to(self.device)
+                        fake_p = self.genNet(noise)
+                    self.genNet.zero_grad()
+                    output = self.discNet(fake_p.detach())
+                    err_G = -torch.mean(output)
+                    err_G.backward()
+                    crit_err_G += err_G.item()
+                    self.genOptimizer.step()
+                    n_generator += 1
+                average_generator_training += n_generator-1
                 # Calculate losses
-                avg_error_G += err_G.item()
+                avg_error_G += crit_err_G.detach().cpu() / n_generator
                 avg_error_D += crit_err_D / self.nCrit
 
                 iters += 1
@@ -127,9 +145,9 @@ class Trainer:
 
             self.Val_G_Losses = np.append(self.Val_G_Losses, val_error_G)
             self.Val_D_Losses = np.append(self.Val_D_Losses, -val_error_D)
-
             print(f'{epoch}/{self.numEpochs}\tLoss_D: {-avg_error_D:.4f}\tLoss_G: {avg_error_G:.4f}')
             print(f'Validation Loss_D: {-val_error_D:.4f}\tValidation Loss_G: {val_error_G:.4f}')
+            print(f"Performed {average_generator_training} generator step/s on avg")
 
     def validate(self):
         self.genNet.eval()
