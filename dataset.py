@@ -13,7 +13,6 @@ class ParticleDataset(Dataset):
         self.quantiles = None
         self._registry = {"log": my_log,
                           "flip": flip}
-
         QT = qt(output_distribution='normal', n_quantiles=cfg['nQuantiles'], subsample=cfg['subsample'])
 
         self.data = pd.read_csv(cfg['data_path'])
