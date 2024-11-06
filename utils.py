@@ -5,7 +5,7 @@ import numpy as np
 from matplotlib import pyplot as plt
 import random
 import dataset
-from generator import Generator, Generator2
+from generator import Generator
 import time
 import json
 import os

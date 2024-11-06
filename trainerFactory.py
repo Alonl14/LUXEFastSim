@@ -13,7 +13,7 @@ import trainer
 importlib.reload(dataset)
 from dataset import ParticleDataset
 importlib.reload(generator)
-from generator import Generator, Generator2
+from generator import Generator
 importlib.reload(discriminator)
 from discriminator import Discriminator
 importlib.reload(trainer)
@@ -58,7 +58,7 @@ def create_trainer(cfg):
     if not cfg['applyQT']:
         cfg['noiseDim'] = numFeatures
 
-    genNet = Generator2(noiseDim=cfg['noiseDim'], numFeatures=numFeatures)
+    genNet = Generator(noiseDim=cfg['noiseDim'], numFeatures=numFeatures)
     discNet = Discriminator(numFeatures=numFeatures)
 
     genNet = nn.DataParallel(genNet)

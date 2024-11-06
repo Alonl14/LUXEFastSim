@@ -8,6 +8,7 @@ warnings.filterwarnings("ignore", category=UserWarning, message=".*does not have
 warnings.filterwarnings("ignore", category=UserWarning,
                         message=".*You can silence this warning by not passing in num_features.*")
 
+
 def get_gradient(crit, real, fake, epsilon):
     mixed_images = real * epsilon + fake * (1 - epsilon)
     mixed_scores = crit(mixed_images)
