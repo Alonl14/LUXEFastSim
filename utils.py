@@ -287,6 +287,8 @@ def generate_ds(generator_net, factor, cfg):
 
 def weights_init(m):
     if isinstance(m, nn.Linear):
+        # nn.init.xavier_uniform_(m.weight)
+        # nn.init.kaiming_uniform_(m.weight, nonlinearity='leaky_relu')
         nn.init.normal_(m.weight.data, 0.0, 0.02)
     elif isinstance(m, nn.BatchNorm1d):
         nn.init.normal_(m.weight.data, 1, 0.02)
