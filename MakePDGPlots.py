@@ -10,12 +10,15 @@ full_data_path = "/storage/agrp/alonle/GAN_InputSample/LUXEDumpFiles_FullSim_0p0
 path = "/storage/agrp/alonle/GAN_Output"
 full_df = pd.read_csv(full_data_path)
 print(full_df[" pdg"].unique().tolist())
+full_df = full_df[full_df[' rx'] <= 4000]
 for pdg in full_df[" pdg"].unique().tolist():
-    temp_df = full_df[full_df[" pdg"] == pdg]
-    Hxy = utils.plot_correlations(temp_df[' xx'], temp_df[' yy'], 'x[mm]', 'y[mm]', run_id=None,
-                                  key="PDG=" + str(pdg))
-    energy_bins = 10 ** np.linspace(-12, 0, 400)
-    time_bins = 10 ** np.linspace(1, 8, 400)
-    Het = utils.plot_correlations(temp_df[' time'], temp_df[' eneg'], 't[ns]', 'E[GeV]', run_id=None,
-                                  key="PDG=" + str(pdg), bins=[time_bins, energy_bins], loglog=True)
+    df_pdg = full_df[full_df[" pdg"] == pdg]
+    outer1 = df_pdg[(df_pdg[' xx'] >= 500) | (df_pdg[' yy'] >= 500)]
+    outer2 = df_pdg[(df_pdg[' xx'] < 500) & (df_pdg[' yy'] < -1700)]
+    inner = df_pdg[(df_pdg[' xx'] < 500) & (df_pdg[' yy'] >= -1700) & (df_pdg[' yy'] < 500)]
+
+    outer1.to_csv(f"/storage/agrp/alonle/GAN_InputSample/{pdg}_outer1.csv", index=False)
+    outer2.to_csv(f"/storage/agrp/alonle/GAN_InputSample/{pdg}_outer2.csv", index=False)
+    inner.to_csv(f"/storage/agrp/alonle/GAN_InputSample/{pdg}_inner.csv", index=False)
+    
 print(f"Done! Time elapsed : {utils.get_time(beg_time, time.localtime())}")

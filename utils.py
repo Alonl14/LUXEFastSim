@@ -5,7 +5,7 @@ import numpy as np
 from matplotlib import pyplot as plt
 import random
 import dataset
-from generator import Generator, Generator2
+from generator import Generator
 import time
 import json
 import os
@@ -61,13 +61,9 @@ def add_features(df, pdg):
     :return: doesn't return, just alters the df
     """
 
-    # dict format is {pdg : particle mass in GeV}
+    # dict format is {pdg : particle object}
 
-    mass_dict = {2112: 0.9395654133,
-                 22: 0,
-                 11: 0.00051099893}
-
-    mass = mass_dict[pdg]
+    mass = particle_dict[pdg].mass
     df[' phi_x'] = np.arctan2(df[' yy'], df[' xx']) + np.pi
     df[' rx'] = np.sqrt(df[' xx'] ** 2 + df[' yy'] ** 2)
     # TODO: The np.abs is TEMPORARY since network is under-trained,
@@ -287,8 +283,6 @@ def generate_ds(generator_net, factor, cfg):
 
 def weights_init(m):
     if isinstance(m, nn.Linear):
-        # nn.init.xavier_uniform_(m.weight)
-        # nn.init.kaiming_uniform_(m.weight, nonlinearity='leaky_relu')
         nn.init.normal_(m.weight.data, 0.0, 0.02)
     elif isinstance(m, nn.BatchNorm1d):
         nn.init.normal_(m.weight.data, 1, 0.02)
@@ -711,3 +705,52 @@ def make_ed_fig(null, H1, group, show, fig_path):
     axs.set_title(f"{group} ED histogram, ks test p-value:{ks_test.pvalue:.2f}")
     axs.legend(["null", "H1"])
     fig.savefig(fig_path + group + '_histograms.png')
+
+
+class Particle:
+    def __init__(self, name, mass, charge, spin, isospin, pdg):
+        self.name = name
+        self.mass = mass
+        self.charge = charge
+        self.spin = spin
+        self.isospin = isospin
+        self.pdg = pdg
+
+    def __repr__(self):
+        return (f"Particle(name='{self.name}', mass={self.mass}, charge={self.charge}, "
+                f"spin={self.spin}, isospin={self.isospin}, pdg={self.pdg})\n")
+
+    def at(self, features):
+        # Return features as a list
+        return [getattr(self, feature) for feature in features]
+
+
+pdg_dict = {
+    11: ["Electron", 0.0005109989461, -1, 0.5, 0],
+    -11: ["Positron", 0.0005109989461, +1, 0.5, 0],
+    12: ["Neutrino", 0.0, 0, 0.5, 0],
+    -12: ["Anti-Neutrino", 0.0, 0, 0.5, 0],
+    13: ["Muon", 0.1056583745, -1, 0.5, 0],
+    -13: ["Anti-Muon", 0.1056583745, +1, 0.5, 0],
+    14: ["Muon-Neutrino", 0.0, 0, 0.5, 0],
+    -14: ["Anti-Muon-Neutrino", 0.0, 0, 0.5, 0],
+    22: ["Photon", 0.0, 0, 1, 0],
+    130: ["K0-L", 0.497611, 0, 0, 0.5],
+    211: ["Pion+", 0.13957039, +1, 0, 0.5],
+    -211: ["Pion-", 0.13957039, -1, 0, 0.5],
+    2112: ["Neutron", 0.9395654133, 0, 0.5, 0.5],
+    2212: ["Proton", 0.9382720813, +1, 0.5, 0.5],
+    1000010020: ["Deuteron", 1.875612573, +1, 1, 0],
+    1000020040: ["Alpha", 3.727379, +2, 0, 0],
+    1000030070: ["Li-7", 6.533839, +3, 1.5, 1.5],
+    1000060120: ["C-12", 11.177930, +6, 0, 0],
+    1000080160: ["O-16", 14.899170, +8, 0, 0],
+    1000260540: ["Fe-54", 50.832600, +26, 0, 0]
+}
+
+
+# Convert pdg_dict to a dictionary of Particle instances
+particle_dict = {
+    pdg: Particle(name, mass, charge, spin, isospin, pdg)
+    for pdg, (name, mass, charge, spin, isospin) in pdg_dict.items()
+}
