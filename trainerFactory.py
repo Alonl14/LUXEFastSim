@@ -13,7 +13,7 @@ import trainer
 importlib.reload(dataset)
 from dataset import ParticleDataset
 importlib.reload(generator)
-from generator import Generator, Generator2
+from generator import Generator
 importlib.reload(discriminator)
 from discriminator import Discriminator
 importlib.reload(trainer)
