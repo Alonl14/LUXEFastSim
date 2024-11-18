@@ -354,63 +354,86 @@ def check_run(run_id, path=None):
 
     with open(run_dir + "cfg_inner.json", 'r') as inner_file:
         cfg_inner = json.loads(inner_file.read())
-    with open(run_dir + "cfg_outer.json", 'r') as outer_file:
-        cfg_outer = json.loads(outer_file.read())
+    with open(run_dir + "cfg_outer1.json", 'r') as outer1_file:
+        cfg_outer1 = json.loads(outer1_file.read())
+    with open(run_dir + "cfg_outer2.json", 'r') as outer2_file:
+        cfg_outer2 = json.loads(outer2_file.read())
 
     # Specifically for data and norm files, changes the path to local
     if path is None:
         fix_path(cfg_inner, "data_path")
         fix_path(cfg_inner, "norm_path")
-        fix_path(cfg_outer, "data_path")
-        fix_path(cfg_outer, "norm_path")
+        fix_path(cfg_outer1, "data_path")
+        fix_path(cfg_outer1, "norm_path")
+        fix_path(cfg_outer2, "data_path")
+        fix_path(cfg_outer2, "norm_path")
 
     # TODO: Think of a different condition to check if a df is needed to be produced
     generation_time_a = time.localtime()
     innerDF, innerData = generate_fake_real_dfs(run_id, cfg_inner, run_dir)
-    outerDF, outerData = generate_fake_real_dfs(run_id, cfg_outer, run_dir)
+    outer1DF, outer1Data = generate_fake_real_dfs(run_id, cfg_outer1, run_dir)
+    outer2DF, outer2Data = generate_fake_real_dfs(run_id, cfg_outer2, run_dir)
     generation_time_b = time.localtime()
     print(f'Created DFs in {get_time(generation_time_a, generation_time_b)}')
     print("getting batch ED...")
     # TODO: for some reason null_values are nans
 
-    inner_null_values, inner_H1_values = get_batch_ed_histograms(innerDF.loc[:, cfg_inner['features'].keys()],
-                                                                 innerData.loc[:len(innerDF), cfg_inner['features'].keys()],
-                                                                 batch_size=100)
-    outer_null_values, outer_H1_values = get_batch_ed_histograms(outerDF.loc[:len(innerDF), cfg_outer['features'].keys()],
-                                                                 outerData.loc[:len(innerDF), cfg_outer['features'].keys()],
-                                                                 batch_size=100)
+    inner_null_values, inner_H1_values = get_batch_ed_histograms(
+        innerDF.loc[:, cfg_inner['features'].keys()],
+        innerData.loc[:len(innerDF), cfg_inner['features'].keys()],
+        batch_size=100)
+    outer1_null_values, outer1_H1_values = get_batch_ed_histograms(
+        outer1DF.loc[:len(innerDF), cfg_outer1['features'].keys()],
+        outer1Data.loc[:len(innerDF), cfg_outer1['features'].keys()],
+        batch_size=100)
+    outer2_null_values, outer2_H1_values = get_batch_ed_histograms(
+        outer2DF.loc[:len(innerDF), cfg_outer2['features'].keys()],
+        outer2Data.loc[:len(innerDF), cfg_outer2['features'].keys()],
+        batch_size=100)
     make_ed_fig(inner_null_values, inner_H1_values, 'inner', False, fig_path)
-    make_ed_fig(outer_null_values, outer_H1_values, 'outer', True, fig_path)
+    make_ed_fig(outer1_null_values, outer1_H1_values, 'outer1', True, fig_path)
+    make_ed_fig(outer2_null_values, outer2_H1_values, 'outer2', True, fig_path)
 
     # else:
     #     innerDF = pd.read_csv(run_dir + 'innerDF.csv')
     #     outerDF = pd.read_csv(run_dir + 'outerDF.csv')
 
     iKLPath = run_dir + "KL_in.npy"
-    oKLPath = run_dir + "KL_out.npy"
+    oKL1Path = run_dir + "KL_out1.npy"
+    oKL2Path = run_dir + "KL_out2.npy"
 
     iDLPath = run_dir + "D_losses_in.npy"
-    oDLPath = run_dir + "D_losses_out.npy"
+    oDL1Path = run_dir + "D_losses_out1.npy"
+    oDL2Path = run_dir + "D_losses_out2.npy"
+
     iVDLPath = run_dir + "Val_D_losses_in.npy"
-    oVDLPath = run_dir + "Val_D_losses_out.npy"
+    oVDL1Path = run_dir + "Val_D_losses_out1.npy"
+    oVDL2Path = run_dir + "Val_D_losses_out2.npy"
 
     iGLPath = run_dir + "G_losses_in.npy"
-    oGLPath = run_dir + "G_losses_out.npy"
+    oGL1Path = run_dir + "G_losses_out1.npy"
+    oGL2Path = run_dir + "G_losses_out2.npy"
     iVGLPath = run_dir + "Val_G_losses_in.npy"
-    oVGLPath = run_dir + "Val_G_losses_out.npy"
+    oVGL1Path = run_dir + "Val_G_losses_out1.npy"
+    oVGL2Path = run_dir + "Val_G_losses_out2.npy"
 
     innerKLDiv = np.load(iKLPath)
-    outerKLDiv = np.load(oKLPath)
+    outer1KLDiv = np.load(oKL1Path)
+    outer2KLDiv = np.load(oKL2Path)
 
     innerDLosses = np.load(iDLPath)
-    outerDLosses = np.load(oDLPath)
+    outer1DLosses = np.load(oDL1Path)
+    outer2DLosses = np.load(oDL2Path)
     innerValDLosses = np.load(iVDLPath)
-    outerValDLosses = np.load(oVDLPath)
+    outer1ValDLosses = np.load(oVDL1Path)
+    outer2ValDLosses = np.load(oVDL2Path)
 
     innerGLosses = np.load(iGLPath)
-    outerGLosses = np.load(oGLPath)
+    outer1GLosses = np.load(oGL1Path)
+    outer2GLosses = np.load(oGL2Path)
     innerValGLosses = np.load(iVGLPath)
-    outerValGLosses = np.load(oVGLPath)
+    outer1ValGLosses = np.load(oVGL1Path)
+    outer2ValGLosses = np.load(oVGL2Path)
 
     plt.figure(dpi=200)
     plt.title("Inner KL divergence")
@@ -419,11 +442,17 @@ def check_run(run_id, path=None):
     plt.yscale('log')
     plt.savefig(fig_path + 'innerKLDiv.png')
     plt.figure(dpi=200)
-    plt.title("Outer KL divergence")
+    plt.title("Outer1 KL divergence")
     plt.grid(True, which='both', color='0.65', linestyle='-')
-    plt.plot(outerKLDiv)
+    plt.plot(outer1KLDiv)
     plt.yscale('log')
-    plt.savefig(fig_path + 'outerKLDiv.png')
+    plt.savefig(fig_path + 'outer1KLDiv.png')
+    plt.figure(dpi=200)
+    plt.title("Outer2 KL divergence")
+    plt.grid(True, which='both', color='0.65', linestyle='-')
+    plt.plot(outer2KLDiv)
+    plt.yscale('log')
+    plt.savefig(fig_path + 'outer2KLDiv.png')
     plt.figure(dpi=200)
     plt.title("Inner Critic Losses")
     plt.grid(True, which='both', color='0.65', linestyle='-')
@@ -432,12 +461,19 @@ def check_run(run_id, path=None):
     plt.legend(["training", "validation"])
     plt.savefig(fig_path + 'innerDLosses.png')
     plt.figure(dpi=200)
-    plt.title("Outer Critic Losses")
+    plt.title("Outer1 Critic Losses")
     plt.grid(True, which='both', color='0.65', linestyle='-')
-    plt.plot(outerDLosses)
-    plt.plot(outerValDLosses)
+    plt.plot(outer1DLosses)
+    plt.plot(outer1ValDLosses)
     plt.legend(["training", "validation"])
-    plt.savefig(fig_path + 'outerDLosses.png')
+    plt.savefig(fig_path + 'outer1DLosses.png')
+    plt.figure(dpi=200)
+    plt.title("Outer2 Critic Losses")
+    plt.grid(True, which='both', color='0.65', linestyle='-')
+    plt.plot(outer2DLosses)
+    plt.plot(outer2ValDLosses)
+    plt.legend(["training", "validation"])
+    plt.savefig(fig_path + 'outer2DLosses.png')
 
     plt.figure(dpi=200)
     plt.title("Inner Generator Losses")
@@ -447,38 +483,57 @@ def check_run(run_id, path=None):
     plt.legend(["training", "validation"])
     plt.savefig(fig_path + 'innerGLosses.png')
     plt.figure(dpi=200)
-    plt.title("Outer Generator Losses")
+    plt.title("Outer1 Generator Losses")
     plt.grid(True, which='both', color='0.65', linestyle='-')
-    plt.plot(outerGLosses)
-    plt.plot(outerValGLosses)
+    plt.plot(outer1GLosses)
+    plt.plot(outer1ValGLosses)
     plt.legend(["training", "validation"])
-    plt.savefig(fig_path + 'outerGLosses.png')
+    plt.savefig(fig_path + 'outer1GLosses.png')
+    plt.figure(dpi=200)
+    plt.title("Outer2 Generator Losses")
+    plt.grid(True, which='both', color='0.65', linestyle='-')
+    plt.plot(outer2GLosses)
+    plt.plot(outer2ValGLosses)
+    plt.legend(["training", "validation"])
+    plt.savefig(fig_path + 'outer2GLosses.png')
+
+################### 3 SPLIT UP TO HERE
 
     features = [' xx', ' yy', ' pxx', ' pyy', ' pzz', ' eneg', ' time', 'theta']
-    chi2_tests = {'inner': {}, 'outer': {}, 'combined': {}, 'noLeaks': {}}
-    dfDict = {'inner': {}, 'outer': {}, 'combined': {}, 'noLeaks': {}}
+    chi2_tests = {'inner': {}, 'outer1': {}, 'outer2': {}, 'combined': {}, 'noLeaks': {}}
+    dfDict = {'inner': {}, 'outer1': {}, 'outer2': {}, 'combined': {}, 'noLeaks': {}}
     chi2_inner = {' xx': 0, ' yy': 0, ' pxx': 0, ' pyy': 0,
                   ' pzz': 0, ' eneg': 0, ' time': 0, 'theta': 0}
-    chi2_outer = chi2_inner.copy()
+    chi2_outer1 = chi2_inner.copy()
+    chi2_outer2 = chi2_inner.copy()
     chi2_combined = chi2_inner.copy()
     chi2_noLeaks = chi2_inner.copy()
-    combinedData = pd.concat([innerData, outerData])
-    combinedDF = pd.concat([innerDF, outerDF])
+    combinedData = pd.concat([innerData, outer1Data, outer2Data])
+    combinedDF = pd.concat([innerDF, outer1DF, outer2DF])
     noLeaksData = combinedData.copy()
     posIn = ((innerDF[' xx'] < 500) * (innerDF[' xx'] > -1700) * (innerDF[' yy'] < 500))
-    posOut = ((outerDF[' xx'] < 500) * (outerDF[' xx'] > -1700) * (outerDF[' yy'] < 500))
+    posOut1 = ((outer1DF[' xx'] < 500) * (outer1DF[' yy'] < 500))
+    posOut2 = ((outer2DF[' xx'] > -1700) * (outer2DF[' yy'] > 500))
+
+    # outer1 = df_pdg[(df_pdg[' xx'] >= 500) | (df_pdg[' yy'] >= 500)]
+    # outer2 = df_pdg[(df_pdg[' xx'] < -1700) & (df_pdg[' yy'] < 500)]
+    # inner = df_pdg[(df_pdg[' xx'] < 500) & (df_pdg[' xx'] >= -1700) & (df_pdg[' yy'] < 500)]
+
     noLeakInner = innerDF[posIn]
-    noLeakOuter = outerDF[~posOut]
-    noLeaksDF = pd.concat([noLeakInner, noLeakOuter])
+    noLeakOuter1 = outer1DF[~posOut1]
+    noLeakOuter2 = outer2DF[~posOut2]
+    noLeaksDF = pd.concat([noLeakInner, noLeakOuter1, noLeakOuter2])
     dfDict['inner'] = innerDF
-    dfDict['outer'] = outerDF
+    dfDict['outer1'] = outer1DF
+    dfDict['outer2'] = outer2DF
     dfDict['combined'] = combinedDF
     dfDict['noLeaks'] = noLeaksDF
 
     Hxy, Het, Hrth, Hpp = make_plots(innerDF, "inner", run_id, 'inner', run_dir)
-    Hxy, Het, Hrth, Hpp = make_plots(outerDF, "outer", run_id, 'outer', run_dir)
-    Hxy, Het, Hrth, Hpp = make_plots(noLeaksDF, "outer", run_id, 'noLeaks', run_dir)
-    GHxy, GHet, GHrth, GHpp = make_plots(combinedDF, "outer", run_id, 'combined', run_dir)
+    Hxy, Het, Hrth, Hpp = make_plots(outer1DF, "outer1", run_id, 'outer1', run_dir)
+    Hxy, Het, Hrth, Hpp = make_plots(outer2DF, "outer2", run_id, 'outer2', run_dir)
+    Hxy, Het, Hrth, Hpp = make_plots(noLeaksDF, "outer1", run_id, 'noLeaks', run_dir)
+    GHxy, GHet, GHrth, GHpp = make_plots(combinedDF, "outer1", run_id, 'combined', run_dir)
 
     for key in chi2_tests.keys():
         if not os.path.isdir(fig_path + '1dHists/' + key):
