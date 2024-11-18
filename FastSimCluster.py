@@ -15,10 +15,10 @@ config_name = sys.argv[3]
 
 with open(config_dir+"/inner"+config_name, 'r') as inner_file:  #
     cfg_inner = json.loads(inner_file.read())
-with open(config_dir+"/outer_1"+config_name, 'r') as outer_file:
-    cfg_outer_1 = json.loads(outer_file.read())
-with open(config_dir+"/outer_2"+config_name, 'r') as outer_file:
-    cfg_outer_2 = json.loads(outer_file.read())
+with open(config_dir+"/outer1"+config_name, 'r') as outer1_file:
+    cfg_outer_1 = json.loads(outer1_file.read())
+with open(config_dir+"/outer2"+config_name, 'r') as outer2_file:
+    cfg_outer_2 = json.loads(outer2_file.read())
 
 cfg_inner['outputDir'] = sys.argv[2]
 cfg_outer_1['outputDir'] = sys.argv[2]
