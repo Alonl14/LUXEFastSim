@@ -497,8 +497,6 @@ def check_run(run_id, path=None):
     plt.legend(["training", "validation"])
     plt.savefig(fig_path + 'outer2GLosses.png')
 
-################### 3 SPLIT UP TO HERE
-
     features = [' xx', ' yy', ' pxx', ' pyy', ' pzz', ' eneg', ' time', 'theta']
     chi2_tests = {'inner': {}, 'outer1': {}, 'outer2': {}, 'combined': {}, 'noLeaks': {}}
     dfDict = {'inner': {}, 'outer1': {}, 'outer2': {}, 'combined': {}, 'noLeaks': {}}
