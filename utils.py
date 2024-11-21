@@ -332,7 +332,7 @@ def generate_fake_real_dfs(run_id, cfg, run_dir):
 
     # TODO: remove factor, find a different way to ease local data generation
     # Read data used for training
-    fake_df, real_df = generate_ds(generator_net, factor=10, cfg=cfg)
+    fake_df, real_df = generate_ds(generator_net, factor=1, cfg=cfg)
     add_features(fake_df, cfg['pdg'])
     add_features(real_df, cfg['pdg'])
 
