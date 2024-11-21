@@ -17,7 +17,17 @@
     "generatorLearningRate": 0.0001,
     "features": {
         " xx": [],
-        " yy": []
+        " yy": [],
+        " rp": [
+            "log"
+        ],
+        " phi_p": [],
+        " eneg": [
+            "log"
+        ],
+        " time": [
+            "log"
+        ]
     },
     "epsilon": 1e-16
 }
