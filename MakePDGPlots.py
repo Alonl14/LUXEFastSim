@@ -15,12 +15,13 @@ full_df = full_df[full_df[' rx'] <= 4000]
 for pdg in full_df[" pdg"].unique().tolist():
     df_pdg = full_df[full_df[" pdg"] == pdg]
     full_df = full_df[~(full_df[" pdg"] == pdg)]
-    outer1 = df_pdg[(df_pdg[' xx'] >= 500) | (df_pdg[' yy'] >= 500)]
-    outer2 = df_pdg[(df_pdg[' xx'] < -1700) & (df_pdg[' yy'] < 500)]
+    outer1 = df_pdg[((df_pdg[' xx'] >= 500) | (df_pdg[' yy'] >= 500)) |
+                    ((df_pdg[' xx'] < -1700) & (df_pdg[' yy'] > 400))]
+    outer2 = df_pdg[(df_pdg[' xx'] < -1700) & (df_pdg[' yy'] < 600)]
     inner = df_pdg[(df_pdg[' xx'] < 500) & (df_pdg[' xx'] >= -1700) & (df_pdg[' yy'] < 500)]
 
-    outer1.to_csv(f"/storage/agrp/alonle/GAN_InputSample/{pdg}_outer1.csv", index=False)
-    outer2.to_csv(f"/storage/agrp/alonle/GAN_InputSample/{pdg}_outer2.csv", index=False)
-    inner.to_csv(f"/storage/agrp/alonle/GAN_InputSample/{pdg}_inner.csv", index=False)
+    outer1.to_csv(f"/storage/agrp/alonle/GAN_InputSample/v2_{pdg}_outer1.csv", index=False)
+    outer2.to_csv(f"/storage/agrp/alonle/GAN_InputSample/v2_{pdg}_outer2.csv", index=False)
+    inner.to_csv(f"/storage/agrp/alonle/GAN_InputSample/v2_{pdg}_inner.csv", index=False)
 
 print(f"Done! Time elapsed : {utils.get_time(beg_time, time.localtime())}")
