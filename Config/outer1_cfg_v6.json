@@ -5,7 +5,7 @@
     "data_path": "/storage/agrp/alonle/GAN_InputSample/v2_2112_outer1.csv",
     "norm_path": "/storage/agrp/alonle/GAN_InputSample/v2_2112_outer1_norm.csv",
     "outputDir": "",
-    "dataGroup": "outer",
+    "dataGroup": "outer1",
     "pdg": 2112,
     "batchSize": 65536,
     "noiseDim": 600,
