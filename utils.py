@@ -509,17 +509,16 @@ def check_run(run_id, path=None):
     combinedData = pd.concat([innerData, outer1Data, outer2Data])
     combinedDF = pd.concat([innerDF, outer1DF, outer2DF])
     noLeaksData = combinedData.copy()
-    posIn = ((innerDF[' xx'] < 500) * (innerDF[' xx'] > -1700) * (innerDF[' yy'] < 500))
-    posOut1 = ((outer1DF[' xx'] < 500) * (outer1DF[' yy'] < 500))
-    posOut2 = ((outer2DF[' xx'] > -1700) * (outer2DF[' yy'] > 500))
-
+    posIn = (innerDF[' rx'] <= 4000) & (innerDF[' xx'] < 500) & (innerDF[' xx'] > -1700) & (innerDF[' yy'] < 500)
+    posOut1 = (outer1DF[' rx'] <= 4000) & ((outer1DF[' xx'] >= 500) | (outer1DF[' yy'] >= 500))
+    posOut2 = (outer2DF[' rx'] <= 4000) & ((outer2DF[' xx'] < -1700) & (outer2DF[' yy'] <= 500))
     # outer1 = df_pdg[(df_pdg[' xx'] >= 500) | (df_pdg[' yy'] >= 500)]
     # outer2 = df_pdg[(df_pdg[' xx'] < -1700) & (df_pdg[' yy'] < 500)]
     # inner = df_pdg[(df_pdg[' xx'] < 500) & (df_pdg[' xx'] >= -1700) & (df_pdg[' yy'] < 500)]
 
     noLeakInner = innerDF[posIn]
-    noLeakOuter1 = outer1DF[~posOut1]
-    noLeakOuter2 = outer2DF[~posOut2]
+    noLeakOuter1 = outer1DF[posOut1]
+    noLeakOuter2 = outer2DF[posOut2]
     noLeaksDF = pd.concat([noLeakInner, noLeakOuter1, noLeakOuter2])
     dfDict['inner'] = innerDF
     dfDict['outer1'] = outer1DF
