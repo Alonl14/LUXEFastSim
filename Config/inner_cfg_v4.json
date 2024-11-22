@@ -6,7 +6,7 @@
     "norm_path": "/storage/agrp/alonle/GAN_InputSample/22_inner_norm.csv",
     "outputDir": "",
     "dataGroup": "inner",
-    "pdg": 2112,
+    "pdg": 22,
     "batchSize": 4096,
     "noiseDim": 100,
     "numEpochs": 25,
