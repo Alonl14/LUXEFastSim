@@ -530,12 +530,12 @@ def check_run(run_id, path=None):
     noLeakOuter2 = outer2DF[posOut2]
     noLeaksDF = pd.concat([noLeakInner, noLeakOuter1, noLeakOuter2])
 
-    features_for_test = [' xx', ' yy', ' rp', ' phi_p', ' eneg', ' time']
-    noLeaks_null_values, noLeaks_H1_values = get_batch_ed_histograms(
-        noLeaksDF.loc[:100000, features_for_test],
-        combinedData.loc[:100000, features_for_test],
-        batch_size=100)
-    make_ed_fig(noLeaks_null_values, noLeaks_H1_values, 'noLeaks', False, fig_path)
+    # features_for_test = [' xx', ' yy', ' rp', ' phi_p', ' eneg', ' time']
+    # noLeaks_null_values, noLeaks_H1_values = get_batch_ed_histograms(
+    #     noLeaksDF.loc[:100000, features_for_test],
+    #     combinedData.loc[:100000, features_for_test],
+    #     batch_size=100)
+    # make_ed_fig(noLeaks_null_values, noLeaks_H1_values, 'noLeaks', False, fig_path)
 
     dfDict['inner'] = innerDF
     dfDict['outer1'] = outer1DF
