@@ -312,7 +312,7 @@ def combine(innerT, outerT, real_df=None, inner=None, outer=None):
     return generated_df
 
 
-def generate_fake_real_dfs(run_id, cfg, run_dir):
+def generate_fake_real_dfs(run_id, cfg, run_dir, generator_net = None):
     """
     Given a run id load the trained model in run_id dir to its respective trainer and return the generated dataframe
     :param run_id: run id
@@ -324,17 +324,18 @@ def generate_fake_real_dfs(run_id, cfg, run_dir):
     # Create a generator based on the model's number of parameters used
     numFeatures = len(cfg["features"].keys())
     # cfg["noiseDim"] = numFeatures
-    generator_net = nn.DataParallel(Generator(cfg["noiseDim"], numFeatures=numFeatures))
 
     # Load parameters
     model_path = run_dir + cfg["dataGroup"] + "_Gen_model.pt"
-    try:
-        generator_net.load_state_dict(torch.load(model_path, map_location=torch.device('cpu')))
-    except RuntimeError as e:
-        print("Error loading model state_dict:", e)
-        print("Switching model")
-        generator_net = nn.DataParallel(Generator2(cfg["noiseDim"], numFeatures=numFeatures))
-        generator_net.load_state_dict(torch.load(model_path, map_location=torch.device('cpu')))
+    if generator_net is None:
+        generator_net = nn.DataParallel(Generator(cfg["noiseDim"], numFeatures=numFeatures))
+        try:
+            generator_net.load_state_dict(torch.load(model_path, map_location=torch.device('cpu')))
+        except RuntimeError as e:
+            print("Error loading model state_dict:", e)
+            print("Switching model")
+            generator_net = nn.DataParallel(Generator2(cfg["noiseDim"], numFeatures=numFeatures))
+            generator_net.load_state_dict(torch.load(model_path, map_location=torch.device('cpu')))
 
     # TODO: remove factor, find a different way to ease local data generation
     # Read data used for training
