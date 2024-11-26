@@ -21,6 +21,9 @@ class ParticleDataset(Dataset):
         if ' pdg' in self.data.columns.values:
             self.data = self.data[self.data[' pdg'].isin([cfg['pdg']])]  # 22 - photons , 2112 - neutrons
 
+        self.data = self.data[self.data[' time'] <= 10**6]
+        print("time cut 10^6")
+
         self.data[' rx'] = np.sqrt(self.data[' xx'].values ** 2 + self.data[' yy'].values ** 2)
         self.data[' rp'] = np.sqrt(self.data[' pxx'].values ** 2 + self.data[' pyy'].values ** 2)
         self.data[' phi_p'] = np.arctan2(self.data[' pyy'].values, self.data[' pxx'].values) + np.pi

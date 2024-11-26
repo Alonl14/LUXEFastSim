@@ -9,25 +9,32 @@
     "pdg": 2112,
     "batchSize": 65536,
     "noiseDim": 600,
-    "numEpochs": 25,
+    "numEpochs": 50,
     "device": "cpu",
     "nCrit": 2,
     "Lambda": 0.0005,
     "criticLearningRate": 5e-05,
     "generatorLearningRate": 0.0001,
     "features": {
-        " xx": [],
-        " yy": [],
-        " rp": [
-            "log"
-        ],
-        " phi_p": [],
-        " eneg": [
-            "log"
-        ],
-        " time": [
-            "log"
-        ]
+                " xx": [],
+                " yy": [],
+                " rx": [
+                            "log"
+                ],
+                " rp": [
+                            "log"
+                ],
+                " phi_p": [],
+                " pzz": [
+                            "flip",
+                            "log"
+                ],
+                " eneg": [
+                            "log"
+                ],
+                " time": [
+                            "log"
+                ]
     },
     "epsilon": 1e-16
 }
