@@ -25,7 +25,7 @@ def get_kld(real, fake, bins=20):
     # Calculate bin edges based on real data
     min_vals = torch.min(real, dim=0)[0]
     max_vals = torch.max(real, dim=0)[0]
-
+    print(real.size(), fake.size())
     # Create equally spaced bins for each dimension
     bin_edges = [torch.linspace(min_vals[i], max_vals[i], bins + 1) for i in range(real.shape[1])]
 
