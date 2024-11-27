@@ -11,9 +11,16 @@ import json
 import os
 import tqdm
 from scipy.stats import kstest as ks
+from scipy.stats import binned_statistic_dd
 
 
-def get_kld(real, fake, bins=20):
+def compute_sparse_histogram(data, bin_edges):
+    hist, _, _2 = binned_statistic_dd(data.detach().cpu().numpy(), values=None, statistic='count', bins=bin_edges)
+    print(f"Size of hist in bytes: {hist.nbytes}")
+    return torch.tensor(hist, dtype=torch.float32)
+
+
+def get_kld(real, fake, bins=12):
     """
     Creates N-dimensional pdfs and calculates their KL-divergence
     :param real: real event features, shape: (n_events, features)
@@ -29,9 +36,12 @@ def get_kld(real, fake, bins=20):
     # Create equally spaced bins for each dimension
     bin_edges = [torch.linspace(min_vals[i], max_vals[i], bins + 1) for i in range(real.shape[1])]
 
-    # Compute histograms using the same bin edges for real and fake data
-    target_hist = torch.histogramdd(real.cpu(), bins=bin_edges, density=True).hist
-    current_hist = torch.histogramdd(fake.cpu(), bins=bin_edges, density=True).hist
+    # # Compute histograms using the same bin edges for real and fake data
+    # target_hist = torch.histogramdd(real.cpu(), bins=bin_edges, density=True).hist
+    # current_hist = torch.histogramdd(fake.cpu(), bins=bin_edges, density=True).hist
+
+    target_hist = compute_sparse_histogram(real, bin_edges)
+    current_hist = compute_sparse_histogram(fake, bin_edges)
 
     # Normalize histograms to be probability densities
     target_hist = target_hist / torch.sum(target_hist)
