@@ -100,6 +100,8 @@ def plot_correlations(x, y, xlabel, ylabel, run_id, key,
         vmin, vmax = 1e-10, 1e-6
     elif xlabel == "t[ns]":
         vmin, vmax = 1e-6, 1e3
+    elif xlabel == 'phi_p [rad]':
+        vmin, vmax = 1, 1e-4
     else:
         vmin, vmax = 1e-6, 1e-3
     plt.pcolormesh(X, Y, H.T, norm="log", vmin = vmin, vmax = vmax)

@@ -18,13 +18,14 @@
     "features": {
                 " xx": [],
                 " yy": [],
-                " rx": [
-                            "log"
-                ],
                 " rp": [
                             "log"
                 ],
                 " phi_p": [],
+                " pzz": [
+                            "flip",
+                            "log"
+                ],
                 " eneg": [
                             "log"
                 ],

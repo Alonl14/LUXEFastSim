@@ -7,7 +7,7 @@
     "outputDir": "",
     "dataGroup": "outer1",
     "pdg": 2112,
-    "batchSize": 32768,
+    "batchSize": 65536,
     "noiseDim": 600,
     "numEpochs": 50,
     "device": "cpu",
@@ -18,9 +18,6 @@
     "features": {
                 " xx": [],
                 " yy": [],
-                " rx": [
-                            "log"
-                ],
                 " rp": [
                             "log"
                 ],
@@ -35,6 +32,6 @@
                 " time": [
                             "log"
                 ]
-    },
+                },
     "epsilon": 1e-16
 }

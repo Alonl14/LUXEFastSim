@@ -2,13 +2,13 @@
     "applyQT": 1,
     "nQuantiles": 100000,
     "subsample": 25000000,
-    "data_path": "/storage/agrp/alonle/GAN_InputSample/v2_2112_outer1.csv",
-    "norm_path": "/storage/agrp/alonle/GAN_InputSample/v2_2112_outer1_norm.csv",
+    "data_path": "/storage/agrp/alonle/GAN_InputSample/v2_22_outer1.csv",
+    "norm_path": "/storage/agrp/alonle/GAN_InputSample/v2_22_outer1_norm.csv",
     "outputDir": "",
     "dataGroup": "outer1",
-    "pdg": 2112,
+    "pdg": 22,
     "batchSize": 8192,
-    "noiseDim": 600,
+    "noiseDim": 200,
     "numEpochs": 50,
     "device": "cpu",
     "nCrit": 2,
@@ -18,17 +18,10 @@
     "features": {
                 " xx": [],
                 " yy": [],
-                " rx": [
-                            "log"
-                ],
                 " rp": [
                             "log"
                 ],
                 " phi_p": [],
-                " pzz": [
-                            "flip",
-                            "log"
-                ],
                 " eneg": [
                             "log"
                 ],
@@ -36,5 +29,5 @@
                             "log"
                 ]
     },
-    "epsilon": 1e-16
+    "epsilon": 1e-10
 }

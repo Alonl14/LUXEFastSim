@@ -33,12 +33,13 @@ class ParticleDataset(Dataset):
         self.preprocess = self.data.copy()
 
         self.norm = pd.read_csv(cfg['norm_path'], index_col=0)
-        self.norm['max'][" time"] = 10**6
+        self.norm['max'][' time'] = 10**6
         self.apply_transformation(cfg)
 
         # mps doesn't work with double-percision floats, cuda does
         data_type = np.float32
         # store quantiles for inverse (applyQT=0) or apply to data (applyQT=1)
+        print(np.min(self.data, axis=0))
         self.quantiles = QT.fit(self.data)
 
         # store values before quantile transformation, the used quantiles, and the data itself
