@@ -20,7 +20,7 @@ class ParticleDataset(Dataset):
 
         if ' pdg' in self.data.columns.values:
             self.data = self.data[self.data[' pdg'].isin([cfg['pdg']])]  # 22 - photons , 2112 - neutrons
-
+        self.data = self.data[self.data[' pzz'] <= 0]
         self.data = self.data[self.data[' time'] <= 10**6]
         print("time cut 10^6")
 
@@ -34,6 +34,7 @@ class ParticleDataset(Dataset):
 
         self.norm = pd.read_csv(cfg['norm_path'], index_col=0)
         self.norm['max'][' time'] = 10**6
+        self.norm['max'][' pzz'] = 0
         self.apply_transformation(cfg)
 
         # mps doesn't work with double-percision floats, cuda does
