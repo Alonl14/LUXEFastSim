@@ -397,21 +397,21 @@ def check_run(run_id, path=None):
     print("getting batch ED...")
     # TODO: for some reason null_values are nans
 
-    # inner_null_values, inner_H1_values = get_batch_ed_histograms(
-    #     innerDF.loc[:, cfg_inner['features'].keys()],
-    #     innerData.loc[:len(innerDF), cfg_inner['features'].keys()],
-    #     batch_size=100)
-    # outer1_null_values, outer1_H1_values = get_batch_ed_histograms(
-    #     outer1DF.loc[:len(innerDF), cfg_outer1['features'].keys()],
-    #     outer1Data.loc[:len(innerDF), cfg_outer1['features'].keys()],
-    #     batch_size=100)
-    # outer2_null_values, outer2_H1_values = get_batch_ed_histograms(
-    #     outer2DF.loc[:len(innerDF), cfg_outer2['features'].keys()],
-    #     outer2Data.loc[:len(innerDF), cfg_outer2['features'].keys()],
-    #     batch_size=100)
-    # make_ed_fig(inner_null_values, inner_H1_values, 'inner', False, fig_path)
-    # make_ed_fig(outer1_null_values, outer1_H1_values, 'outer1', True, fig_path)
-    # make_ed_fig(outer2_null_values, outer2_H1_values, 'outer2', True, fig_path)
+    inner_null_values, inner_H1_values = get_batch_ed_histograms(
+        innerDF.loc[:, cfg_inner['features'].keys()],
+        innerData.loc[:len(innerDF), cfg_inner['features'].keys()],
+        batch_size=100)
+    outer1_null_values, outer1_H1_values = get_batch_ed_histograms(
+        outer1DF.loc[:len(innerDF), cfg_outer1['features'].keys()],
+        outer1Data.loc[:len(innerDF), cfg_outer1['features'].keys()],
+        batch_size=100)
+    outer2_null_values, outer2_H1_values = get_batch_ed_histograms(
+        outer2DF.loc[:len(innerDF), cfg_outer2['features'].keys()],
+        outer2Data.loc[:len(innerDF), cfg_outer2['features'].keys()],
+        batch_size=100)
+    make_ed_fig(inner_null_values, inner_H1_values, 'inner', False, fig_path)
+    make_ed_fig(outer1_null_values, outer1_H1_values, 'outer1', True, fig_path)
+    make_ed_fig(outer2_null_values, outer2_H1_values, 'outer2', True, fig_path)
 
     #######
     # else:
@@ -544,10 +544,11 @@ def check_run(run_id, path=None):
     noLeaksDF = pd.concat([noLeakInner, noLeakOuter1, noLeakOuter2])
 
     # features_for_test = [' xx', ' yy', ' rp', ' phi_p', ' eneg', ' time']
+
     # noLeaks_null_values, noLeaks_H1_values = get_batch_ed_histograms(
-    #     noLeaksDF.loc[:100000, features_for_test],
-    #     combinedData.loc[:100000, features_for_test],
-    #     batch_size=100)
+    #     noLeaksDF.loc[:, features_for_test],
+    #     combinedData.loc[:, features_for_test],
+    #     batch_size=500)
     # make_ed_fig(noLeaks_null_values, noLeaks_H1_values, 'noLeaks', False, fig_path)
 
     dfDict['inner'] = innerDF
