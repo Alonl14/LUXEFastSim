@@ -109,7 +109,8 @@ class Trainer:
                 iters += 1
                 if iters % kl_log_interval == 0:  # Record KL_div 10 times per epoch
                     print(f"Iteration #{iters}")
-                    addCurrentKLD = utils.get_kld(real_data[:, :], fake_p[:, :])
+                    kl_batch = min(batch_size, 4096)
+                    addCurrentKLD = utils.get_kld(real_data[:kl_batch, :], fake_p[:kl_batch, :])
                     self.KL_Div = np.append(self.KL_Div, addCurrentKLD.detach().numpy())
                     currentKLD = 0
 
