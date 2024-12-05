@@ -16,16 +16,16 @@
     "criticLearningRate": 0.0001,
     "generatorLearningRate": 0.0001,
     "features": {
-        "xx": [],
-        "yy": [],
-        "rp": [
+        " xx": [],
+        " yy": [],
+        " rp": [
             "log"
         ],
-        "phi_p": [],
-        "eneg": [
+        " phi_p": [],
+        " eneg": [
             "log"
         ],
-        "time": [
+        " time": [
             "log"
         ]
     },

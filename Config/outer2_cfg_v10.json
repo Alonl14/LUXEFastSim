@@ -7,7 +7,7 @@
     "outputDir": "",
     "dataGroup": "outer2",
     "pdg": 2112,
-    "batchSize": 512,
+    "batchSize": 1024,
     "noiseDim": 100,
     "numEpochs": 50,
     "device": "cuda",
@@ -16,16 +16,16 @@
     "criticLearningRate": 1e-05,
     "generatorLearningRate": 1e-05,
     "features": {
-        "xx": [],
-        "yy": [],
-        "rp": [
+        " xx": [],
+        " yy": [],
+        " rp": [
             "log"
         ],
-        "phi_p": [],
-        "eneg": [
+        " phi_p": [],
+        " eneg": [
             "log"
         ],
-        "time": [
+        " time": [
             "log"
         ]
     },
