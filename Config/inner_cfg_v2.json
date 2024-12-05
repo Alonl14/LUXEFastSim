@@ -10,7 +10,7 @@
     "batchSize": 1024,
     "noiseDim": 100,
     "numEpochs": 50,
-    "device": "cuda",
+    "device": "cpu",
     "nCrit": 2,
     "Lambda": 0.0005,
     "criticLearningRate": 1e-05,
