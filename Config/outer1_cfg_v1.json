@@ -8,30 +8,26 @@
     "dataGroup": "outer1",
     "pdg": 2112,
     "batchSize": 65536,
-    "noiseDim": 600,
+    "noiseDim": 300,
     "numEpochs": 50,
-    "device": "cpu",
+    "device": "cuda",
     "nCrit": 2,
     "Lambda": 0.0005,
-    "criticLearningRate": 5e-05,
-    "generatorLearningRate": 0.0001,
+    "criticLearningRate": 1e-05,
+    "generatorLearningRate": 1e-05,
     "features": {
-                " xx": [],
-                " yy": [],
-                " rp": [
-                            "log"
-                ],
-                " phi_p": [],
-                " pzz": [
-                            "flip",
-                            "log"
-                ],
-                " eneg": [
-                            "log"
-                ],
-                " time": [
-                            "log"
-                ]
-                },
+        "xx": [],
+        "yy": [],
+        "rp": [
+            "log"
+        ],
+        "phi_p": [],
+        "eneg": [
+            "log"
+        ],
+        "time": [
+            "log"
+        ]
+    },
     "epsilon": 1e-16
 }

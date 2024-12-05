@@ -109,7 +109,7 @@ class Trainer:
                 iters += 1
                 if iters % kl_log_interval == 0:  # Record KL_div 10 times per epoch
                     print(f"Iteration #{iters}")
-                    addCurrentKLD = utils.get_kld(real_data[:1024, :], fake_p[:1024, :])
+                    addCurrentKLD = utils.get_kld(real_data[:, :], fake_p[:, :])
                     self.KL_Div = np.append(self.KL_Div, addCurrentKLD.detach().numpy())
                     currentKLD = 0
 
@@ -122,14 +122,14 @@ class Trainer:
             avg_error_G /= iters
             avg_error_D /= iters
 
-            self.G_Losses = np.append(self.G_Losses, avg_error_G)
+            self.G_Losses = np.append(self.G_Losses, -avg_error_G)
             self.D_Losses = np.append(self.D_Losses, -avg_error_D)
 
-            self.Val_G_Losses = np.append(self.Val_G_Losses, val_error_G)
+            self.Val_G_Losses = np.append(self.Val_G_Losses, -val_error_G)
             self.Val_D_Losses = np.append(self.Val_D_Losses, -val_error_D)
 
-            print(f'{epoch}/{self.numEpochs}\tLoss_D: {-avg_error_D:.4f}\tLoss_G: {avg_error_G:.4f}')
-            print(f'Validation Loss_D: {-val_error_D:.4f}\tValidation Loss_G: {val_error_G:.4f}')
+            print(f'{epoch}/{self.numEpochs}\tLoss_D: {-avg_error_D:.4f}\tLoss_G: {-avg_error_G:.4f}')
+            print(f'Validation Loss_D: {-val_error_D:.4f}\tValidation Loss_G: {-val_error_G:.4f}')
 
     def validate(self):
         self.genNet.eval()

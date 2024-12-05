@@ -396,18 +396,19 @@ def check_run(run_id, path=None):
     print(f'Created DFs in {get_time(generation_time_a, generation_time_b)}')
     print("getting batch ED...")
     # TODO: for some reason null_values are nans
+    min_length = min(len(innerDF), len(outer1DF), len(outer2DF))
 
     inner_null_values, inner_H1_values = get_batch_ed_histograms(
-        innerDF.loc[:, cfg_inner['features'].keys()],
-        innerData.loc[:len(innerDF), cfg_inner['features'].keys()],
+        innerDF.loc[:min(1e6, len(innerDF)-1), cfg_inner['features'].keys()],
+        innerData.loc[:min(1e6, len(innerDF)-1), cfg_inner['features'].keys()],
         batch_size=100)
     outer1_null_values, outer1_H1_values = get_batch_ed_histograms(
-        outer1DF.loc[:len(innerDF), cfg_outer1['features'].keys()],
-        outer1Data.loc[:len(innerDF), cfg_outer1['features'].keys()],
+        outer1DF.loc[:min(1e6, len(outer1DF)-1), cfg_outer1['features'].keys()],
+        outer1Data.loc[:min(1e6, len(outer1DF)-1), cfg_outer1['features'].keys()],
         batch_size=100)
     outer2_null_values, outer2_H1_values = get_batch_ed_histograms(
-        outer2DF.loc[:len(innerDF), cfg_outer2['features'].keys()],
-        outer2Data.loc[:len(innerDF), cfg_outer2['features'].keys()],
+        outer2DF.loc[:min(1e6, len(outer2DF)-1), cfg_outer2['features'].keys()],
+        outer2Data.loc[:min(1e6, len(outer2DF)-1), cfg_outer2['features'].keys()],
         batch_size=100)
     make_ed_fig(inner_null_values, inner_H1_values, 'inner', False, fig_path)
     make_ed_fig(outer1_null_values, outer1_H1_values, 'outer1', True, fig_path)
@@ -418,7 +419,6 @@ def check_run(run_id, path=None):
     #     innerDF = pd.read_csv(run_dir + 'innerDF.csv')
     #     outerDF = pd.read_csv(run_dir + 'outerDF.csv')
     ######
-
 
     iKLPath = run_dir + "KL_in.npy"
     oKL1Path = run_dir + "KL_out1.npy"
@@ -572,8 +572,6 @@ def check_run(run_id, path=None):
             exec("plot_1d(" + key + "Data," + key + "DF,feat,chi2_" + key + ", fig_path, key)")
         exec("chi2_tests['" + key + "']=chi2_" + key)
 
-    # return chi2_tests, dfDict
-
 
 def plot_1d(data, DF, feat, ks, fig_path, key):
     plt.figure(dpi=200)
@@ -725,10 +723,9 @@ def get_batch_ed_histograms(x, y, batch_size=1000):
 
     x_batches = get_batches(x.values, batch_size)
     y_batches = get_batches(y.values, batch_size)
-    print(len(x_batches), np.shape(x_batches[0]))
     y_prime_batches = y_batches.copy()
     random.shuffle(y_prime_batches)
-    n_batches = len(x_batches)
+    n_batches = min(len(x_batches), len(y_batches))
     ED_null = np.zeros(n_batches)
     ED_H1 = np.zeros(n_batches)
 
