@@ -37,11 +37,12 @@ def get_kld(real, fake, bins=12):
     bin_edges = [torch.linspace(min_vals[i], max_vals[i], bins + 1) for i in range(real.shape[1])]
 
     # # Compute histograms using the same bin edges for real and fake data
-    # target_hist = torch.histogramdd(real.cpu(), bins=bin_edges, density=True).hist
-    # current_hist = torch.histogramdd(fake.cpu(), bins=bin_edges, density=True).hist
-
-    target_hist = compute_sparse_histogram(real, bin_edges)
-    current_hist = compute_sparse_histogram(fake, bin_edges)
+    if len(min_vals) <= 7:
+        target_hist = torch.histogramdd(real.cpu(), bins=bin_edges, density=True).hist
+        current_hist = torch.histogramdd(fake.cpu(), bins=bin_edges, density=True).hist
+    else:
+        target_hist = compute_sparse_histogram(real, bin_edges)
+        current_hist = compute_sparse_histogram(fake, bin_edges)
 
     # Normalize histograms to be probability densities
     target_hist = target_hist / torch.sum(target_hist)
