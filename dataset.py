@@ -17,6 +17,9 @@ class ParticleDataset(Dataset):
         QT = qt(output_distribution='normal', n_quantiles=cfg['nQuantiles'], subsample=cfg['subsample'])
 
         self.data = pd.read_csv(cfg['data_path'])
+        print(self.data.shape)
+        if self.data.shape[0] > 1e7:
+            self.data = self.data.loc[:int(1e7), :]
 
         if ' pdg' in self.data.columns.values:
             self.data = self.data[self.data[' pdg'].isin([cfg['pdg']])]  # 22 - photons , 2112 - neutrons
