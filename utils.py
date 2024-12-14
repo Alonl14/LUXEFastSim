@@ -81,7 +81,7 @@ def add_features(df, pdg):
     #       needs to be removed for future versions
     df[' pzz'] = -np.sqrt(np.abs((df[' eneg'] + mass) ** 2 - mass ** 2 - df[' rp'] ** 2))
     # df[' eneg'] = np.sqrt(df[' rp']**2+df[' pzz']**2+mass**2)-mass
-    # df[' rp'] = np.sqrt((df[' eneg']+mass)**2-mass**2-df[' pzz']**2)
+    # df[' rp'] = np.sqrt((df[' eneg'] + mass) ** 2 - mass ** 2 - df[' pzz'] ** 2)
     # df[' rp'] = np.sqrt(df[' eneg']**2-df[' pzz']**2)
     # df[' phi_p'] = np.arctan2(df[' pyy'], df[' pxx'])+np.pi
     df[' pxx'] = df[' rp'] * np.cos(df[' phi_p'] - np.pi)
@@ -106,7 +106,7 @@ def plot_correlations(x, y, xlabel, ylabel, run_id, key,
     else:
         vmin, vmax = 1e-6, 1e-3
     plt.pcolormesh(X, Y, H.T, norm="log", vmin = vmin, vmax = vmax)
-
+    plt.tick_params(labelsize=20)
     if loglog:
         plt.xscale('log')
         plt.yscale('log')
@@ -114,6 +114,8 @@ def plot_correlations(x, y, xlabel, ylabel, run_id, key,
         plt.xlim(Xlim)
     if Ylim is not None:
         plt.ylim(Ylim)
+    plt.xticks(fontsize = 18)
+    plt.yticks(fontsize = 18)
     plt.xlabel(xlabel)
     plt.ylabel(ylabel)
     plt.grid(True)
@@ -214,32 +216,107 @@ def get_q(ds):
     return ds.quantiles.quantiles_
 
 
-def plot_features(ds):
-    print("Feature Slope      Curvature")
+# def plot_features(ds):
+#     print("Feature Slope      Curvature")
+#
+#     for i, col in enumerate(ds.preprocess):
+#         fig, (ax1, ax2, ax3, ax4) = plt.subplots(1, 4, figsize=(20, 5))
+#         fig.suptitle(col)
+#
+#         ax1.hist(ds.preprocess[col], bins=400)
+#         ax2.hist(ds.preqt[:, i], bins=400)
+#         ax3.hist(ds.data[:, i], bins=400)
+#         ax4.plot(ds.quantiles.quantiles_[:, i])
+#
+#         feature = '{:8}'.format(col)
+#
+#         norm = np.max(get_q(ds)[:, i])
+#         slope = np.max(get_q(ds)[1:, i] - get_q(ds)[:-1, i]) / norm
+#         curvature = np.max(get_q(ds)[2:, i] - 2 * get_q(ds)[1:-1, i] + get_q(ds)[:-2, i]) / norm
+#
+#         print(feature + '%.4f     %.4f' % (slope, curvature))
+#         print("\n")
+#
+#         ax1.set_yscale('log')
+#         ax2.set_yscale('log')
+#         ax3.set_yscale('log')
+#         plt.show()
+
+
+def plot_features(ds, save_path=None):
+    """Plots histograms and feature diagnostics for a dataset in one figure."""
+    features = ds.preprocess.columns
+    n_features = len(features)
+    fig, axes = plt.subplots(n_features, 5, figsize=(16, 5 * n_features))
+    fig.suptitle("Feature Diagnostics", fontsize=16)
+    n_events = ds.preprocess.shape[0]
+    generated_qt_df = np.random.randn(n_events, n_features)
+    empty_arr = np.empty((0, n_features))
+    ds2 = dataset.ParticleDataset(ds.cfg)
+    ds2.data = pd.DataFrame(empty_arr, columns=features)
+    data_values = ds2.quantiles.inverse_transform(generated_qt_df)
+    for i, feature in enumerate(features):
+        ds2.data[feature] = data_values[:, i]
+    ds2.apply_transformation(ds2.cfg, inverse=True)
+    ylabels = ['$x$', '$y$', '$r_p$', '$\phi_p$', '$p_z$', '$E$', '$t$']
+
+    xlabels_1 = ['$x [mm]$', '$y [mm]$', '$r_p [GeV]$', '$\phi_p [rad]$', '$p_z [GeV]$', '$E [GeV]$', '$t [ns]$']
+    xlabels_2 = ['$x [a.u.]$', '$y [a.u.]$', '$r_p [a.u.]$', '$\phi_p [a.u.]$', '$p_z [a.u.]$', '$E [a.u.]$', '$t [a.u.]$']
+    print("Feature       Slope       Curvature")
+    print("-" * 40)
 
     for i, col in enumerate(ds.preprocess):
-        fig, (ax1, ax2, ax3, ax4) = plt.subplots(1, 4, figsize=(20, 5))
-        fig.suptitle(col)
+        # Extract axes
+        ax1, ax2, ax3, ax4, ax5 = axes[i]
 
-        ax1.hist(ds.preprocess[col], bins=400)
-        ax2.hist(ds.preqt[:, i], bins=400)
-        ax3.hist(ds.data[:, i], bins=400)
-        ax4.plot(ds.quantiles.quantiles_[:, i])
-
-        feature = '{:8}'.format(col)
-
+        # Data for plotting
         norm = np.max(get_q(ds)[:, i])
         slope = np.max(get_q(ds)[1:, i] - get_q(ds)[:-1, i]) / norm
         curvature = np.max(get_q(ds)[2:, i] - 2 * get_q(ds)[1:-1, i] + get_q(ds)[:-2, i]) / norm
 
-        print(feature + '%.4f     %.4f' % (slope, curvature))
-        print("\n")
+        print(f"{col:<10}  {slope:.4f}    {curvature:.4f}")
 
-        ax1.set_yscale('log')
-        ax2.set_yscale('log')
-        ax3.set_yscale('log')
-        plt.show()
+        # Plot histograms and quantiles
+        ax1.hist(ds.preprocess[col], bins=400, log=True)
+        ax2.hist(ds.preqt[:, i], bins=400, log=True)
+        ax3.hist(ds.data[:, i], bins=400, log=True)
+        ax4.plot(ds.quantiles.quantiles_[:, i], label="Quantiles")
+        if col == ' eneg':
+            bins = 10 ** np.linspace(-12, 0, 400)
+        elif col == ' time':
+            bins = 10 ** np.linspace(1, 8, 400)
+        else:
+            bins = 400
+        ax5.hist(ds.preprocess[col], bins=bins, log=True, alpha=0.6)
+        ax5.hist(ds2.data[col], bins=bins, log=True, alpha=0.6)
+        # Add titles and labels
+        if i == 0:  # Add column headers for the first row
+            ax1.set_title("Raw Data")
+            ax2.set_title("Normalized Features")
+            ax3.set_title("Quantile Transformation")
+            ax4.set_title("Approximated \nQuantile Function")
+            ax5.set_title("QT-generated Data")
 
+        ax1.set_ylabel(f"frequency({ylabels[i]})", fontsize=18)
+        ax1.set_xlabel(f"{xlabels_1[i]}", fontsize=18)
+        ax2.set_xlabel(f"{xlabels_2[i]}", fontsize=18)
+        ax5.set_xlabel(f"{xlabels_1[i]}", fontsize=18)
+        if col in [' eneg', ' time']:
+            ax5.set_xscale('log')
+        for ax in [ax1, ax2, ax3, ax4, ax5]:
+            ax.tick_params(axis='both', which='major', labelsize=16)
+            ax.grid(True, alpha=0.6)
+
+        ax5.legend(["Original Data", "Inverse QT"])
+    plt.tight_layout(rect=(0., 0., 1., 0.95))  # Leave space for the overall title
+    if save_path:
+        plt.savefig(save_path, dpi=300, bbox_inches="tight")
+    plt.show()
+    add_features(ds2.data, ds2.cfg["pdg"])
+    Hxy, Het, Hrth, Hpp = make_plots(ds2.data, "outer1", "", 'noLeaks', "")
+
+    # Hxy, Het, Hrth, Hpp = make_plots(ds.preprocess, "outer1", "", 'noLeaks', "")
+    return ds2.data, ds.preprocess
 
 def generate_df(generator_net, numEvents, cfg):
     """

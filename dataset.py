@@ -13,7 +13,7 @@ class ParticleDataset(Dataset):
         self.quantiles = None
         self._registry = {"log": my_log,
                           "flip": flip}
-
+        self.cfg = cfg
         QT = qt(output_distribution='normal', n_quantiles=cfg['nQuantiles'], subsample=cfg['subsample'])
 
         self.data = pd.read_csv(cfg['data_path'])
@@ -23,8 +23,8 @@ class ParticleDataset(Dataset):
             self.data = self.data[self.data[' pdg'].isin([cfg['pdg']])]  # 22 - photons , 2112 - neutrons
         self.data = self.data[self.data[' pzz'] <= 0]
         self.data = self.data[self.data[' time'] <= 10**6]
-        if self.data.shape[0] > 8e6:
-            self.data = self.data.loc[int(7e6):int(8e6), :]
+        # if self.data.shape[0] > 8e6:
+        #     self.data = self.data.loc[int(7e6):int(8e6), :]
         print("time cut 10^6")
 
         self.data[' rx'] = np.sqrt(self.data[' xx'].values ** 2 + self.data[' yy'].values ** 2)
