@@ -79,7 +79,7 @@ def add_features(df, pdg):
     df[' rx'] = np.sqrt(df[' xx'] ** 2 + df[' yy'] ** 2)
     # TODO: The np.abs is TEMPORARY since network is under-trained,
     #       needs to be removed for future versions
-    # df[' pzz'] = -np.sqrt(np.abs((df[' eneg'] + mass) ** 2 - mass ** 2 - df[' rp'] ** 2))
+    df[' pzz'] = -np.sqrt(np.abs((df[' eneg'] + mass) ** 2 - mass ** 2 - df[' rp'] ** 2))
     # df[' eneg'] = np.sqrt(df[' rp']**2+df[' pzz']**2+mass**2)-mass
     # df[' rp'] = np.sqrt((df[' eneg'] + mass) ** 2 - mass ** 2 - df[' pzz'] ** 2)
     # df[' phi_p'] = np.arctan2(df[' pyy'], df[' pxx'])+np.pi
