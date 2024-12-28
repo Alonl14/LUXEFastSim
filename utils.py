@@ -79,15 +79,20 @@ def add_features(df, pdg):
     df[' rx'] = np.sqrt(df[' xx'] ** 2 + df[' yy'] ** 2)
     # TODO: The np.abs is TEMPORARY since network is under-trained,
     #       needs to be removed for future versions
-    df[' pzz'] = -np.sqrt(np.abs((df[' eneg'] + mass) ** 2 - mass ** 2 - df[' rp'] ** 2))
-    # df[' eneg'] = np.sqrt(df[' rp']**2+df[' pzz']**2+mass**2)-mass
+
+    exp = (df[' eneg'] + mass) ** 2 - mass ** 2 - df[' rp'] ** 2
+    print(exp[exp < 0].min())
+    plt.scatter(df[' xx'][exp < 0], df[' yy'][exp < 0])
+    print("x,y:", df[[' xx', ' yy']][exp < 0])
+    # df[' pzz'] = -np.sqrt((df[' eneg'] + 10**-7 + mass) ** 2 - mass ** 2 - df[' rp'] ** 2)
+    df[' eneg'] = np.sqrt(df[' rp']**2+df[' pzz']**2+mass**2)-mass
     # df[' rp'] = np.sqrt((df[' eneg'] + mass) ** 2 - mass ** 2 - df[' pzz'] ** 2)
     # df[' phi_p'] = np.arctan2(df[' pyy'], df[' pxx'])+np.pi
     df[' pxx'] = df[' rp'] * np.cos(df[' phi_p'] - np.pi)
     df[' pyy'] = df[' rp'] * np.sin(df[' phi_p'] - np.pi)
     # TODO: The np.maximum is TEMPORARY since network is under-trained,
     #       needs to be removed for future versions
-    df['theta'] = np.arccos(df[' pzz'] / np.sqrt((df[' eneg'] + mass) ** 2 - mass ** 2))
+    df['theta'] = np.arccos(-np.sqrt(1-df[' rp']**2 / ((df[' eneg'] + mass) ** 2 - mass ** 2)))
 
 
 def plot_correlations(x, y, xlabel, ylabel, run_id, key,
