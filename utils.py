@@ -81,18 +81,19 @@ def add_features(df, pdg):
     #       needs to be removed for future versions
 
     exp = (df[' eneg'] + mass) ** 2 - mass ** 2 - df[' rp'] ** 2
-    print(exp[exp < 0].min())
-    plt.scatter(df[' xx'][exp < 0], df[' yy'][exp < 0])
-    print("x,y:", df[[' xx', ' yy']][exp < 0])
-    # df[' pzz'] = -np.sqrt((df[' eneg'] + 10**-7 + mass) ** 2 - mass ** 2 - df[' rp'] ** 2)
-    df[' eneg'] = np.sqrt(df[' rp']**2+df[' pzz']**2+mass**2)-mass
+    df.drop(df[exp < 0].index, inplace=True)
+    # print(exp[exp < 0].min())
+    df[' pzz'] = -np.sqrt((df[' eneg'] + mass) ** 2 - mass ** 2 - df[' rp'] ** 2)
+    # df[' eneg'] = np.sqrt(df[' rp']**2+df[' pzz']**2+mass**2)-mass
     # df[' rp'] = np.sqrt((df[' eneg'] + mass) ** 2 - mass ** 2 - df[' pzz'] ** 2)
     # df[' phi_p'] = np.arctan2(df[' pyy'], df[' pxx'])+np.pi
     df[' pxx'] = df[' rp'] * np.cos(df[' phi_p'] - np.pi)
     df[' pyy'] = df[' rp'] * np.sin(df[' phi_p'] - np.pi)
     # TODO: The np.maximum is TEMPORARY since network is under-trained,
     #       needs to be removed for future versions
-    df['theta'] = np.arccos(-np.sqrt(1-df[' rp']**2 / ((df[' eneg'] + mass) ** 2 - mass ** 2)))
+    exp2 = df[' pzz']/np.sqrt((df[' eneg'] + mass) ** 2 - mass ** 2)
+    print(exp2[(exp2 < -1) | (exp2 > 1)])
+    df['theta'] = np.arccos(df[' pzz']/np.sqrt((df[' eneg'] + mass)**2 - mass ** 2))
 
 
 def plot_correlations(x, y, xlabel, ylabel, run_id, key,
@@ -667,7 +668,8 @@ def plot_1d(data, DF, feat, ks, fig_path, key):
     elif feat == ' eneg':
         bins = np.logspace(np.log10(np.min(data[feat])), np.log10(np.sort(data[feat]))[-10], 400)
         plt.xscale('log')
-    plt.text(.01, .85, 'distance = ' + f'{ks[feat]:.3f}', ha='left', va='top', transform=plt.gca().transAxes)
+    if ks is not None:
+        plt.text(.01, .85, 'distance = ' + f'{ks[feat]:.3f}', ha='left', va='top', transform=plt.gca().transAxes)
     plt.hist(DF[feat], bins=bins, density=True, alpha=0.6)
     plt.hist(data[feat], bins=bins, density=True, alpha=0.6)
     plt.legend(["Generated data", "FullSim data"])
