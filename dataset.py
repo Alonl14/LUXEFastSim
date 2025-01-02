@@ -37,7 +37,7 @@ class ParticleDataset(Dataset):
 
         self.norm = pd.read_csv(cfg['norm_path'], index_col=0)
         self.norm['max'][' time'] = 10**6
-        self.norm['max'][' pzz'] = 0
+        # self.norm['max'][' pzz'] = 0
         self.apply_transformation(cfg)
 
         # mps doesn't work with double-percision floats, cuda does
