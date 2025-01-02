@@ -2,10 +2,10 @@
     "applyQT": 1,
     "nQuantiles": 100000,
     "subsample": 1000000,
-    "data_path": "TrainData/v2_2112_outer1.csv",
-    "norm_path": "TrainData/v2_2112_outer1_norm.csv",
-    "outputDir": "/Users/alonlevi/PycharmProjects/LUXEFastSim/Output/",
-    "dataGroup": "outer",
+    "data_path": "/storage/agrp/alonle/GAN_InputSample/v2_2112_outer1.csv",
+    "norm_path": "/storage/agrp/alonle/GAN_InputSample/v2_2112_outer1_norm.csv",
+    "outputDir": "",
+    "dataGroup": "outer1",
     "pdg": 2112,
     "batchSize": 2048,
     "noiseDim": 500,
@@ -22,10 +22,6 @@
             "log"
         ],
         " phi_p": [],
-        " pzz": [
-            "flip",
-            "log"
-        ],
         " eneg": [
             "log"
         ],
