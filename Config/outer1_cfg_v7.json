@@ -10,7 +10,7 @@
     "batchSize": 1024,
     "noiseDim": 500,
     "numEpochs": 25,
-    "device": "mps",
+    "device": "cpu",
     "nCrit": 3,
     "Lambda": 0.0001,
     "criticLearningRate": 0.0001,
