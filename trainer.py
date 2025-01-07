@@ -56,6 +56,8 @@ class Trainer:
         self.genNet.train()
         self.discNet.to(self.device)
         self.discNet.train()
+        torch.save(self.genNet.state_dict(), self.outputDir + self.dataGroup + '_Gen_model.pt')
+        torch.save(self.discNet.state_dict(), self.outputDir + self.dataGroup + '_Disc_model.pt')
 
         for epoch in tqdm.tqdm(range(self.numEpochs), desc=' epochs', position=0):
             avg_error_G, avg_error_D, currentKLD, iters = 0, 0, 0, 0
