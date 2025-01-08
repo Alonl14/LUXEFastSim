@@ -100,12 +100,13 @@ def plot_correlations(x, y, xlabel, ylabel, run_id, key,
                       bins=[400, 400], loglog=False, Xlim=None, Ylim=None, path=None):
     H, xb, yb = np.histogram2d(x, y, bins=bins, range=[[x.min(), x.max()], [y.min(), y.max()]], density=True)
     X, Y = np.meshgrid(xb, yb)
+    plt.rc('font', family='serif', size=18)
     plt.figure(dpi=250)
     if xlabel == "x[mm]":
         vmin, vmax = 1e-10, 1e-6
     elif xlabel == "t[ns]":
         vmin, vmax = 1e-6, 1e3
-    elif xlabel == 'phi_p [rad]':
+    elif xlabel == '\phi_p [rad]':
         vmin, vmax = 1, 1e-4
     else:
         vmin, vmax = 1e-6, 1e-3
@@ -120,8 +121,9 @@ def plot_correlations(x, y, xlabel, ylabel, run_id, key,
         plt.ylim(Ylim)
     plt.xticks(fontsize = 18)
     plt.yticks(fontsize = 18)
-    plt.xlabel(xlabel)
-    plt.ylabel(ylabel)
+    plt.xlabel(r"$" + xlabel + r"$")
+    plt.ylabel(r"$" + ylabel + r"$")
+
     plt.grid(True)
     plt.colorbar()
     if run_id is not None:
@@ -137,7 +139,7 @@ def plot_correlations(x, y, xlabel, ylabel, run_id, key,
     return H
 
 
-def make_plots(df, dataGroup, run_id=None, key=None, path=None):
+def make_plots(df, dataGroup, run_id="", key="", path=""):
     """
     Takes a dataframe and its data group and makes correlation plots for x-y,E-t,r_x-theta,phi_x-phi_p
     :param df: dataframe containing both polar and cartesian forms of data
@@ -160,8 +162,8 @@ def make_plots(df, dataGroup, run_id=None, key=None, path=None):
     time_bins = 10 ** np.linspace(1, 8, 400)
     Het = plot_correlations(df[' time'], df[' eneg'], 't[ns]', 'E[GeV]', run_id, key, bins=[time_bins, energy_bins],
                             loglog=True, path=path)
-    Hrth = plot_correlations(df[' rx'], df['theta'], 'r [mm]', 'theta_p [rad]', run_id, key, path=path)
-    Hpp = plot_correlations(df[' phi_p'], df[' phi_x'], 'phi_p [rad]', 'phi_x [rad]', run_id, key, path=path)
+    Hrth = plot_correlations(df[' rx'], df['theta'], 'r [mm]', '\\theta_p [rad]', run_id, key, path=path)
+    Hpp = plot_correlations(df[' phi_p'], df[' phi_x'], '\phi_p [rad]', '\phi_x [rad]', run_id, key, path=path)
     return Hxy, Het, Hrth, Hpp
 
 
