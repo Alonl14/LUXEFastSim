@@ -2,15 +2,9 @@ import sys
 import time
 import utils
 import argparse
-#
-# beg_time = time.localtime()
-# print(f"Starting timer at : {utils.get_time(beg_time)}")
-# cluster_output = "/storage/agrp/alonle/GAN_Output"
-# utils.check_run(sys.argv[1], path=cluster_output,
-#                 calculate_BED=True, save_df=False,
-#                 plot_metrics=True, plot_results=True)
-# print(f"Done! Time elapsed : {utils.get_time(beg_time, time.localtime())}")
 
+
+# Create an ArgumentParser object to parse command line arguments
 parser = argparse.ArgumentParser(description="Run the GAN output processing script.")
 
 # Positional argument for the main parameter
