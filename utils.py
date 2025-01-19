@@ -91,9 +91,9 @@ def add_features(df, pdg):
     df[' pyy'] = df[' rp'] * np.sin(df[' phi_p'] - np.pi)
     # TODO: The np.maximum is TEMPORARY since network is under-trained,
     #       needs to be removed for future versions
-    exp2 = df[' pzz']/np.sqrt((df[' eneg'] + mass) ** 2 - mass ** 2)
+    exp2 = df[' pzz'] / np.sqrt((df[' eneg'] + mass) ** 2 - mass ** 2)
     print(exp2[(exp2 < -1) | (exp2 > 1)])
-    df['theta'] = np.arccos(df[' pzz']/np.sqrt((df[' eneg'] + mass)**2 - mass ** 2))
+    df['theta'] = np.arccos(df[' pzz'] / np.sqrt((df[' eneg'] + mass) ** 2 - mass ** 2))
 
 
 def plot_correlations(x, y, xlabel, ylabel, run_id, key,
@@ -110,7 +110,7 @@ def plot_correlations(x, y, xlabel, ylabel, run_id, key,
         vmin, vmax = 1, 1e-4
     else:
         vmin, vmax = 1e-6, 1e-3
-    plt.pcolormesh(X, Y, H.T, norm="log", vmin = vmin, vmax = vmax)
+    plt.pcolormesh(X, Y, H.T, norm="log", vmin=vmin, vmax=vmax)
     plt.tick_params(labelsize=20)
     if loglog:
         plt.xscale('log')
@@ -119,8 +119,8 @@ def plot_correlations(x, y, xlabel, ylabel, run_id, key,
         plt.xlim(Xlim)
     if Ylim is not None:
         plt.ylim(Ylim)
-    plt.xticks(fontsize = 18)
-    plt.yticks(fontsize = 18)
+    plt.xticks(fontsize=18)
+    plt.yticks(fontsize=18)
     plt.xlabel(r"$" + xlabel + r"$")
     plt.ylabel(r"$" + ylabel + r"$")
 
@@ -253,8 +253,8 @@ def plot_features(ds, save_path=None):
     """Plots histograms and feature diagnostics for a dataset in one figure."""
     features = ds.preprocess.columns
     n_features = len(features)
-    fig, axes = plt.subplots(n_features, 5, figsize=(16, 5 * n_features))
-    fig.suptitle("Feature Diagnostics", fontsize=16)
+    fig, axes = plt.subplots(4, n_features, figsize=(3 * n_features, 12))
+    # fig.suptitle("Feature Diagnostics", fontsize=16)
     n_events = ds.preprocess.shape[0]
     generated_qt_df = np.random.randn(n_events, n_features)
     empty_arr = np.empty((0, n_features))
@@ -264,17 +264,17 @@ def plot_features(ds, save_path=None):
     for i, feature in enumerate(features):
         ds2.data[feature] = data_values[:, i]
     ds2.apply_transformation(ds2.cfg, inverse=True)
-    ylabels = ['$x$', '$y$', '$r_p$', '$\phi_p$', '$p_z$', '$E$', '$t$']
-
-    xlabels_1 = ['$x [mm]$', '$y [mm]$', '$r_p [GeV]$', '$\phi_p [rad]$', '$p_z [GeV]$', '$E [GeV]$', '$t [ns]$']
-    xlabels_2 = ['$x [a.u.]$', '$y [a.u.]$', '$r_p [a.u.]$', '$\phi_p [a.u.]$', '$p_z [a.u.]$', '$E [a.u.]$', '$t [a.u.]$']
+    ylabels = ['$x$', '$y$', '$r_p$', '$\phi_p$', '$E$', '$t$']  # , '$p_z$'
+    xlabels_1 = ['$x [mm]$', '$y [mm]$', '$r_p [GeV]$', '$\phi_p [rad]$', '$E [GeV]$', '$t [ns]$']  # , '$p_z [GeV]$'
+    xlabels_2 = ['$x [a.u.]$', '$y [a.u.]$', '$r_p [a.u.]$', '$\phi_p [a.u.]$', '$E [a.u.]$',
+                 '$t [a.u.]$']  # , '$p_z [a.u.]$'
     print("Feature       Slope       Curvature")
     print("-" * 40)
 
-    for i, col in enumerate(ds.preprocess):
+    for i, col in enumerate(ds.preprocess.columns):
         # Extract axes
-        ax1, ax2, ax3, ax4, ax5 = axes[i]
-
+        ax1, ax2, ax3, ax4 = axes[:, i]
+        # , ax5
         # Data for plotting
         norm = np.max(get_q(ds)[:, i])
         slope = np.max(get_q(ds)[1:, i] - get_q(ds)[:-1, i]) / norm
@@ -283,38 +283,40 @@ def plot_features(ds, save_path=None):
         print(f"{col:<10}  {slope:.4f}    {curvature:.4f}")
 
         # Plot histograms and quantiles
-        ax1.hist(ds.preprocess[col], bins=400, log=True)
-        ax2.hist(ds.preqt[:, i], bins=400, log=True)
-        ax3.hist(ds.data[:, i], bins=400, log=True)
-        ax4.plot(ds.quantiles.quantiles_[:, i], label="Quantiles")
         if col == ' eneg':
             bins = 10 ** np.linspace(-12, 0, 400)
         elif col == ' time':
-            bins = 10 ** np.linspace(1, 8, 400)
+            bins = 10 ** np.linspace(1, 6, 400)
         else:
             bins = 400
-        ax5.hist(ds.preprocess[col], bins=bins, log=True, alpha=0.6)
-        ax5.hist(ds2.data[col], bins=bins, log=True, alpha=0.6)
-        # Add titles and labels
-        if i == 0:  # Add column headers for the first row
-            ax1.set_title("Raw Data")
-            ax2.set_title("Normalized Features")
-            ax3.set_title("Quantile Transformation")
-            ax4.set_title("Approximated \nQuantile Function")
-            ax5.set_title("QT-generated Data")
 
-        ax1.set_ylabel(f"frequency({ylabels[i]})", fontsize=18)
+        ax1.hist(ds.preprocess[col], bins=bins, log=True)
+        ax2.hist(ds.preqt[:, i], bins=400, log=True)
+        ax3.hist(ds.data[:, i], bins=400, log=True)
+        ax4.plot(ds.quantiles.quantiles_[:, i], label="Quantiles")
+
+        # ax5.hist(ds.preprocess[col], bins=bins, log=True, alpha=0.6)
+        # ax5.hist(ds2.data[col], bins=bins, log=True, alpha=0.6)
+        # Add titles and labels
+        # if i == 0:  # Add column headers for the first row
+        #     ax1.set_title("Raw Data")
+        #     ax2.set_title("Normalized Features")
+        #     ax3.set_title("Quantile Transformation")
+        #     ax4.set_title("Approximated \nQuantile Function")
+        #     ax5.set_title("QT-generated Data")
+        if i == 0:
+            ax1.set_ylabel(f"frequency", fontsize=18)
         ax1.set_xlabel(f"{xlabels_1[i]}", fontsize=18)
         ax2.set_xlabel(f"{xlabels_2[i]}", fontsize=18)
-        ax5.set_xlabel(f"{xlabels_1[i]}", fontsize=18)
-        if col in [' eneg', ' time']:
-            ax5.set_xscale('log')
-        for ax in [ax1, ax2, ax3, ax4, ax5]:
+        # ax5.set_xlabel(f"{xlabels_1[i]}", fontsize=18)
+        # if col in [' eneg', ' time']:
+        # _____ ax5.set_xscale('log')
+        for ax in [ax1, ax2, ax3, ax4]:  # , ax5
             ax.tick_params(axis='both', which='major', labelsize=16)
             ax.grid(True, alpha=0.6)
 
-        ax5.legend(["Original Data", "Inverse QT"])
-    plt.tight_layout(rect=(0., 0., 1., 0.95))  # Leave space for the overall title
+        # ax5.legend(["Original Data", "Inverse QT"])
+    plt.tight_layout(w_pad=-0.4)  # Leave space for the overall title
     if save_path:
         plt.savefig(save_path, dpi=300, bbox_inches="tight")
     plt.show()
@@ -323,6 +325,7 @@ def plot_features(ds, save_path=None):
 
     # Hxy, Het, Hrth, Hpp = make_plots(ds.preprocess, "outer1", "", 'noLeaks', "")
     return ds2.data, ds.preprocess
+
 
 def generate_df(generator_net, numEvents, cfg):
     """
@@ -368,7 +371,7 @@ def generate_ds(generator_net, factor, cfg):
     """
     ds = dataset.ParticleDataset(cfg)
     numEvents = np.shape(ds.data)[0]
-    noise = torch.randn(np.int64(numEvents/factor), cfg['noiseDim'], device='cpu')
+    noise = torch.randn(np.int64(numEvents / factor), cfg['noiseDim'], device='cpu')
     generator_net.to('cpu')
     generated_data = generator_net(noise)
     generated_data = generated_data.detach().numpy()
@@ -408,7 +411,7 @@ def combine(innerT, outerT, real_df=None, inner=None, outer=None):
     return generated_df
 
 
-def generate_fake_real_dfs(run_id, cfg, run_dir, generator_net = None):
+def generate_fake_real_dfs(run_id, cfg, run_dir, generator_net=None):
     """
     Given a run id load the trained model in run_id dir to its respective trainer and return the generated dataframe
     :param run_id: run id
@@ -484,16 +487,16 @@ def check_run(run_id, path=None, calculate_BED=True, save_df=False, plot_metrics
 
     if calculate_BED:
         inner_null_values, inner_H1_values = get_batch_ed_histograms(
-            innerDF.loc[:min(1e6, len(innerDF)-1), cfg_inner['features'].keys()],
-            innerData.loc[:min(1e6, len(innerDF)-1), cfg_inner['features'].keys()],
+            innerDF.loc[:min(1e6, len(innerDF) - 1), cfg_inner['features'].keys()],
+            innerData.loc[:min(1e6, len(innerDF) - 1), cfg_inner['features'].keys()],
             batch_size=100)
         outer1_null_values, outer1_H1_values = get_batch_ed_histograms(
-            outer1DF.loc[:min(1e6, len(outer1DF)-1), cfg_outer1['features'].keys()],
-            outer1Data.loc[:min(1e6, len(outer1DF)-1), cfg_outer1['features'].keys()],
+            outer1DF.loc[:min(1e6, len(outer1DF) - 1), cfg_outer1['features'].keys()],
+            outer1Data.loc[:min(1e6, len(outer1DF) - 1), cfg_outer1['features'].keys()],
             batch_size=100)
         outer2_null_values, outer2_H1_values = get_batch_ed_histograms(
-            outer2DF.loc[:min(1e6, len(outer2DF)-1), cfg_outer2['features'].keys()],
-            outer2Data.loc[:min(1e6, len(outer2DF)-1), cfg_outer2['features'].keys()],
+            outer2DF.loc[:min(1e6, len(outer2DF) - 1), cfg_outer2['features'].keys()],
+            outer2Data.loc[:min(1e6, len(outer2DF) - 1), cfg_outer2['features'].keys()],
             batch_size=100)
         make_ed_fig(inner_null_values, inner_H1_values, 'inner', False, fig_path)
         make_ed_fig(outer1_null_values, outer1_H1_values, 'outer1', True, fig_path)
@@ -603,7 +606,6 @@ def check_run(run_id, path=None, calculate_BED=True, save_df=False, plot_metrics
         plt.plot(outer2ValGLosses)
         plt.legend(["training", "validation"])
         plt.savefig(fig_path + 'outer2GLosses.png')
-
 
     features = [' xx', ' yy', ' pxx', ' pyy', ' pzz', ' eneg', ' time', 'theta']
     chi2_tests = {'inner': {}, 'outer1': {}, 'outer2': {}, 'combined': {}, 'noLeaks': {}}
@@ -828,7 +830,7 @@ def get_batches(array, batch_size):
     batch_list = []
     i = 0
     while i + batch_size < np.shape(array)[0]:
-        batch_list.append(array[i:i+batch_size, :])
+        batch_list.append(array[i:i + batch_size, :])
         i += batch_size
     return batch_list
 
@@ -915,7 +917,6 @@ pdg_dict = {
     1000080160: ["O-16", 14.899170, +8, 0, 0],
     1000260540: ["Fe-54", 50.832600, +26, 0, 0]
 }
-
 
 # Convert pdg_dict to a dictionary of Particle instances
 particle_dict = {

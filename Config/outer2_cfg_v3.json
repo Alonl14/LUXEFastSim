@@ -12,12 +12,15 @@
     "numEpochs": 50,
     "device": "cpu",
     "nCrit": 4,
-    "Lambda": 1e-05,
+    "Lambda": 0.0001,
     "criticLearningRate": 0.0001,
     "generatorLearningRate": 0.0001,
     "features": {
         " xx": [],
         " yy": [],
+        " rx": [
+            "log"
+        ],
         " rp": [
             "log"
         ],

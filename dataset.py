@@ -23,6 +23,7 @@ class ParticleDataset(Dataset):
         
         self._prepare_data_for_training(cfg, QT)
 
+
     def _load_and_preprocess_data(self, cfg):
         data = pd.read_csv(cfg['data_path'])
         print(f"Initial data shape: {data.shape}")
