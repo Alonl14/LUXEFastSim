@@ -101,7 +101,7 @@ def plot_correlations(x, y, xlabel, ylabel, run_id, key,
     H, xb, yb = np.histogram2d(x, y, bins=bins, range=[[x.min(), x.max()], [y.min(), y.max()]], density=True)
     X, Y = np.meshgrid(xb, yb)
     plt.rc('font', family='serif', size=18)
-    plt.figure(dpi=250)
+    plt.figure(dpi=200)
     if xlabel == "x[mm]":
         vmin, vmax = 1e-10, 1e-6
     elif xlabel == "t[ns]":
@@ -126,13 +126,16 @@ def plot_correlations(x, y, xlabel, ylabel, run_id, key,
 
     plt.grid(True)
     plt.colorbar()
+    plt.tight_layout()
     if run_id is not None:
         hist_path = path + 'plots/2dHists'
         if not os.path.isdir(hist_path + '/' + key):
             if not os.path.isdir(hist_path):
                 os.mkdir(hist_path)
             os.mkdir(hist_path + '/' + key)
-        plt.savefig(hist_path + '/' + key + '/' + xlabel + '-' + ylabel + '.png')
+        clean_xlabel = ''.join(char for char in xlabel if char.isalnum())
+        clean_ylabel = ''.join(char for char in ylabel if char.isalnum())
+        plt.savefig(hist_path + '/' + key + '/2d-' + clean_xlabel + '-' + clean_ylabel + '.png', bbox_inches='tight')
     else:
         hist_path = "/storage/agrp/alonle/GAN_Output"
         plt.savefig(hist_path + '/' + key + xlabel + '-' + ylabel + '.png')
@@ -158,10 +161,11 @@ def make_plots(df, dataGroup, run_id="", key="", path=""):
         y_lim = [-2500, 500]
 
     Hxy = plot_correlations(df[' xx'], df[' yy'], 'x[mm]', 'y[mm]', run_id, key, path=path)  # , Xlim=x_lim, Ylim=y_lim
-    energy_bins = 10 ** np.linspace(-12, 0, 400)
-    time_bins = 10 ** np.linspace(1, 8, 400)
+    energy_bins = 10 ** np.linspace(-13, 0, 400)
+    bin_stop = np.log10(np.max(df[' time']))
+    time_bins = 10 ** np.linspace(1, bin_stop+0.5, 400)
     Het = plot_correlations(df[' time'], df[' eneg'], 't[ns]', 'E[GeV]', run_id, key, bins=[time_bins, energy_bins],
-                            loglog=True, path=path)
+                            loglog=True, path=path) #, Xlim=10**6.5
     Hrth = plot_correlations(df[' rx'], df['theta'], 'r [mm]', '\\theta_p [rad]', run_id, key, path=path)
     Hpp = plot_correlations(df[' phi_p'], df[' phi_x'], '\phi_p [rad]', '\phi_x [rad]', run_id, key, path=path)
     return Hxy, Het, Hrth, Hpp
@@ -439,6 +443,7 @@ def generate_fake_real_dfs(run_id, cfg, run_dir, generator_net=None):
     # TODO: remove factor, find a different way to ease local data generation
     # Read data used for training
     fake_df, real_df = generate_ds(generator_net, factor=1, cfg=cfg)
+    real_df = real_df[real_df[' time'] <= 1e6]
     add_features(fake_df, cfg['pdg'])
     add_features(real_df, cfg['pdg'])
 
@@ -619,9 +624,9 @@ def check_run(run_id, path=None, calculate_BED=True, save_df=False, plot_metrics
     combinedData = pd.concat([innerData, outer1Data, outer2Data])
     combinedDF = pd.concat([innerDF, outer1DF, outer2DF])
     noLeaksData = combinedData.copy()
-    posIn = (innerDF[' rx'] <= 4000) & (innerDF[' xx'] < 500) & (innerDF[' xx'] > -1700) & (innerDF[' yy'] < 500)
-    posOut1 = (outer1DF[' rx'] <= 4000) & ((outer1DF[' xx'] >= 500) | (outer1DF[' yy'] >= 500))
-    posOut2 = (outer2DF[' rx'] <= 4000) & ((outer2DF[' xx'] < -1700) & (outer2DF[' yy'] <= 500))
+    posIn = (innerDF[' time'] <= 1e6) & (innerDF[' rx'] <= 4000) & (innerDF[' xx'] < 500) & (innerDF[' xx'] > -1700) & (innerDF[' yy'] < 500)
+    posOut1 = (outer1DF[' time'] <= 1e6) & (outer1DF[' rx'] <= 4000) & ((outer1DF[' xx'] >= 500) | (outer1DF[' yy'] >= 500))
+    posOut2 = (outer2DF[' time'] <= 1e6) & (outer2DF[' rx'] <= 4000) & ((outer2DF[' xx'] < -1700) & (outer2DF[' yy'] <= 500))
     # outer1 = df_pdg[(df_pdg[' xx'] >= 500) | (df_pdg[' yy'] >= 500)]
     # outer2 = df_pdg[(df_pdg[' xx'] < -1700) & (df_pdg[' yy'] < 500)]
     # inner = df_pdg[(df_pdg[' xx'] < 500) & (df_pdg[' xx'] >= -1700) & (df_pdg[' yy'] < 500)]
