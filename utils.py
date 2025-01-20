@@ -612,11 +612,11 @@ def check_run(run_id, path=None, calculate_BED=True, save_df=False, plot_metrics
         plt.legend(["training", "validation"])
         plt.savefig(fig_path + 'outer2GLosses.png')
 
-    features = [' xx', ' yy', ' pxx', ' pyy', ' pzz', ' eneg', ' time', 'theta']
+    features = [' xx', ' yy', ' pxx', ' pyy', ' pzz', ' eneg', ' time', 'theta', ' rx']
     chi2_tests = {'inner': {}, 'outer1': {}, 'outer2': {}, 'combined': {}, 'noLeaks': {}}
     dfDict = {'inner': {}, 'outer1': {}, 'outer2': {}, 'combined': {}, 'noLeaks': {}}
     chi2_inner = {' xx': 0, ' yy': 0, ' pxx': 0, ' pyy': 0,
-                  ' pzz': 0, ' eneg': 0, ' time': 0, 'theta': 0}
+                  ' pzz': 0, ' eneg': 0, ' time': 0, 'theta': 0, ' rx': 0}
     chi2_outer1 = chi2_inner.copy()
     chi2_outer2 = chi2_inner.copy()
     chi2_combined = chi2_inner.copy()
@@ -664,7 +664,6 @@ def check_run(run_id, path=None, calculate_BED=True, save_df=False, plot_metrics
                 os.mkdir(fig_path + '1dHists/' + key)
             for feat in features:
                 exec("plot_1d(" + key + "Data," + key + "DF,feat,chi2_" + key + ", fig_path, key)")
-            exec("chi2_tests['" + key + "']=chi2_" + key)
 
 
 def plot_1d(data, DF, feat, ks, fig_path, key):
@@ -677,8 +676,8 @@ def plot_1d(data, DF, feat, ks, fig_path, key):
     elif feat == ' eneg':
         bins = np.logspace(np.log10(np.min(data[feat])), np.log10(np.sort(data[feat]))[-10], 400)
         plt.xscale('log')
-    if ks is not None:
-        plt.text(.01, .85, 'distance = ' + f'{ks[feat]:.3f}', ha='left', va='top', transform=plt.gca().transAxes)
+    # if ks is not None:
+    #     plt.text(.01, .85, 'distance = ' + f'{ks[feat]:.3f}', ha='left', va='top', transform=plt.gca().transAxes)
     plt.hist(DF[feat], bins=bins, density=True, alpha=0.6)
     plt.hist(data[feat], bins=bins, density=True, alpha=0.6)
     plt.legend(["Generated data", "FullSim data"])
