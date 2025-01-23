@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 from torch.utils.data import Dataset
 from sklearn.preprocessing import QuantileTransformer as qt
+import copy
 
 
 class ParticleDataset(Dataset):
@@ -10,54 +11,43 @@ class ParticleDataset(Dataset):
         self.preprocess = None
         self.preqt = None
         self.quantiles = None
-        self._registry = {"log": my_log, "flip": flip}
+        self._registry = {"log": my_log,
+                          "flip": flip}
         self.cfg = cfg
-        
         QT = qt(output_distribution='normal', n_quantiles=cfg['nQuantiles'], subsample=cfg['subsample'])
-        
-        self.data = self._load_and_preprocess_data(cfg)
+
+        self.data = pd.read_csv(cfg['data_path'])
+        print(self.data.shape)
+
+        if ' pdg' in self.data.columns.values:
+            self.data = self.data[self.data[' pdg'].isin([cfg['pdg']])]  # 22 - photons , 2112 - neutrons
+        self.data = self.data[(self.data[' time'] <= 10**6) & (self.data[' pzz'] <= 0)]
+        print("time cut 10^6")
+
+        self.data[' rx'] = np.sqrt(self.data[' xx'].values ** 2 + self.data[' yy'].values ** 2)
+        self.data[' rp'] = np.sqrt(self.data[' pxx'].values ** 2 + self.data[' pyy'].values ** 2)
+        self.data[' phi_p'] = np.arctan2(self.data[' pyy'].values, self.data[' pxx'].values) + np.pi
+
+        self.data = self.data[cfg["features"].keys()]
+
         self.preprocess = self.data.copy()
-        
-        self._load_normalization(cfg)
-        self.apply_transformation(cfg)
-        
-        self._prepare_data_for_training(cfg, QT)
 
-
-    def _load_and_preprocess_data(self, cfg):
-        data = pd.read_csv(cfg['data_path'])
-        print(f"Initial data shape: {data.shape}")
-        
-        data = self._filter_data(data, cfg)
-        data = self._add_derived_features(data)
-        
-        return data[cfg["features"].keys()]
-
-    def _filter_data(self, data, cfg):
-        if ' pdg' in data.columns.values:
-            data = data[data[' pdg'].isin([cfg['pdg']])]
-        data = data[(data[' pzz'] <= 0) & (data[' time'] <= 10**6)]
-        print("Applied time cut 10^6")
-        return data
-
-    def _add_derived_features(self, data):
-        data[' rx'] = np.sqrt(data[' xx'].values**2 + data[' yy'].values**2)
-        data[' rp'] = np.sqrt(data[' pxx'].values**2 + data[' pyy'].values**2)
-        data[' phi_p'] = np.arctan2(data[' pyy'].values, data[' pxx'].values) + np.pi
-        return data
-
-    def _load_normalization(self, cfg):
         self.norm = pd.read_csv(cfg['norm_path'], index_col=0)
         self.norm['max'][' time'] = 10**6
+        self.norm['max'][' pzz'] = 0
+        self.apply_transformation(cfg)
 
-    def _prepare_data_for_training(self, cfg, QT):
+        # mps doesn't work with double-percision floats, cuda does
         data_type = np.float32
-        print(f"Minimum values: {np.min(self.data, axis=0)}")
+        # store quantiles for inverse (applyQT=0) or apply to data (applyQT=1)
+        print(np.min(self.data, axis=0))
         self.quantiles = QT.fit(self.data)
 
+        # store values before quantile transformation, the used quantiles, and the data itself
         if cfg['applyQT']:
             self.preqt = self.data.values
-            self.data = QT.fit_transform(self.data).astype(data_type)
+            self.data = QT.fit_transform(self.data)
+            self.data = self.data.astype(data_type)
         else:
             self.data = self.data.values.astype(data_type)
 
@@ -66,9 +56,19 @@ class ParticleDataset(Dataset):
         return self._registry
 
     def apply_transformation(self, cfg, inverse=False):
+        """
+        Applies transformations to data before feeding it to QT / training
+        :param cfg: config for that specific run
+        :param inverse: if True applies the inverse transformations listed in cfg
+        :return:
+        """
+
         eps = cfg["epsilon"]
+
+        # make all transformations, if inverse flip the function list since (f(g(x)))^-1 = g^-1(f^-1(x))
         for feature, function_list in cfg["features"].items():
-            x_max, x_min = self.norm['max'][feature], self.norm['min'][feature]
+            x_max = self.norm['max'][feature]
+            x_min = self.norm['min'][feature]
             if not inverse:
                 self.data[feature] = normalize(self.data[feature], x_min, x_max, eps, inverse)
             functions = function_list[::-1] if inverse else function_list[:]
@@ -84,19 +84,16 @@ class ParticleDataset(Dataset):
         return self.data.shape[0]
 
 
-def normalize(data: np.ndarray, data_min: float, data_max: float, epsilon: float, inverse: bool) -> np.ndarray:
+def normalize(data, data_min, data_max, epsilon, inverse):
     """
-    Normalize a feature to be in the range (epsilon, 1-epsilon) or perform the inverse operation.
+    normalize a feature to be in the range (eps,1-eps) OR the inverse
 
-    Args:
-        data (np.ndarray): Feature to be normalized.
-        data_min (float): Minimum value of the data (or from norm file if inverse).
-        data_max (float): Maximum value of the data (or from norm file if inverse).
-        epsilon (float): Data will be scaled to the range [epsilon, 1-epsilon].
-        inverse (bool): If True, assumes data is in [epsilon, 1-epsilon] and scales it to [data_min, data_max].
-
-    Returns:
-        np.ndarray: Normalized or inverse-normalized feature.
+    :param data: feature to be normalized
+    :param data_min: min(data) OR if inverse, should be taken from norm file
+    :param data_max: max(data) OR if inverse, should be taken from norm file
+    :param epsilon: data will be scaled to the range [eps, 1-eps], MUST be the smallest scale in the dataset!
+    :param inverse: if True, assumes data is in [eps, 1-eps] and scales it to be in [data_min, data_max]
+    :return: normalized feature
     """
     if data_min == 0:
         b = epsilon
@@ -108,37 +105,20 @@ def normalize(data: np.ndarray, data_min: float, data_max: float, epsilon: float
     return a * data + b if not inverse else (data - b) / a
 
 
-def my_log(data: np.ndarray, epsilon: float, inverse: bool) -> np.ndarray:
+def my_log(data, epsilon, inverse):
     """
-    Apply logarithmic transformation with scaling.
+    applies log with scale, derivation in OneNote -> FastSim -> Code Clean-up
 
-    Args:
-        data (np.ndarray): Input data, assumed to be in range [epsilon, 1-epsilon].
-        epsilon (float): Small value used for scaling, should match the one used in normalize.
-        inverse (bool): If True, applies the inverse function.
-
-    Returns:
-        np.ndarray: Transformed data, still in range [epsilon, 1-epsilon].
+    :param data: ASSUMES DATA IS IN [eps, 1-eps]
+    :param epsilon: should be the same as in normalize
+    :param inverse: if true applies the inverse function
+    :return: log(a*data+b) with a,b s.t. result is still in [eps, 1-eps]
     """
+
     a = (np.log((1 - epsilon) / epsilon)) ** (-1)
     b = epsilon - a * np.log(epsilon)
-    
-    if not inverse:
-        return a * np.log(data) + b
-    else:
-        return np.exp((data - b) / a)
+    return a * np.log(data) + b if not inverse else np.exp((data - b) / a)
 
 
-def flip(data: np.ndarray, epsilon: float, inverse: bool) -> np.ndarray:
-    """
-    Flip the data around its midpoint.
-
-    Args:
-        data (np.ndarray): Input data to be flipped.
-        epsilon (float): Unused, included for consistency with other transformation functions.
-        inverse (bool): Unused, the flip operation is its own inverse.
-
-    Returns:
-        np.ndarray: Flipped data.
-    """
+def flip(data, epsilon, inverse):
     return 1 - data

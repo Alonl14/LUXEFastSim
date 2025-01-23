@@ -81,7 +81,7 @@ def add_features(df, pdg):
     #       needs to be removed for future versions
 
     exp = (df[' eneg'] + mass) ** 2 - mass ** 2 - df[' rp'] ** 2
-    df.drop(df[exp < 0].index, inplace=True)
+    # df.drop(df[exp < 0].index, inplace=True)
     # print(exp[exp < 0].min())
     df[' pzz'] = -np.sqrt((df[' eneg'] + mass) ** 2 - mass ** 2 - df[' rp'] ** 2)
     # df[' eneg'] = np.sqrt(df[' rp']**2+df[' pzz']**2+mass**2)-mass
@@ -111,7 +111,7 @@ def plot_correlations(x, y, xlabel, ylabel, run_id, key,
     else:
         vmin, vmax = 1e-6, 1e-3
     plt.pcolormesh(X, Y, H.T, norm="log", vmin=vmin, vmax=vmax)
-    plt.tick_params(labelsize=20)
+    # plt.tick_params()
     if loglog:
         plt.xscale('log')
         plt.yscale('log')
@@ -119,13 +119,14 @@ def plot_correlations(x, y, xlabel, ylabel, run_id, key,
         plt.xlim(Xlim)
     if Ylim is not None:
         plt.ylim(Ylim)
-    plt.xticks(fontsize=18)
-    plt.yticks(fontsize=18)
-    plt.xlabel(r"$" + xlabel + r"$")
-    plt.ylabel(r"$" + ylabel + r"$")
+    plt.xticks(fontsize=25)
+    plt.yticks(fontsize=25)
+    plt.xlabel(r"$" + xlabel + r"$", fontsize=25)
+    plt.ylabel(r"$" + ylabel + r"$", fontsize=25)
 
     plt.grid(True)
-    plt.colorbar()
+    cbar = plt.colorbar()
+    cbar.ax.tick_params(labelsize=25)
     plt.tight_layout()
     if run_id is not None:
         hist_path = path + 'plots/2dHists'
@@ -294,10 +295,10 @@ def plot_features(ds, save_path=None):
         else:
             bins = 400
 
-        ax1.hist(ds.preprocess[col], bins=bins, log=True)
-        ax2.hist(ds.preqt[:, i], bins=400, log=True)
-        ax3.hist(ds.data[:, i], bins=400, log=True)
-        ax4.plot(ds.quantiles.quantiles_[:, i], label="Quantiles")
+        ax1.hist(ds.preprocess[col], bins=bins, log=True, color="#4682b4")
+        ax2.hist(ds.preqt[:, i], bins=400, log=True, color="#4682b4")
+        ax3.hist(ds.data[:, i], bins=400, log=True, color="#4682b4")
+        ax4.plot(ds.quantiles.quantiles_[:, i], label="Quantiles", color="#4682b4")
 
         # ax5.hist(ds.preprocess[col], bins=bins, log=True, alpha=0.6)
         # ax5.hist(ds2.data[col], bins=bins, log=True, alpha=0.6)
@@ -442,7 +443,7 @@ def generate_fake_real_dfs(run_id, cfg, run_dir, generator_net=None):
 
     # TODO: remove factor, find a different way to ease local data generation
     # Read data used for training
-    fake_df, real_df = generate_ds(generator_net, factor=1, cfg=cfg)
+    fake_df, real_df = generate_ds(generator_net, factor=20, cfg=cfg)
     real_df = real_df[real_df[' time'] <= 1e6]
     add_features(fake_df, cfg['pdg'])
     add_features(real_df, cfg['pdg'])
@@ -671,7 +672,7 @@ def plot_1d(data, DF, feat, ks, fig_path, key):
     plt.yscale('log')
     bins = np.linspace(np.min(data[feat]), np.max(data[feat]), 400)
     if feat == ' time':
-        bins = np.logspace(np.log10(np.min(data[feat])), np.log10(np.sort(data[feat]))[-10], 400)
+        bins = np.logspace(np.log10(np.min(data[feat])), 10**6, 400)
         plt.xscale('log')
     elif feat == ' eneg':
         bins = np.logspace(np.log10(np.min(data[feat])), np.log10(np.sort(data[feat]))[-10], 400)
@@ -872,7 +873,7 @@ def make_ed_fig(null, H1, group, show, fig_path):
     axs.grid(True, which='both', color='0.65', linestyle='-')
     bin_max = np.max(np.concatenate((null, H1)))
     bin_min = np.min(np.concatenate((null, H1)))
-    bins = np.linspace(bin_min, bin_max, 30)
+    bins = np.linspace(bin_min, bin_max, 50)
     axs.hist(null, bins=bins, density=True, alpha=0.6)
     axs.hist(H1, bins=bins, density=True, alpha=0.6)
     ks_test = ks(null, H1)
