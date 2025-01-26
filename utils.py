@@ -483,6 +483,8 @@ def check_run(run_id, path=None, calculate_BED=True, save_df=False, plot_metrics
         fix_path(cfg_outer2, "norm_path")
 
     # TODO: Think of a different condition to check if a df is needed to be produced
+    plt.style.use('seaborn-v0_8-deep')
+    plt.rcParams.update({'font.size': 25})
     generation_time_a = time.localtime()
     innerDF, innerData = generate_fake_real_dfs(run_id, cfg_inner, run_dir)
     outer1DF, outer1Data = generate_fake_real_dfs(run_id, cfg_outer1, run_dir)
@@ -596,22 +598,22 @@ def check_run(run_id, path=None, calculate_BED=True, save_df=False, plot_metrics
         plt.figure(dpi=200)
         plt.title("Inner Generator Losses")
         plt.grid(True, which='both', color='0.65', linestyle='-')
-        plt.plot(innerGLosses)
-        plt.plot(innerValGLosses)
+        plt.plot(-innerGLosses)
+        plt.plot(-innerValGLosses)
         plt.legend(["training", "validation"])
         plt.savefig(fig_path + 'innerGLosses.png')
         plt.figure(dpi=200)
         plt.title("Outer1 Generator Losses")
         plt.grid(True, which='both', color='0.65', linestyle='-')
-        plt.plot(outer1GLosses)
-        plt.plot(outer1ValGLosses)
+        plt.plot(-outer1GLosses)
+        plt.plot(-outer1ValGLosses)
         plt.legend(["training", "validation"])
         plt.savefig(fig_path + 'outer1GLosses.png')
         plt.figure(dpi=200)
         plt.title("Outer2 Generator Losses")
         plt.grid(True, which='both', color='0.65', linestyle='-')
-        plt.plot(outer2GLosses)
-        plt.plot(outer2ValGLosses)
+        plt.plot(-outer2GLosses)
+        plt.plot(-outer2ValGLosses)
         plt.legend(["training", "validation"])
         plt.savefig(fig_path + 'outer2GLosses.png')
 
@@ -679,12 +681,19 @@ def plot_1d(data, DF, feat, ks, fig_path, key):
     elif feat == ' eneg':
         bins = np.logspace(np.log10(np.min(data[feat])), np.log10(np.sort(data[feat]))[-10], 400)
         plt.xscale('log')
-    # if ks is not None:
-    #     plt.text(.01, .85, 'distance = ' + f'{ks[feat]:.3f}', ha='left', va='top', transform=plt.gca().transAxes)
+
     plt.hist(DF[feat], bins=bins, density=True, alpha=0.6)
     plt.hist(data[feat], bins=bins, density=True, alpha=0.6)
     plt.legend(["Generated data", "FullSim data"])
-    plt.title(feat)
+    labeldict = {' xx': '$x~$[mm]',
+                 ' yy': '$y~$[mm]',
+                 ' pxx': '$p_x~$[GeV]',
+                 ' pyy': '$p_y~$[GeV]',
+                 ' pzz': '$p_z~$[GeV]',
+                 ' eneg': '$E~$[GeV]',
+                 ' time': '$t~$[ns]',
+                 'theta': '$\\theta~$[rad]'}
+    plt.xlabel(labeldict[feat])
     plt.savefig(fig_path + '1dHists/' + key + '/' + feat.strip().capitalize())
 
 
