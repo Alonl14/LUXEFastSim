@@ -258,7 +258,7 @@ def plot_features(ds, save_path=None):
     """Plots histograms and feature diagnostics for a dataset in one figure."""
     features = ds.preprocess.columns
     n_features = len(features)
-    fig, axes = plt.subplots(4, n_features, figsize=(3 * n_features, 12))
+    fig, axes = plt.subplots(4, n_features, figsize=(5 * n_features, 12))
     # fig.suptitle("Feature Diagnostics", fontsize=16)
     n_events = ds.preprocess.shape[0]
     generated_qt_df = np.random.randn(n_events, n_features)
@@ -309,26 +309,28 @@ def plot_features(ds, save_path=None):
         #     ax3.set_title("Quantile Transformation")
         #     ax4.set_title("Approximated \nQuantile Function")
         #     ax5.set_title("QT-generated Data")
+        fontsize=28
         if i == 0:
-            ax1.set_ylabel(f"frequency", fontsize=18)
-        ax1.set_xlabel(f"{xlabels_1[i]}", fontsize=18)
-        ax2.set_xlabel(f"{xlabels_2[i]}", fontsize=18)
-        # ax5.set_xlabel(f"{xlabels_1[i]}", fontsize=18)
+            ax1.set_ylabel(f"frequency", fontsize=fontsize)
+            ax2.set_ylabel(f"frequency", fontsize=fontsize)
+            ax3.set_ylabel(f"frequency", fontsize=fontsize)
+            ax4.set_ylabel(f"data value", fontsize=fontsize)
+        ax1.set_xlabel(f"{xlabels_1[i]}", fontsize=fontsize)
+        ax2.set_xlabel(f"{xlabels_2[i]}", fontsize=fontsize)
+        ax4.set_xlabel(f"Quantile", fontsize=fontsize)
         # if col in [' eneg', ' time']:
         # _____ ax5.set_xscale('log')
         for ax in [ax1, ax2, ax3, ax4]:  # , ax5
-            ax.tick_params(axis='both', which='major', labelsize=16)
+            ax.tick_params(axis='both', which='major', labelsize=fontsize)
             ax.grid(True, alpha=0.6)
 
         # ax5.legend(["Original Data", "Inverse QT"])
-    plt.tight_layout(w_pad=-0.4)  # Leave space for the overall title
+    plt.tight_layout()  # Leave space for the overall title
     if save_path:
         plt.savefig(save_path, dpi=300, bbox_inches="tight")
     plt.show()
     add_features(ds2.data, ds2.cfg["pdg"])
-    Hxy, Het, Hrth, Hpp = make_plots(ds2.data, "outer1", "", 'noLeaks', "")
 
-    # Hxy, Het, Hrth, Hpp = make_plots(ds.preprocess, "outer1", "", 'noLeaks', "")
     return ds2.data, ds.preprocess
 
 
@@ -443,7 +445,7 @@ def generate_fake_real_dfs(run_id, cfg, run_dir, generator_net=None):
 
     # TODO: remove factor, find a different way to ease local data generation
     # Read data used for training
-    fake_df, real_df = generate_ds(generator_net, factor=20, cfg=cfg)
+    fake_df, real_df = generate_ds(generator_net, factor=1, cfg=cfg)
     real_df = real_df[real_df[' time'] <= 1e6]
     add_features(fake_df, cfg['pdg'])
     add_features(real_df, cfg['pdg'])
@@ -493,16 +495,16 @@ def check_run(run_id, path=None, calculate_BED=True, save_df=False, plot_metrics
 
     if calculate_BED:
         inner_null_values, inner_H1_values = get_batch_ed_histograms(
-            innerDF.loc[:min(1e6, len(innerDF) - 1), cfg_inner['features'].keys()],
-            innerData.loc[:min(1e6, len(innerDF) - 1), cfg_inner['features'].keys()],
+            innerDF[cfg_inner['features'].keys()],
+            innerData[cfg_inner['features'].keys()],
             batch_size=100)
         outer1_null_values, outer1_H1_values = get_batch_ed_histograms(
-            outer1DF.loc[:min(1e6, len(outer1DF) - 1), cfg_outer1['features'].keys()],
-            outer1Data.loc[:min(1e6, len(outer1DF) - 1), cfg_outer1['features'].keys()],
+            outer1DF[cfg_outer1['features'].keys()],
+            outer1Data[cfg_outer1['features'].keys()],
             batch_size=100)
         outer2_null_values, outer2_H1_values = get_batch_ed_histograms(
-            outer2DF.loc[:min(1e6, len(outer2DF) - 1), cfg_outer2['features'].keys()],
-            outer2Data.loc[:min(1e6, len(outer2DF) - 1), cfg_outer2['features'].keys()],
+            outer2DF[cfg_outer2['features'].keys()],
+            outer2Data[cfg_outer2['features'].keys()],
             batch_size=100)
         make_ed_fig(inner_null_values, inner_H1_values, 'inner', False, fig_path)
         make_ed_fig(outer1_null_values, outer1_H1_values, 'outer1', True, fig_path)
@@ -638,13 +640,13 @@ def check_run(run_id, path=None, calculate_BED=True, save_df=False, plot_metrics
     noLeaksDF = pd.concat([noLeakInner, noLeakOuter1, noLeakOuter2])
     if save_df:
         noLeaksDF.to_csv(run_dir + "noLeaksDF.csv")
-    # features_for_test = [' xx', ' yy', ' rp', ' phi_p', ' eneg', ' time']
+    features_for_test = [' xx', ' yy', ' rp', ' phi_p', ' eneg', ' time']
 
-    # noLeaks_null_values, noLeaks_H1_values = get_batch_ed_histograms(
-    #     noLeaksDF.loc[:, features_for_test],
-    #     combinedData.loc[:, features_for_test],
-    #     batch_size=500)
-    # make_ed_fig(noLeaks_null_values, noLeaks_H1_values, 'noLeaks', False, fig_path)
+    noLeaks_null_values, noLeaks_H1_values = get_batch_ed_histograms(
+        noLeaksDF[features_for_test],
+        combinedData[features_for_test],
+        batch_size=100)
+    make_ed_fig(noLeaks_null_values, noLeaks_H1_values, 'noLeaks', False, fig_path)
 
     dfDict['inner'] = innerDF
     dfDict['outer1'] = outer1DF
@@ -813,8 +815,8 @@ def get_batch_ed_histograms(x, y, batch_size=1000):
         if f in [' rp', ' eneg', ' time']:
             x[f] = np.log(x[f])
             y[f] = np.log(y[f])
-        x[f] = (x[f] - np.mean(x[f])) / np.std(x[f])
-        y[f] = (y[f] - np.mean(y[f])) / np.std(y[f])
+        # x[f] = (x[f] - np.mean(x[f])) / np.std(x[f])
+        # y[f] = (y[f] - np.mean(y[f])) / np.std(y[f])
 
     x_batches = get_batches(x.values, batch_size)
     y_batches = get_batches(y.values, batch_size)
@@ -868,7 +870,7 @@ def fix_path(cfg, feature):
     cfg[feature] = "TrainData/" + file_name
 
 
-def make_ed_fig(null, H1, group, show, fig_path):
+def make_ed_fig(null, H1, group, fig_path, real_tag="Y", fake_tag="X"):
     fig, axs = plt.subplots(dpi=200)
     axs.grid(True, which='both', color='0.65', linestyle='-')
     bin_max = np.max(np.concatenate((null, H1)))
@@ -877,9 +879,31 @@ def make_ed_fig(null, H1, group, show, fig_path):
     axs.hist(null, bins=bins, density=True, alpha=0.6)
     axs.hist(H1, bins=bins, density=True, alpha=0.6)
     ks_test = ks(null, H1)
-    axs.set_title(f"{group} ED histogram, ks test p-value:{ks_test.pvalue:.2f}")
-    axs.legend(["null", "H1"])
-    fig.savefig(fig_path + group + '_histograms.png')
+    if ks_test.pvalue<0.1:
+        plt.text(0.5, 2, f' $p$-value: ${compact_latex(ks_test.pvalue)}$ ')
+        plt.text(0.5, 1.5, f' $D_{{n,m}}={ks_test.statistic:.2f}$ ')
+    else:
+        plt.text(0.5, 2, f' $p$-value: ${ks_test.pvalue:.2f}$ ')
+        plt.text(0.5, 1.5, f' $D_{{n,m}}={ks_test.statistic:.2f}$ ')
+    plt.xlabel("$D_E \\rm{[a.u]}$")
+    plt.ylabel("frequency")
+    # axs.set_title(f"{group} ED histogram, ks test p-value: {ks_test.pvalue:.02g}")
+    axs.legend([f"$D_E({real_tag},{fake_tag})$", f"$D_E({real_tag},{real_tag}^\prime)$"])
+    fig.savefig(fig_path + group + '_histograms.png', bbox_inches='tight')
+
+
+def compact_latex(n):
+    # Convert the number to scientific notation
+    sci_notation = "{:.2e}".format(n).split('e')
+
+    # Extract the coefficient and exponent
+    coefficient = sci_notation[0]
+    exponent = int(sci_notation[1])
+
+    # Construct the LaTeX string
+    latex_str = f"{coefficient} \\cdot 10^{{{exponent}}}"
+
+    return latex_str
 
 
 class Particle:
