@@ -81,7 +81,7 @@ def add_features(df, pdg):
     #       needs to be removed for future versions
 
     exp = (df[' eneg'] + mass) ** 2 - mass ** 2 - df[' rp'] ** 2
-    # df.drop(df[exp < 0].index, inplace=True)
+    df.drop(df[exp < 0].index, inplace=True)
     # print(exp[exp < 0].min())
     df[' pzz'] = -np.sqrt((df[' eneg'] + mass) ** 2 - mass ** 2 - df[' rp'] ** 2)
     # df[' eneg'] = np.sqrt(df[' rp']**2+df[' pzz']**2+mass**2)-mass
@@ -421,6 +421,7 @@ def combine(innerT, outerT, real_df=None, inner=None, outer=None):
 def generate_fake_real_dfs(run_id, cfg, run_dir, generator_net=None):
     """
     Given a run id load the trained model in run_id dir to its respective trainer and return the generated dataframe
+    :param generator_net: network, if available
     :param run_id: run id
     :param cfg: relevant config file
     :param run_dir: local is none / cluster is path to run dir
@@ -493,24 +494,24 @@ def check_run(run_id, path=None, calculate_BED=True, save_df=False, plot_metrics
     print(f'Created DFs in {get_time(generation_time_a, generation_time_b)}')
     print("getting batch ED...")
     # TODO: for some reason null_values are nans
-    min_length = min(len(innerDF), len(outer1DF), len(outer2DF))
+    max_length = 5e6
 
     if calculate_BED:
         inner_null_values, inner_H1_values = get_batch_ed_histograms(
-            innerDF[cfg_inner['features'].keys()],
-            innerData[cfg_inner['features'].keys()],
+            innerDF.loc[:min(max_length, len(innerDF)-1), cfg_inner['features'].keys()],
+            innerData[:min(max_length, len(innerDF)-1), cfg_inner['features'].keys()],
             batch_size=100)
         outer1_null_values, outer1_H1_values = get_batch_ed_histograms(
-            outer1DF[cfg_outer1['features'].keys()],
-            outer1Data[cfg_outer1['features'].keys()],
+            outer1DF.loc[:min(max_length, len(outer1DF)-1), cfg_outer1['features'].keys()],
+            outer1Data.loc[:min(max_length, len(outer1DF)-1), cfg_outer1['features'].keys()],
             batch_size=100)
         outer2_null_values, outer2_H1_values = get_batch_ed_histograms(
-            outer2DF[cfg_outer2['features'].keys()],
-            outer2Data[cfg_outer2['features'].keys()],
+            outer2DF.loc[:min(max_length, len(outer2DF)-1), cfg_outer2['features'].keys()],
+            outer2Data.loc[:min(max_length, len(outer2DF)-1), cfg_outer2['features'].keys()],
             batch_size=100)
-        make_ed_fig(inner_null_values, inner_H1_values, 'inner', False, fig_path)
-        make_ed_fig(outer1_null_values, outer1_H1_values, 'outer1', True, fig_path)
-        make_ed_fig(outer2_null_values, outer2_H1_values, 'outer2', True, fig_path)
+        make_ed_fig(inner_null_values, inner_H1_values, 'inner', fig_path)
+        make_ed_fig(outer1_null_values, outer1_H1_values, 'outer1', fig_path)
+        make_ed_fig(outer2_null_values, outer2_H1_values, 'outer2', fig_path)
 
     #######
     # else:
@@ -645,10 +646,10 @@ def check_run(run_id, path=None, calculate_BED=True, save_df=False, plot_metrics
     features_for_test = [' xx', ' yy', ' rp', ' phi_p', ' eneg', ' time']
 
     noLeaks_null_values, noLeaks_H1_values = get_batch_ed_histograms(
-        noLeaksDF[features_for_test],
-        combinedData[features_for_test],
+        noLeaksDF[features_for_test].sample(max_length),
+        combinedData[features_for_test].sample(max_length),
         batch_size=100)
-    make_ed_fig(noLeaks_null_values, noLeaks_H1_values, 'noLeaks', False, fig_path)
+    make_ed_fig(noLeaks_null_values, noLeaks_H1_values, 'noLeaks', fig_path)
 
     dfDict['inner'] = innerDF
     dfDict['outer1'] = outer1DF
