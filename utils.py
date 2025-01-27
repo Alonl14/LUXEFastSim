@@ -499,7 +499,7 @@ def check_run(run_id, path=None, calculate_BED=True, save_df=False, plot_metrics
     if calculate_BED:
         inner_null_values, inner_H1_values = get_batch_ed_histograms(
             innerDF.loc[:min(max_length, len(innerDF)-1), cfg_inner['features'].keys()],
-            innerData[:min(max_length, len(innerDF)-1), cfg_inner['features'].keys()],
+            innerData.loc[:min(max_length, len(innerDF)-1), cfg_inner['features'].keys()],
             batch_size=100)
         outer1_null_values, outer1_H1_values = get_batch_ed_histograms(
             outer1DF.loc[:min(max_length, len(outer1DF)-1), cfg_outer1['features'].keys()],
