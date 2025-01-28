@@ -21,20 +21,23 @@ class ParticleDataset(Dataset):
 
         if ' pdg' in self.data.columns.values:
             self.data = self.data[self.data[' pdg'].isin([cfg['pdg']])]  # 22 - photons , 2112 - neutrons
-        self.data = self.data[(self.data[' time'] <= 10**6) & (self.data[' pzz'] <= 0)]
-        print("time cut 10^6")
+        # self.data = self.data[(self.data[' time'] <= 10**6) & (self.data[' pzz'] <= 0)]
+        # print("time cut 10^6")
 
-        self.data[' rx'] = np.sqrt(self.data[' xx'].values ** 2 + self.data[' yy'].values ** 2)
-        self.data[' rp'] = np.sqrt(self.data[' pxx'].values ** 2 + self.data[' pyy'].values ** 2)
-        self.data[' phi_p'] = np.arctan2(self.data[' pyy'].values, self.data[' pxx'].values) + np.pi
+        # self.data[' rx'] = np.sqrt(self.data[' xx'].values ** 2 + self.data[' yy'].values ** 2)
+        # self.data[' rp'] = np.sqrt(self.data[' pxx'].values ** 2 + self.data[' pyy'].values ** 2)
+        # self.data[' phi_p'] = np.arctan2(self.data[' pyy'].values, self.data[' pxx'].values) + np.pi
 
         self.data = self.data[cfg["features"].keys()]
 
         self.preprocess = self.data.copy()
 
-        self.norm = pd.read_csv(cfg['norm_path'], index_col=0)
-        self.norm['max'][' time'] = 10**6
-        self.norm['max'][' pzz'] = 0
+        self.norm = pd.read_csv(cfg['norm_path'], index_col=0, float_precision='high')
+        self.norm['min'][' rp'] = self.norm['min'][' rp']
+        print(" rp norm is ", self.norm['min'][' rp'], " ", self.norm['max'][' rp'])
+        print(" rp minmax is ", np.min(self.data[' rp']), " ", np.max(self.data[' rp']))
+        # self.norm['max'][' time'] = 10**6
+        # self.norm['max'][' pzz'] = 0
         self.apply_transformation(cfg)
 
         # mps doesn't work with double-percision floats, cuda does
@@ -69,11 +72,14 @@ class ParticleDataset(Dataset):
         for feature, function_list in cfg["features"].items():
             x_max = self.norm['max'][feature]
             x_min = self.norm['min'][feature]
+            print(feature, " minman in apply transformation: ", x_min, " ", x_max, " eps is ", eps)
             if not inverse:
                 self.data[feature] = normalize(self.data[feature], x_min, x_max, eps, inverse)
+                print(feature, " minman after normalize: ", np.min(self.data[feature]), " ", np.max(self.data[feature]), " eps is ", eps)
             functions = function_list[::-1] if inverse else function_list[:]
             for f in functions:
                 self.data[feature] = self.registry[f](self.data[feature], eps, inverse)
+                print(feature, " minman after log: ", np.min(self.data[feature]), " ", np.max(self.data[feature]), " eps is ", eps)
             if inverse:
                 self.data[feature] = normalize(self.data[feature], x_min, x_max, eps, inverse)
 
@@ -99,8 +105,8 @@ def normalize(data, data_min, data_max, epsilon, inverse):
         b = epsilon
         a = (1 - 2 * epsilon) / data_max
     else:
-        b = (1 - epsilon * (1 + data_max / data_min)) / (1 - data_max / data_min)
-        a = (epsilon - b) / data_min
+        b = (data_min - epsilon * (data_min + data_max)) / (data_min - data_max)
+        a = (2*epsilon - 1) / (data_min - data_max)
 
     return a * data + b if not inverse else (data - b) / a
 
@@ -115,7 +121,7 @@ def my_log(data, epsilon, inverse):
     :return: log(a*data+b) with a,b s.t. result is still in [eps, 1-eps]
     """
 
-    a = (np.log((1 - epsilon) / epsilon)) ** (-1)
+    a = (np.log((1 - epsilon) / epsilon)) ** (-1) * (1 - 2*epsilon)
     b = epsilon - a * np.log(epsilon)
     return a * np.log(data) + b if not inverse else np.exp((data - b) / a)
 

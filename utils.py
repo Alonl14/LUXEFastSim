@@ -645,12 +645,6 @@ def check_run(run_id, path=None, calculate_BED=True, save_df=False, plot_metrics
         noLeaksDF.to_csv(run_dir + "noLeaksDF.csv")
     features_for_test = [' xx', ' yy', ' rp', ' phi_p', ' eneg', ' time']
 
-    noLeaks_null_values, noLeaks_H1_values = get_batch_ed_histograms(
-        noLeaksDF[features_for_test].sample(max_length),
-        combinedData[features_for_test].sample(max_length),
-        batch_size=100)
-    make_ed_fig(noLeaks_null_values, noLeaks_H1_values, 'noLeaks', fig_path)
-
     dfDict['inner'] = innerDF
     dfDict['outer1'] = outer1DF
     dfDict['outer2'] = outer2DF
@@ -670,6 +664,11 @@ def check_run(run_id, path=None, calculate_BED=True, save_df=False, plot_metrics
                 os.mkdir(fig_path + '1dHists/' + key)
             for feat in features:
                 exec("plot_1d(" + key + "Data," + key + "DF,feat,chi2_" + key + ", fig_path, key)")
+    noLeaks_null_values, noLeaks_H1_values = get_batch_ed_histograms(
+        noLeaksDF[features_for_test].sample(max_length),
+        combinedData[features_for_test].sample(max_length),
+        batch_size=100)
+    make_ed_fig(noLeaks_null_values, noLeaks_H1_values, 'noLeaks', fig_path)
 
 
 def plot_1d(data, DF, feat, ks, fig_path, key):
