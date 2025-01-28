@@ -174,21 +174,22 @@ def make_plots(df, dataGroup, run_id="", key="", path=""):
 
 def split(df):
     """
-    splits a dataframe into inner and outer particles according to their xy position
+    splits a dataframe into regions I, II, III according to their xy position
     :param df: input dataframe, contains all particles
     :return: inner dataframe, outer dataframe
     """
-    # -1700mm < x < 500mm and -2500mm < y < 500mm qualifies as inner
-    # -1700mm > x,x < 500mm and y > 500mm qualifies as outer
-    # The union of these 2 regions doesn't cover the initial area so prints percentage of discarded events
-
-    pos = ((df[' xx'] < 500) * (df[' xx'] > -1700) * (df[' yy'] < 500))
-    pos2 = ((df[' xx'] < 500) * (df[' xx'] > -1700) * (df[' yy'] < -2500))
-    print(f'Discarded {np.sum(np.int64(pos2)) / len(pos)  : .4%} of the particles')
-    inner_df = df[pos & (~pos2)]
-    outer_df = df[(~pos) & (~pos2)]
-    print(f'Inner particles : {len(inner_df) / len(df):.2%} \nOuter Particles : {len(outer_df) / len(df) : .2%}')
-    return inner_df, outer_df
+    outer1_pos = (((df[' xx'] >= 500) | (df[' yy'] >= 520)) |
+                  ((df[' yy'] >= 420) & (df[' xx'] <= -1700)))
+    inner_pos = ~outer1_pos & (df[' xx'] >= -1700)
+    outer2_pos = (df[' yy'] <= 620) & (df[' xx'] <= -1700)
+    inner_df = df[inner_pos]
+    outer1_df = df[outer1_pos]
+    outer2_df = df[outer2_pos]
+    print(f'Created 3 datasets:'
+          f'\nPoints in region I: {len(outer1_df)}'
+          f'\nPoints in region II: {len(outer2_df)}'
+          f'\nPoints in region III: {len(inner_df)}')
+    return inner_df, outer1_df, outer2_df
 
 
 def make_norm_file(df, path):
@@ -203,7 +204,6 @@ def make_norm_file(df, path):
         normDF['max'][col] = np.max(df[col])
         normDF['min'][col] = np.min(df[col])
     normPath = path.replace('.csv', '_norm.csv')
-
     print(normDF)
     normDF.to_csv(normPath)
     print('New file created at: ' + normPath)
@@ -401,21 +401,21 @@ def weights_init(m):
     elif isinstance(m, nn.InstanceNorm1d):
         nn.init.normal_(m.weight.data, 1, 0.02)
 
-
-def combine(innerT, outerT, real_df=None, inner=None, outer=None):
-    if real_df is not None:
-        inner, outer = split(real_df)
-    numEvents = (len(inner) + len(outer)) / 10
-    q_in = len(inner) / (len(inner) + len(outer))
-    inner_events = np.int64(np.floor(numEvents * q_in))
-    outer_events = np.int64(np.ceil(numEvents * (1 - q_in)))
-    print(inner_events, outer_events)
-    inner_df = generate_df(innerT, innerT.noiseDim, inner_events)
-    outer_df = generate_df(outerT, outerT.noiseDim, outer_events)
-
-    generated_df = pd.concat((inner_df, outer_df), axis=0)
-
-    return generated_df
+#
+# def combine(innerT, outerT, real_df=None, inner=None, outer=None):
+#     if real_df is not None:
+#         inner, outer = split(real_df)
+#     numEvents = (len(inner) + len(outer)) / 10
+#     q_in = len(inner) / (len(inner) + len(outer))
+#     inner_events = np.int64(np.floor(numEvents * q_in))
+#     outer_events = np.int64(np.ceil(numEvents * (1 - q_in)))
+#     print(inner_events, outer_events)
+#     inner_df = generate_df(innerT, innerT.noiseDim, inner_events)
+#     outer_df = generate_df(outerT, outerT.noiseDim, outer_events)
+#
+#     generated_df = pd.concat((inner_df, outer_df), axis=0)
+#
+#     return generated_df
 
 
 def generate_fake_real_dfs(run_id, cfg, run_dir, generator_net=None):
@@ -890,20 +890,13 @@ def make_ed_fig(null, H1, group, fig_path, real_tag="Y", fake_tag="X"):
     axs.hist(H1, bins=bins, density=True, alpha=0.6)
     ks_test = ks(null, H1)
     if ks_test.pvalue < 0.1:
-        # plt.text(0.5, 2, f' $p$-value: ${compact_latex(ks_test.pvalue)}$ ')
-        # plt.text(0.5, 1.5, f' $K_{{n,m}}={ks_test.statistic:.2f}$ ')
-
         plt.text(.6, .5, f' $p$-value: ${compact_latex(ks_test.pvalue)}$ ', ha='right', va='top', transform=axs.transAxes)
         plt.text(.6, .4, f' $K_{{n,m}}={ks_test.statistic:.2f}$ ', ha='right', va='top', transform=axs.transAxes)
     else:
-        # plt.text(0.5, 2, f' $p$-value: ${ks_test.pvalue:.2f}$ ')
-        # plt.text(0.5, 1.5, f' $K_{{n,m}}={ks_test.statistic:.2f}$ ')
-
         plt.text(.6, .5, f' $p$-value: ${ks_test.pvalue:.2f}$ ', ha='right', va='top', transform=axs.transAxes)
         plt.text(.6, .4, f' $K_{{n,m}}={ks_test.statistic:.2f}$ ', ha='right', va='top', transform=axs.transAxes)
     plt.xlabel("$D_E \\rm{[a.u]}$")
     plt.ylabel("frequency")
-    # axs.set_title(f"{group} ED histogram, ks test p-value: {ks_test.pvalue:.02g}")
     axs.legend([f"$D_E({real_tag},{fake_tag})$", f"$D_E({real_tag},{real_tag}^\prime)$"])
     fig.savefig(fig_path + group + '_histograms.png', bbox_inches='tight')
 
