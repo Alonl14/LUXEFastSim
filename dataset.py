@@ -12,6 +12,7 @@ class ParticleDataset(Dataset):
         self.preqt = None
         self.quantiles = None
         self._registry = {"log": my_log,
+                          "s_log": simple_log,
                           "flip": flip}
         self.cfg = cfg
         QT = qt(output_distribution='normal', n_quantiles=cfg['nQuantiles'], subsample=cfg['subsample'])
@@ -72,14 +73,11 @@ class ParticleDataset(Dataset):
         for feature, function_list in cfg["features"].items():
             x_max = self.norm['max'][feature]
             x_min = self.norm['min'][feature]
-            print(feature, " minman in apply transformation: ", x_min, " ", x_max, " eps is ", eps)
             if not inverse:
                 self.data[feature] = normalize(self.data[feature], x_min, x_max, eps, inverse)
-                print(feature, " minman after normalize: ", np.min(self.data[feature]), " ", np.max(self.data[feature]), " eps is ", eps)
             functions = function_list[::-1] if inverse else function_list[:]
             for f in functions:
                 self.data[feature] = self.registry[f](self.data[feature], eps, inverse)
-                print(feature, " minman after log: ", np.min(self.data[feature]), " ", np.max(self.data[feature]), " eps is ", eps)
             if inverse:
                 self.data[feature] = normalize(self.data[feature], x_min, x_max, eps, inverse)
 
@@ -121,10 +119,24 @@ def my_log(data, epsilon, inverse):
     :return: log(a*data+b) with a,b s.t. result is still in [eps, 1-eps]
     """
 
-    a = (np.log((1 - epsilon) / epsilon)) ** (-1) * (1 - 2*epsilon)
+    a = (np.log((1 - epsilon) / epsilon)) ** (-1) # * (1 - 2*epsilon)
     b = epsilon - a * np.log(epsilon)
     return a * np.log(data) + b if not inverse else np.exp((data - b) / a)
 
 
+def simple_log(data, epsilon, inverse):
+    """
+    applies log without scale
+
+    :param data: ASSUMES DATA IS IN [eps, 1-eps]
+    :param epsilon: should be the same as in normalize
+    :param inverse: if true applies the inverse function
+    :return: log(a*data+b) with a,b s.t. result is still in [eps, 1-eps]
+    """
+
+    return np.log(data) if not inverse else np.exp(data)
+
+
 def flip(data, epsilon, inverse):
     return 1 - data
+

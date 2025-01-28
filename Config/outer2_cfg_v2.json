@@ -19,14 +19,14 @@
         " xx": [],
         " yy": [],
         " rp": [
-            "log"
+            "s_log"
         ],
         " phi_p": [],
         " eneg": [
-            "log"
+            "s_log"
         ],
         " time": [
-            "log"
+            "s_log"
         ]
     },
     "epsilon": 1e-16

@@ -447,7 +447,6 @@ def generate_fake_real_dfs(run_id, cfg, run_dir, generator_net=None):
     # TODO: remove factor, find a different way to ease local data generation
     # Read data used for training
     fake_df, real_df = generate_ds(generator_net, factor=1, cfg=cfg)
-    real_df = real_df[real_df[' time'] <= 1e6]
     add_features(fake_df, cfg['pdg'])
     add_features(real_df, cfg['pdg'])
 
@@ -692,6 +691,7 @@ def plot_1d(data, DF, feat, ks, fig_path, key):
                  ' pzz': '$p_z~$[GeV]',
                  ' eneg': '$E~$[GeV]',
                  ' time': '$t~$[ns]',
+                 ' rx': '$r_x~$[mm]',
                  'theta': '$\\theta~$[rad]'}
     plt.xlabel(labeldict[feat])
     plt.savefig(fig_path + '1dHists/' + key + '/' + feat.strip().capitalize())
