@@ -77,22 +77,17 @@ def add_features(df, pdg):
     mass = particle_dict[pdg].mass
     df[' phi_x'] = np.arctan2(df[' yy'], df[' xx']) + np.pi
     df[' rx'] = np.sqrt(df[' xx'] ** 2 + df[' yy'] ** 2)
-    # TODO: The np.abs is TEMPORARY since network is under-trained,
-    #       needs to be removed for future versions
 
     exp = (df[' eneg'] + mass) ** 2 - mass ** 2 - df[' rp'] ** 2
-    df.drop(df[exp < 0].index, inplace=True)
-    # print(exp[exp < 0].min())
+    # df.drop(df[exp < 0].index, inplace=True)
+
     df[' pzz'] = -np.sqrt((df[' eneg'] + mass) ** 2 - mass ** 2 - df[' rp'] ** 2)
     # df[' eneg'] = np.sqrt(df[' rp']**2+df[' pzz']**2+mass**2)-mass
     # df[' rp'] = np.sqrt((df[' eneg'] + mass) ** 2 - mass ** 2 - df[' pzz'] ** 2)
     # df[' phi_p'] = np.arctan2(df[' pyy'], df[' pxx'])+np.pi
     df[' pxx'] = df[' rp'] * np.cos(df[' phi_p'] - np.pi)
     df[' pyy'] = df[' rp'] * np.sin(df[' phi_p'] - np.pi)
-    # TODO: The np.maximum is TEMPORARY since network is under-trained,
-    #       needs to be removed for future versions
     exp2 = df[' pzz'] / np.sqrt((df[' eneg'] + mass) ** 2 - mass ** 2)
-    print(exp2[(exp2 < -1) | (exp2 > 1)])
     df['theta'] = np.arccos(df[' pzz'] / np.sqrt((df[' eneg'] + mass) ** 2 - mass ** 2))
 
 
@@ -446,7 +441,7 @@ def generate_fake_real_dfs(run_id, cfg, run_dir, generator_net=None):
 
     # TODO: remove factor, find a different way to ease local data generation
     # Read data used for training
-    fake_df, real_df = generate_ds(generator_net, factor=1, cfg=cfg)
+    fake_df, real_df = generate_ds(generator_net, factor=1000, cfg=cfg)
     add_features(fake_df, cfg['pdg'])
     add_features(real_df, cfg['pdg'])
 
@@ -489,6 +484,9 @@ def check_run(run_id, path=None, calculate_BED=True, save_df=False, plot_metrics
     innerDF, innerData = generate_fake_real_dfs(run_id, cfg_inner, run_dir)
     outer1DF, outer1Data = generate_fake_real_dfs(run_id, cfg_outer1, run_dir)
     outer2DF, outer2Data = generate_fake_real_dfs(run_id, cfg_outer2, run_dir)
+    print("smallest E: ", np.min(innerDF[' eneg']))
+    print("smallest E: ", np.min(outer1DF[' eneg']))
+    print("smallest E: ", np.min(outer2DF[' eneg']))
     generation_time_b = time.localtime()
     print(f'Created DFs in {get_time(generation_time_a, generation_time_b)}')
     print("getting batch ED...")
@@ -617,7 +615,7 @@ def check_run(run_id, path=None, calculate_BED=True, save_df=False, plot_metrics
         plt.legend(["training", "validation"])
         plt.savefig(fig_path + 'outer2GLosses.png')
 
-    features = [' xx', ' yy', ' pxx', ' pyy', ' pzz', ' eneg', ' time', 'theta', ' rx']
+    features = [' xx', ' yy', ' pxx', ' pyy', ' pzz', ' eneg', ' time', 'theta', ' rx', ' rp']
     chi2_tests = {'inner': {}, 'outer1': {}, 'outer2': {}, 'combined': {}, 'noLeaks': {}}
     dfDict = {'inner': {}, 'outer1': {}, 'outer2': {}, 'combined': {}, 'noLeaks': {}}
     chi2_inner = {' xx': 0, ' yy': 0, ' pxx': 0, ' pyy': 0,
@@ -629,12 +627,9 @@ def check_run(run_id, path=None, calculate_BED=True, save_df=False, plot_metrics
     combinedData = pd.concat([innerData, outer1Data, outer2Data])
     combinedDF = pd.concat([innerDF, outer1DF, outer2DF])
     noLeaksData = combinedData.copy()
-    posIn = (innerDF[' time'] <= 1e6) & (innerDF[' rx'] <= 4000) & (innerDF[' xx'] < 500) & (innerDF[' xx'] > -1700) & (innerDF[' yy'] < 500)
-    posOut1 = (outer1DF[' time'] <= 1e6) & (outer1DF[' rx'] <= 4000) & ((outer1DF[' xx'] >= 500) | (outer1DF[' yy'] >= 500))
-    posOut2 = (outer2DF[' time'] <= 1e6) & (outer2DF[' rx'] <= 4000) & ((outer2DF[' xx'] < -1700) & (outer2DF[' yy'] <= 500))
-    # outer1 = df_pdg[(df_pdg[' xx'] >= 500) | (df_pdg[' yy'] >= 500)]
-    # outer2 = df_pdg[(df_pdg[' xx'] < -1700) & (df_pdg[' yy'] < 500)]
-    # inner = df_pdg[(df_pdg[' xx'] < 500) & (df_pdg[' xx'] >= -1700) & (df_pdg[' yy'] < 500)]
+    posIn = (innerDF[' time'] <= 1e6) & (innerDF[' rx'] <= 4000) & (innerDF[' xx'] <= 500) & (innerDF[' xx'] >= -1700) & (innerDF[' yy'] <= 520)
+    posOut1 = (outer1DF[' time'] <= 1e6) & (outer1DF[' rx'] <= 4000) & ((outer1DF[' xx'] >= 500) | (outer1DF[' yy'] >= 520))
+    posOut2 = (outer2DF[' time'] <= 1e6) & (outer2DF[' rx'] <= 4000) & ((outer2DF[' xx'] < -1700) & (outer2DF[' yy'] <= 520))
 
     noLeakInner = innerDF[posIn]
     noLeakOuter1 = outer1DF[posOut1]
@@ -692,6 +687,7 @@ def plot_1d(data, DF, feat, ks, fig_path, key):
                  ' eneg': '$E~$[GeV]',
                  ' time': '$t~$[ns]',
                  ' rx': '$r_x~$[mm]',
+                 ' rp': '$r_p~$[GeV]',
                  'theta': '$\\theta~$[rad]'}
     plt.xlabel(labeldict[feat])
     plt.savefig(fig_path + '1dHists/' + key + '/' + feat.strip().capitalize())

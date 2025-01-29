@@ -1,0 +1,36 @@
+{
+            "applyQT": 1,
+            "nQuantiles": 100000,
+            "subsample": 1000000,
+            "data_path": "/storage/agrp/alonle/GAN_InputSample/v3_2112_inner.csv",
+            "norm_path": "/storage/agrp/alonle/GAN_InputSample/v3_2112_inner_norm.csv",
+            "outputDir": "",
+            "dataGroup": "inner",
+            "pdg": 2112,
+            "batchSize": 1024,
+            "noiseDim": 100,
+            "numEpochs": 50,
+            "device": "cpu",
+            "nCrit": 2,
+            "Lambda": 0.0005,
+            "criticLearningRate": 5e-05,
+            "generatorLearningRate": 0.0001,
+            "features": {
+                        " xx": [],
+                        " yy": [],
+                        " rx": [
+                                    "s_log"
+                        ],
+                        " rp": [
+                                    "s_log"
+                        ],
+                        " phi_p": [],
+                        " eneg": [
+                                    "s_log"
+                        ],
+                        " time": [
+                                    "s_log"
+                        ]
+            },
+            "epsilon": 1e-16
+}

@@ -12,21 +12,21 @@
     "numEpochs": 50,
     "device": "cpu",
     "nCrit": 2,
-    "Lambda": 0.0001,
-    "criticLearningRate": 0.0001,
-    "generatorLearningRate": 1e-05,
+    "Lambda": 0.0005,
+    "criticLearningRate": 5e-05,
+    "generatorLearningRate": 0.0001,
     "features": {
         " xx": [],
         " yy": [],
         " rp": [
-            "s_log"
+                "s_log"
         ],
         " phi_p": [],
         " eneg": [
-            "s_log"
+                "s_log"
         ],
         " time": [
-            "s_log"
+                "s_log"
         ]
     },
     "epsilon": 1e-16
