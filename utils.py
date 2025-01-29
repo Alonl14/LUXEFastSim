@@ -442,7 +442,7 @@ def generate_fake_real_dfs(run_id, cfg, run_dir, generator_net=None):
 
     # TODO: remove factor, find a different way to ease local data generation
     # Read data used for training
-    fake_df, real_df = generate_ds(generator_net, factor=1000, cfg=cfg)
+    fake_df, real_df = generate_ds(generator_net, factor=1, cfg=cfg)
     add_features(fake_df, cfg['pdg'])
     add_features(real_df, cfg['pdg'])
 
@@ -491,7 +491,7 @@ def check_run(run_id, path=None, calculate_BED=True, save_df=False, plot_metrics
     generation_time_b = time.localtime()
     print(f'Created DFs in {get_time(generation_time_a, generation_time_b)}')
     print("getting batch ED...")
-    # TODO: for some reason null_values are nans
+
     max_length = int(5e6)
 
     if calculate_BED:
@@ -659,10 +659,22 @@ def check_run(run_id, path=None, calculate_BED=True, save_df=False, plot_metrics
                 os.mkdir(fig_path + '1dHists/' + key)
             for feat in features:
                 exec("plot_1d(" + key + "Data," + key + "DF,feat,chi2_" + key + ", fig_path, key)")
-    noLeaks_null_values, noLeaks_H1_values = get_batch_ed_histograms(
-        noLeaksDF[features_for_test].sample(max_length),
-        combinedData[features_for_test].sample(max_length),
-        batch_size=100)
+    if cfg_inner['cfg'] == 11:
+        batch_size = 10
+        print("applying small batch")
+    else:
+        batch_size = 100
+
+    if len(noLeaksDF) > max_length:
+        noLeaks_null_values, noLeaks_H1_values = get_batch_ed_histograms(
+            noLeaksDF[features_for_test].sample(max_length),
+            combinedData[features_for_test].sample(max_length),
+            batch_size=batch_size)
+    else:
+        noLeaks_null_values, noLeaks_H1_values = get_batch_ed_histograms(
+            noLeaksDF[features_for_test].sample(max_length),
+            combinedData[features_for_test].sample(max_length),
+            batch_size=batch_size)
     make_ed_fig(noLeaks_null_values, noLeaks_H1_values, 'noLeaks', fig_path)
 
 

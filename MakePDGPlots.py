@@ -28,5 +28,5 @@ for pdg in full_df[" pdg"].unique().tolist():
     utils.make_norm_file(outer1, "/storage/agrp/alonle/GAN_InputSample/v2_"+str(pdg)+"_outer1.csv")
     utils.make_norm_file(outer2, "/storage/agrp/alonle/GAN_InputSample/v2_" + str(pdg) + "_outer2.csv")
     utils.make_norm_file(inner, "/storage/agrp/alonle/GAN_InputSample/v2_" + str(pdg) + "_inner.csv")
-    
+
 print(f"Done! Time elapsed : {utils.get_time(beg_time, time.localtime())}")

@@ -119,7 +119,7 @@ def my_log(data, epsilon, inverse):
     :return: log(a*data+b) with a,b s.t. result is still in [eps, 1-eps]
     """
 
-    a = (np.log((1 - epsilon) / epsilon)) ** (-1) # * (1 - 2*epsilon)
+    a = (np.log((1 - epsilon) / epsilon)) ** (-1)  # * (1 - 2*epsilon)
     b = epsilon - a * np.log(epsilon)
     return a * np.log(data) + b if not inverse else np.exp((data - b) / a)
 
