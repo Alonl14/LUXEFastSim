@@ -173,10 +173,11 @@ def split(df):
     :param df: input dataframe, contains all particles
     :return: inner dataframe, outer dataframe
     """
-    outer1_pos = (((df[' xx'] >= 500) | (df[' yy'] >= 520)) |
-                  ((df[' yy'] >= 420) & (df[' xx'] <= -1700)))
+    ## OLD SPLIT is y>420, y<620
+    outer1_pos = (((df[' xx'] >= 500) | (df[' yy'] >= 500)) |
+                  ((df[' yy'] >= 400) & (df[' xx'] <= -1700)))
     inner_pos = ~outer1_pos & (df[' xx'] >= -1700)
-    outer2_pos = (df[' yy'] <= 620) & (df[' xx'] <= -1700)
+    outer2_pos = (df[' yy'] <= 600) & (df[' xx'] <= -1700)
     inner_df = df[inner_pos]
     outer1_df = df[outer1_pos]
     outer2_df = df[outer2_pos]
@@ -286,7 +287,7 @@ def plot_features(ds, save_path=None):
         if col == ' eneg':
             bins = 10 ** np.linspace(-12, 0, 400)
         elif col == ' time':
-            bins = 10 ** np.linspace(1, 6, 400)
+            bins = 10 ** np.linspace(1, 6.5, 400)
         else:
             bins = 400
 
