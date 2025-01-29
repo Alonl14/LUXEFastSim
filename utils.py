@@ -492,7 +492,7 @@ def check_run(run_id, path=None, calculate_BED=True, save_df=False, plot_metrics
     print(f'Created DFs in {get_time(generation_time_a, generation_time_b)}')
     print("getting batch ED...")
 
-    max_length = int(5e6)
+    max_length = int(1e6)
 
     if calculate_BED:
         inner_null_values, inner_H1_values = get_batch_ed_histograms(
@@ -627,7 +627,7 @@ def check_run(run_id, path=None, calculate_BED=True, save_df=False, plot_metrics
     chi2_noLeaks = chi2_inner.copy()
     combinedData = pd.concat([innerData, outer1Data, outer2Data])
     combinedDF = pd.concat([innerDF, outer1DF, outer2DF])
-    noLeaksData = combinedData.copy()
+    noLeaksData = combinedData[combinedData[' time'] <= 1e6]
     posIn = (innerDF[' time'] <= 1e6) & (innerDF[' rx'] <= 4000) & (innerDF[' xx'] <= 500) & (innerDF[' xx'] >= -1700) & (innerDF[' yy'] <= 520)
     posOut1 = (outer1DF[' time'] <= 1e6) & (outer1DF[' rx'] <= 4000) & ((outer1DF[' xx'] >= 500) | (outer1DF[' yy'] >= 520))
     posOut2 = (outer2DF[' time'] <= 1e6) & (outer2DF[' rx'] <= 4000) & ((outer2DF[' xx'] < -1700) & (outer2DF[' yy'] <= 520))
@@ -683,7 +683,7 @@ def plot_1d(data, DF, feat, ks, fig_path, key):
     plt.yscale('log')
     bins = np.linspace(np.min(data[feat]), np.max(data[feat]), 400)
     if feat == ' time':
-        bins = np.logspace(np.log10(np.min(data[feat])), 10**6, 400)
+        bins = np.logspace(np.log10(np.min(data[feat])), np.log10(np.sort(data[feat]))[-10], 400)
         plt.xscale('log')
     elif feat == ' eneg':
         bins = np.logspace(np.log10(np.min(data[feat])), np.log10(np.sort(data[feat]))[-10], 400)
@@ -700,10 +700,12 @@ def plot_1d(data, DF, feat, ks, fig_path, key):
                  ' eneg': '$E~$[GeV]',
                  ' time': '$t~$[ns]',
                  ' rx': '$r_x~$[mm]',
+                 ' phi_x': '$phi_x~$[rad]',
                  ' rp': '$r_p~$[GeV]',
+                 ' phi_p': '$phi_p~$[rad]',
                  'theta': '$\\theta~$[rad]'}
     plt.xlabel(labeldict[feat])
-    plt.savefig(fig_path + '1dHists/' + key + '/' + feat.strip().capitalize())
+    plt.savefig(fig_path + '1dHists/' + key + '/' + feat.strip().capitalize(),bbox_inches='tight')
 
 
 def get_distance(data, DF, feat):
@@ -898,11 +900,11 @@ def make_ed_fig(null, H1, group, fig_path, real_tag="Y", fake_tag="X"):
     axs.hist(H1, bins=bins, density=True, alpha=0.6)
     ks_test = ks(null, H1)
     if ks_test.pvalue < 0.1:
-        plt.text(.6, .5, f' $p$-value: ${compact_latex(ks_test.pvalue)}$ ', ha='right', va='top', transform=axs.transAxes)
-        plt.text(.6, .4, f' $K_{{n,m}}={ks_test.statistic:.2f}$ ', ha='right', va='top', transform=axs.transAxes)
+        plt.text(.9, .5, f' $p$-value: ${compact_latex(ks_test.pvalue)}$ ', ha='right', va='top', transform=axs.transAxes)
+        plt.text(.9, .4, f' $K_{{n,m}}={ks_test.statistic:.2f}$ ', ha='right', va='top', transform=axs.transAxes)
     else:
-        plt.text(.6, .5, f' $p$-value: ${ks_test.pvalue:.2f}$ ', ha='right', va='top', transform=axs.transAxes)
-        plt.text(.6, .4, f' $K_{{n,m}}={ks_test.statistic:.2f}$ ', ha='right', va='top', transform=axs.transAxes)
+        plt.text(.9, .5, f' $p$-value: ${ks_test.pvalue:.2f}$ ', ha='right', va='top', transform=axs.transAxes)
+        plt.text(.9, .4, f' $K_{{n,m}}={ks_test.statistic:.2f}$ ', ha='right', va='top', transform=axs.transAxes)
     plt.xlabel("$D_E \\rm{[a.u]}$")
     plt.ylabel("frequency")
     axs.legend([f"$D_E({real_tag},{fake_tag})$", f"$D_E({real_tag},{real_tag}^\prime)$"])
