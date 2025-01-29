@@ -18,6 +18,9 @@
     "features": {
         " xx": [],
         " yy": [],
+        " rx": [
+            "s_log"
+        ],
         " rp": [
                     "s_log"
         ],

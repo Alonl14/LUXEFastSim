@@ -493,20 +493,24 @@ def check_run(run_id, path=None, calculate_BED=True, save_df=False, plot_metrics
     print("getting batch ED...")
 
     max_length = int(1e6)
-
+    batch_size = 100
+    if cfg_inner['cfg'] == 11:
+        batch_size = 10
+        print("applying small batch")
+    
     if calculate_BED:
         inner_null_values, inner_H1_values = get_batch_ed_histograms(
             innerDF.loc[:min(max_length, len(innerDF)-1), cfg_inner['features'].keys()],
             innerData.loc[:min(max_length, len(innerDF)-1), cfg_inner['features'].keys()],
-            batch_size=100)
+            batch_size=batch_size)
         outer1_null_values, outer1_H1_values = get_batch_ed_histograms(
             outer1DF.loc[:min(max_length, len(outer1DF)-1), cfg_outer1['features'].keys()],
             outer1Data.loc[:min(max_length, len(outer1DF)-1), cfg_outer1['features'].keys()],
-            batch_size=100)
+            batch_size=batch_size)
         outer2_null_values, outer2_H1_values = get_batch_ed_histograms(
             outer2DF.loc[:min(max_length, len(outer2DF)-1), cfg_outer2['features'].keys()],
             outer2Data.loc[:min(max_length, len(outer2DF)-1), cfg_outer2['features'].keys()],
-            batch_size=100)
+            batch_size=batch_size)
         make_ed_fig(inner_null_values, inner_H1_values, 'inner', fig_path)
         make_ed_fig(outer1_null_values, outer1_H1_values, 'outer1', fig_path)
         make_ed_fig(outer2_null_values, outer2_H1_values, 'outer2', fig_path)
@@ -659,11 +663,6 @@ def check_run(run_id, path=None, calculate_BED=True, save_df=False, plot_metrics
                 os.mkdir(fig_path + '1dHists/' + key)
             for feat in features:
                 exec("plot_1d(" + key + "Data," + key + "DF,feat,chi2_" + key + ", fig_path, key)")
-    if cfg_inner['cfg'] == 11:
-        batch_size = 10
-        print("applying small batch")
-    else:
-        batch_size = 100
 
     if len(noLeaksDF) > max_length:
         noLeaks_null_values, noLeaks_H1_values = get_batch_ed_histograms(
