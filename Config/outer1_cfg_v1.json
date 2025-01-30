@@ -8,7 +8,7 @@
     "dataGroup": "outer1",
     "pdg": 2112,
     "batchSize": 65536,
-    "noiseDim": 500,
+    "noiseDim": 1000,
     "numEpochs": 50,
     "device": "cpu",
     "nCrit": 2,

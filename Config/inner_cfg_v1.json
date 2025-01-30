@@ -8,7 +8,7 @@
     "dataGroup": "inner",
     "pdg": 2112,
     "batchSize": 1024,
-    "noiseDim": 100,
+    "noiseDim": 1000,
     "numEpochs": 50,
     "device": "cpu",
     "nCrit": 2,
