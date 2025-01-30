@@ -674,8 +674,8 @@ def check_run(run_id, path=None, calculate_BED=True, save_df=False, plot_metrics
             batch_size=batch_size)
     else:
         noLeaks_null_values, noLeaks_H1_values = get_batch_ed_histograms(
-            noLeaksDF[features_for_test].sample(max_length),
-            combinedData[features_for_test].sample(max_length),
+            noLeaksDF[features_for_test],
+            combinedData[features_for_test],
             batch_size=batch_size)
     make_ed_fig(noLeaks_null_values, noLeaks_H1_values, 'noLeaks', fig_path)
 
