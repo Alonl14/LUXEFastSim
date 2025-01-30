@@ -443,6 +443,8 @@ def generate_fake_real_dfs(run_id, cfg, run_dir, generator_net=None):
     # TODO: remove factor, find a different way to ease local data generation
     # Read data used for training
     fake_df, real_df = generate_ds(generator_net, factor=1, cfg=cfg)
+    real_df = real_df[real_df[' time'] <= 1e6]
+    fake_df = fake_df[fake_df[' time'] <= 1e6]
     add_features(fake_df, cfg['pdg'])
     add_features(real_df, cfg['pdg'])
 
@@ -485,6 +487,7 @@ def check_run(run_id, path=None, calculate_BED=True, save_df=False, plot_metrics
     innerDF, innerData = generate_fake_real_dfs(run_id, cfg_inner, run_dir)
     outer1DF, outer1Data = generate_fake_real_dfs(run_id, cfg_outer1, run_dir)
     outer2DF, outer2Data = generate_fake_real_dfs(run_id, cfg_outer2, run_dir)
+
     print("smallest E: ", np.min(innerDF[' eneg']))
     print("smallest E: ", np.min(outer1DF[' eneg']))
     print("smallest E: ", np.min(outer2DF[' eneg']))
@@ -494,10 +497,15 @@ def check_run(run_id, path=None, calculate_BED=True, save_df=False, plot_metrics
 
     max_length = int(1e6)
     batch_size = 100
-    if cfg_inner['cfg'] == 11:
-        batch_size = 10
+    small_batch = 50
+    if cfg_inner['pdg'] == 11:
+        batch_size = 50
+        small_batch = 5
+    elif cfg_inner['pdg'] == 22:
+        batch_size = 100
+        small_batch = 20
         print("applying small batch")
-    
+
     if calculate_BED:
         inner_null_values, inner_H1_values = get_batch_ed_histograms(
             innerDF.loc[:min(max_length, len(innerDF)-1), cfg_inner['features'].keys()],
@@ -510,16 +518,11 @@ def check_run(run_id, path=None, calculate_BED=True, save_df=False, plot_metrics
         outer2_null_values, outer2_H1_values = get_batch_ed_histograms(
             outer2DF.loc[:min(max_length, len(outer2DF)-1), cfg_outer2['features'].keys()],
             outer2Data.loc[:min(max_length, len(outer2DF)-1), cfg_outer2['features'].keys()],
-            batch_size=batch_size)
+            batch_size=small_batch)
         make_ed_fig(inner_null_values, inner_H1_values, 'inner', fig_path)
         make_ed_fig(outer1_null_values, outer1_H1_values, 'outer1', fig_path)
         make_ed_fig(outer2_null_values, outer2_H1_values, 'outer2', fig_path)
 
-    #######
-    # else:
-    #     innerDF = pd.read_csv(run_dir + 'innerDF.csv')
-    #     outerDF = pd.read_csv(run_dir + 'outerDF.csv')
-    ######
     if plot_metrics:
         iKLPath = run_dir + "KL_in.npy"
         oKL1Path = run_dir + "KL_out1.npy"
@@ -828,14 +831,14 @@ def get_batch_ed_histograms(x, y, batch_size=1000):
     :param batch_size:
     :return: null values, H1 values
     """
-
     for f in x.columns:
         # Just so that any of the features won't take over the metric
-        if f in [' rp', ' eneg', ' time']:
+        if f in [' rx', ' rp', ' eneg', ' time']:
             x[f] = np.log(x[f])
             y[f] = np.log(y[f])
-        # x[f] = (x[f] - np.mean(x[f])) / np.std(x[f])
-        # y[f] = (y[f] - np.mean(y[f])) / np.std(y[f])
+
+        x[f] = (x[f] - np.mean(x[f])) / np.std(x[f])
+        y[f] = (y[f] - np.mean(y[f])) / np.std(y[f])
 
     x_batches = get_batches(x.values, batch_size)
     y_batches = get_batches(y.values, batch_size)
@@ -899,11 +902,11 @@ def make_ed_fig(null, H1, group, fig_path, real_tag="Y", fake_tag="X"):
     axs.hist(H1, bins=bins, density=True, alpha=0.6)
     ks_test = ks(null, H1)
     if ks_test.pvalue < 0.1:
-        plt.text(.9, .5, f' $p$-value: ${compact_latex(ks_test.pvalue)}$ ', ha='right', va='top', transform=axs.transAxes)
-        plt.text(.9, .4, f' $K_{{n,m}}={ks_test.statistic:.2f}$ ', ha='right', va='top', transform=axs.transAxes)
+        plt.text(.98, .5, f' $p$-value: ${compact_latex(ks_test.pvalue)}$ ', ha='right', va='top', transform=axs.transAxes)
+        plt.text(.98, .4, f' $K_{{n,m}}={ks_test.statistic:.2f}$ ', ha='right', va='top', transform=axs.transAxes)
     else:
-        plt.text(.9, .5, f' $p$-value: ${ks_test.pvalue:.2f}$ ', ha='right', va='top', transform=axs.transAxes)
-        plt.text(.9, .4, f' $K_{{n,m}}={ks_test.statistic:.2f}$ ', ha='right', va='top', transform=axs.transAxes)
+        plt.text(.98, .5, f' $p$-value: ${ks_test.pvalue:.2f}$ ', ha='right', va='top', transform=axs.transAxes)
+        plt.text(.98, .4, f' $K_{{n,m}}={ks_test.statistic:.2f}$ ', ha='right', va='top', transform=axs.transAxes)
     plt.xlabel("$D_E \\rm{[a.u]}$")
     plt.ylabel("frequency")
     axs.legend([f"$D_E({real_tag},{fake_tag})$", f"$D_E({real_tag},{real_tag}^\prime)$"])
