@@ -495,7 +495,7 @@ def check_run(run_id, path=None, calculate_BED=True, save_df=False, plot_metrics
     print(f'Created DFs in {get_time(generation_time_a, generation_time_b)}')
     print("getting batch ED...")
 
-    max_length = int(1e6)
+    max_length = int(1e7)
     batch_size = 100
     small_batch = 50
     if cfg_inner['pdg'] == 11:
@@ -670,12 +670,12 @@ def check_run(run_id, path=None, calculate_BED=True, save_df=False, plot_metrics
     if len(noLeaksDF) > max_length:
         noLeaks_null_values, noLeaks_H1_values = get_batch_ed_histograms(
             noLeaksDF[features_for_test].sample(max_length),
-            combinedData[features_for_test].sample(max_length),
+            noLeaksData[features_for_test].sample(max_length),
             batch_size=batch_size)
     else:
         noLeaks_null_values, noLeaks_H1_values = get_batch_ed_histograms(
             noLeaksDF[features_for_test],
-            combinedData[features_for_test],
+            noLeaksData[features_for_test],
             batch_size=batch_size)
     make_ed_fig(noLeaks_null_values, noLeaks_H1_values, 'noLeaks', fig_path)
 
