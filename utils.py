@@ -495,14 +495,14 @@ def check_run(run_id, path=None, calculate_BED=True, save_df=False, plot_metrics
     print(f'Created DFs in {get_time(generation_time_a, generation_time_b)}')
     print("getting batch ED...")
 
-    max_length = int(1e6)
+    max_length = int(5e6)
     batch_size = 100
     small_batch = 50
     if cfg_inner['pdg'] == 11:
         batch_size = 50
         small_batch = 5
     elif cfg_inner['pdg'] == 22:
-        batch_size = 50
+        batch_size = 100
         small_batch = 20
 
     if calculate_BED:
