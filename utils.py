@@ -495,14 +495,14 @@ def check_run(run_id, path=None, calculate_BED=True, save_df=False, plot_metrics
     print(f'Created DFs in {get_time(generation_time_a, generation_time_b)}')
     print("getting batch ED...")
 
-    max_length = int(5e6)
+    max_length = int(1e6)
     batch_size = 100
     small_batch = 50
     if cfg_inner['pdg'] == 11:
         batch_size = 50
         small_batch = 5
     elif cfg_inner['pdg'] == 22:
-        batch_size = 100
+        batch_size = 30
         small_batch = 20
 
     if calculate_BED:
@@ -680,6 +680,8 @@ def check_run(run_id, path=None, calculate_BED=True, save_df=False, plot_metrics
 
 
 def plot_1d(data, DF, feat, ks, fig_path, key):
+    plt.style.use('seaborn-v0_8-deep')
+    plt.rc('font', family='serif', size=25)
     plt.figure(dpi=200)
     plt.yscale('log')
     bins = np.linspace(np.min(data[feat]), np.max(data[feat]), 400)
@@ -701,9 +703,9 @@ def plot_1d(data, DF, feat, ks, fig_path, key):
                  ' eneg': '$E~$[GeV]',
                  ' time': '$t~$[ns]',
                  ' rx': '$r_x~$[mm]',
-                 ' phi_x': '$phi_x~$[rad]',
+                 ' phi_x': '$\\phi_x~$[rad]',
                  ' rp': '$r_p~$[GeV]',
-                 ' phi_p': '$phi_p~$[rad]',
+                 ' phi_p': '$\\phi_p~$[rad]',
                  'theta': '$\\theta~$[rad]'}
     plt.xlabel(labeldict[feat])
     plt.savefig(fig_path + '1dHists/' + key + '/' + feat.strip().capitalize(),bbox_inches='tight')
@@ -957,8 +959,8 @@ pdg_dict = {
     130: ["K0-L", 0.497611, 0, 0, 0.5],
     211: ["Pion+", 0.13957039, +1, 0, 0.5],
     -211: ["Pion-", 0.13957039, -1, 0, 0.5],
-    2112: ["Neutron", 0.9395654133, 0, 0.5, 0.5],
-    2212: ["Proton", 0.9382720813, +1, 0.5, 0.5],
+    2112: ["Neutron", 0.93956, 0, 0.5, 0.5],
+    2212: ["Proton", 0.93827, +1, 0.5, 0.5],
     1000010020: ["Deuteron", 1.875612573, +1, 1, 0],
     1000020040: ["Alpha", 3.727379, +2, 0, 0],
     1000030070: ["Li-7", 6.533839, +3, 1.5, 1.5],
