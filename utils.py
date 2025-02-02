@@ -502,7 +502,7 @@ def check_run(run_id, path=None, calculate_BED=True, save_df=False, plot_metrics
         batch_size = 50
         small_batch = 5
     elif cfg_inner['pdg'] == 22:
-        batch_size = 30
+        batch_size = 150
         small_batch = 20
 
     if calculate_BED:
