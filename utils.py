@@ -12,6 +12,8 @@ import os
 import tqdm
 from scipy.stats import kstest as ks
 from scipy.stats import binned_statistic_dd
+from numba import njit
+import random
 
 
 def compute_sparse_histogram(data, bin_edges):
@@ -748,12 +750,18 @@ def prep_matrix(x):
 
 
 # calculates the Euclidean distance matrix for two np arrays x and y
+@njit
 def euclidean_distance_matrix(x, y):
-    D_XY = np.zeros([np.shape(x)[0], np.shape(y)[0]])
-    shape = np.shape(D_XY)
-    for i in range(shape[0]):
-        for j in range(shape[1]):
-            D_XY[i, j] = np.linalg.norm(x[i, :] - y[j, :])
+    n_x = x.shape[0]
+    n_y = y.shape[0]
+    dim = x.shape[1]
+    D_XY = np.zeros((n_x, n_y))
+
+    for i in range(n_x):
+        for j in range(n_y):
+            for k in range(dim):
+                D_XY[i, j] += (x[i, k] - y[j, k]) ** 2
+            D_XY[i, j] = np.sqrt(D_XY[i, j])
     return D_XY
 
 
@@ -826,6 +834,7 @@ def get_perm_p_value(x, y, n_permutations, log_norm=True, progress=True):
 
 def get_batch_ed_histograms(x, y, batch_size=1000):
     """
+    NORMALIZES THE DATA x = (x - np.mean(x)) / np.std(x)
     get histograms of energy distance for batches of data with itself (null) and data with generated data (h1)
     :param x: data in the shape [num_samples, num_features]
     :param y: data in the shape [num_samples, num_features]
@@ -838,13 +847,17 @@ def get_batch_ed_histograms(x, y, batch_size=1000):
             x[f] = np.log(x[f])
             y[f] = np.log(y[f])
 
-        x[f] = (x[f] - np.mean(x[f])) / np.std(x[f])
-        y[f] = (y[f] - np.mean(y[f])) / np.std(y[f])
+        # x[f] = (x[f] - np.mean(x[f])) / np.std(x[f])
+        # y[f] = (y[f] - np.mean(y[f])) / np.std(y[f])
 
     x_batches = get_batches(x.values, batch_size)
     y_batches = get_batches(y.values, batch_size)
+
     y_prime_batches = y_batches.copy()
     random.shuffle(y_prime_batches)
+
+    print("Length of batches: ", len(x_batches), len(y_batches))
+
     n_batches = min(len(x_batches), len(y_batches))
     ED_null = np.zeros(n_batches)
     ED_H1 = np.zeros(n_batches)
@@ -893,25 +906,30 @@ def fix_path(cfg, feature):
     cfg[feature] = "TrainData/" + file_name
 
 
-def make_ed_fig(null, H1, group, fig_path, real_tag="Y", fake_tag="X"):
-    fig, axs = plt.subplots(dpi=200)
-    axs.grid(True, which='both', color='0.65', linestyle='-')
-    bin_max = np.max(np.concatenate((null, H1)))
-    bin_min = np.min(np.concatenate((null, H1)))
-    bins = np.linspace(bin_min, bin_max, 50)
-    axs.hist(null, bins=bins, density=True, alpha=0.6)
-    axs.hist(H1, bins=bins, density=True, alpha=0.6)
+def make_ed_fig(null, H1, group, fig_path, real_tag="Y", fake_tag="X", plotting=True):
     ks_test = ks(null, H1)
-    if ks_test.pvalue < 0.1:
-        plt.text(.98, .5, f' $p$-value: ${compact_latex(ks_test.pvalue)}$ ', ha='right', va='top', transform=axs.transAxes)
-        plt.text(.98, .4, f' $K_{{n,m}}={ks_test.statistic:.2f}$ ', ha='right', va='top', transform=axs.transAxes)
-    else:
-        plt.text(.98, .5, f' $p$-value: ${ks_test.pvalue:.2f}$ ', ha='right', va='top', transform=axs.transAxes)
-        plt.text(.98, .4, f' $K_{{n,m}}={ks_test.statistic:.2f}$ ', ha='right', va='top', transform=axs.transAxes)
-    plt.xlabel("$D_E \\rm{[a.u]}$")
-    plt.ylabel("frequency")
-    axs.legend([f"$D_E({real_tag},{fake_tag})$", f"$D_E({real_tag},{real_tag}^\prime)$"])
-    fig.savefig(fig_path + group + '_histograms.png', bbox_inches='tight')
+    pval, ks_stat = ks_test.pvalue, ks_test.statistic
+    if plotting:
+        fig, axs = plt.subplots(dpi=200)
+        plt.rcParams['text.usetex'] = True
+        axs.grid(True, which='both', color='0.65', linestyle='-')
+        bin_max = np.max(np.concatenate((null, H1)))
+        bin_min = np.min(np.concatenate((null, H1)))
+        bins = np.linspace(bin_min, bin_max, 50)
+        axs.hist(null, bins=bins, density=True, alpha=0.6)
+        axs.hist(H1, bins=bins, density=True, alpha=0.6)
+        if pval < 0.1:
+            plt.text(.98, .5, f' $p$-value: ${compact_latex(pval)}$ ', ha='right', va='top', transform=axs.transAxes)
+            plt.text(.98, .4, f' $K_{{n,m}}={ks_stat:.2f}$ ', ha='right', va='top', transform=axs.transAxes)
+        else:
+            plt.text(.98, .5, f' $p$-value: ${pval:.2f}$ ', ha='right', va='top', transform=axs.transAxes)
+            plt.text(.98, .4, f' $K_{{n,m}}={ks_stat:.2f}$ ', ha='right', va='top', transform=axs.transAxes)
+        plt.xlabel("$D_E \\rm{[a.u]}$")
+        plt.ylabel("frequency")
+        plt.yscale('log')
+        axs.legend([f"$D_E({real_tag},{fake_tag})$", f"$D_E({real_tag},{real_tag}^\prime)$"])
+        # fig.savefig(fig_path + group + '_histograms.png', bbox_inches='tight')
+    return pval, ks_stat
 
 
 def compact_latex(n):
