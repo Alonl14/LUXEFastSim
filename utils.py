@@ -497,28 +497,25 @@ def check_run(run_id, path=None, calculate_BED=True, save_df=False, plot_metrics
     print(f'Created DFs in {get_time(generation_time_a, generation_time_b)}')
     print("getting batch ED...")
 
-    max_length = int(1e6)
-    batch_size = 100
+    # max_length = int(1e6)
+    batch_size = 5000
     small_batch = 50
-    if cfg_inner['pdg'] == 11:
-        batch_size = 50
-        small_batch = 5
-    elif cfg_inner['pdg'] == 22:
-        batch_size = 150
-        small_batch = 20
+    # if cfg_inner['pdg'] == 11:
+    #     batch_size = 50
+    #     small_batch = 5
+    # elif cfg_inner['pdg'] == 22:
+    #     batch_size = 150
+    #     small_batch = 20
 
     if calculate_BED:
         inner_null_values, inner_H1_values = get_batch_ed_histograms(
-            innerDF.loc[:min(max_length, len(innerDF)-1), cfg_inner['features'].keys()],
-            innerData.loc[:min(max_length, len(innerDF)-1), cfg_inner['features'].keys()],
+            innerDF, innerData,
             batch_size=batch_size)
         outer1_null_values, outer1_H1_values = get_batch_ed_histograms(
-            outer1DF.loc[:min(max_length, len(outer1DF)-1), cfg_outer1['features'].keys()],
-            outer1Data.loc[:min(max_length, len(outer1DF)-1), cfg_outer1['features'].keys()],
+            outer1DF, outer1Data,
             batch_size=batch_size)
         outer2_null_values, outer2_H1_values = get_batch_ed_histograms(
-            outer2DF.loc[:min(max_length, len(outer2DF)-1), cfg_outer2['features'].keys()],
-            outer2Data.loc[:min(max_length, len(outer2DF)-1), cfg_outer2['features'].keys()],
+            outer2DF, outer2Data,
             batch_size=small_batch)
         make_ed_fig(inner_null_values, inner_H1_values, 'inner', fig_path)
         make_ed_fig(outer1_null_values, outer1_H1_values, 'outer1', fig_path)
@@ -866,6 +863,52 @@ def get_batch_ed_histograms(x, y, batch_size=1000):
         x_batch, y_batch, y_prime_batch = (x_batches[i], y_batches[i], y_prime_batches[i])
         ED_null[i] = get_ed(x_batch, y_batch)
         ED_H1[i] = get_ed(y_prime_batch, y_batch)
+    return ED_null, ED_H1
+
+
+def get_sampled_ed_histograms(x, y, batch_size=1000, num_iters=10000):
+    """
+    NORMALIZES THE DATA x = (x - np.mean(x)) / np.std(x)
+    get histograms of energy distance for batches of data with itself (null) and data with generated data (h1)
+    :param x: data in the shape [num_samples, num_features]
+    :param y: data in the shape [num_samples, num_features]
+    :param batch_size:
+    :return: null values, H1 values
+    """
+    # Process the data once before sampling loop
+    x_processed = x.copy()
+    y_processed = y.copy()
+
+    for f in x.columns:
+        # Just so that any of the features won't take over the metric
+        if f in [' rx', ' rp', ' eneg', ' time']:
+            x_processed[f] = np.log(x_processed[f])
+            y_processed[f] = np.log(y_processed[f])
+
+        x_processed[f] = (x_processed[f] - np.mean(x_processed[f])) / np.std(x_processed[f])
+        y_processed[f] = (y_processed[f] - np.mean(y_processed[f])) / np.std(y_processed[f])
+
+    # Pre-generate all random indices for sampling
+    x_indices = np.random.choice(len(x_processed), size=(num_iters, batch_size), replace=True)
+    y_indices = np.random.choice(len(y_processed), size=(num_iters, batch_size), replace=True)
+    y_prime_indices = np.random.choice(len(y_processed), size=(num_iters, batch_size), replace=True)
+
+    # Convert to numpy arrays for faster indexing
+    x_values = x_processed.values
+    y_values = y_processed.values
+
+    ED_null = np.zeros(num_iters)
+    ED_H1 = np.zeros(num_iters)
+
+    # Vectorize the energy distance calculation if possible
+    for i in tqdm.tqdm_notebook(range(num_iters), desc='Calculating ED', leave=False):
+        x_batch = x_values[x_indices[i]]
+        y_batch = y_values[y_indices[i]]
+        y_prime_batch = y_values[y_prime_indices[i]]
+
+        ED_null[i] = get_ed(x_batch, y_batch)
+        ED_H1[i] = get_ed(y_prime_batch, y_batch)
+
     return ED_null, ED_H1
 
 
