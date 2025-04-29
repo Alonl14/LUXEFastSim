@@ -59,3 +59,30 @@ class Discriminator(nn.Module):
 
     def get_param_number(self):
         return sum(p.numel() for p in self.parameters())
+
+
+class Discriminator2(nn.Module):
+    def __init__(self, numFeatures):
+        super().__init__()
+        self.net = nn.Sequential(
+            nn.Linear(numFeatures, 256, bias=True),
+            nn.InstanceNorm1d(256, affine=True),
+            nn.LeakyReLU(0.2),
+
+            nn.Linear(256, 512, bias=True),
+            nn.InstanceNorm1d(512, affine=True),
+            nn.LeakyReLU(0.2),
+
+            nn.Linear(512, 256, bias=True),
+            nn.InstanceNorm1d(256, affine=True),
+            nn.LeakyReLU(0.2),
+
+            nn.Linear(256, 1, bias=False)
+        )
+
+    def forward(self, input):
+        return self.main(input)
+
+    def get_param_number(self):
+        return sum(p.numel() for p in self.parameters())
+

@@ -455,7 +455,6 @@ def generate_fake_real_dfs(run_id, cfg, run_dir, generator_net=None):
 
 def check_run(run_id, path=None, calculate_BED=True, save_df=False, plot_metrics=True, plot_results=True):
     plt.ioff()
-    plt.rcParams['text.usetex'] = True
     if path is None:
         print("Local path")
         run_dir = 'Output/run_' + run_id + '/'
@@ -501,12 +500,6 @@ def check_run(run_id, path=None, calculate_BED=True, save_df=False, plot_metrics
     # max_length = int(1e6)
     batch_size = 5000
     small_batch = 50
-    # if cfg_inner['pdg'] == 11:
-    #     batch_size = 50
-    #     small_batch = 5
-    # elif cfg_inner['pdg'] == 22:
-    #     batch_size = 150
-    #     small_batch = 20
 
     if calculate_BED:
         inner_null_values, inner_H1_values = get_batch_ed_histograms(

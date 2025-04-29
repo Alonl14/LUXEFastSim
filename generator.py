@@ -46,3 +46,26 @@ class Generator(nn.Module):
 
     def get_param_number(self):
         return sum(p.numel() for p in self.parameters())
+
+class Generator2(nn.Module):
+    def __init__(self, noiseDim, numFeatures):
+        super().__init__()
+        self.noiseDim = noiseDim
+        self.net = nn.Sequential(
+            nn.Linear(noiseDim, 256, bias=False),
+            nn.BatchNorm1d(256, affine=True),
+            nn.ReLU(),
+            nn.Linear(256, 512, bias=False),
+            nn.BatchNorm1d(512, affine=True),
+            nn.ReLU(),
+            nn.Linear(512, 256, bias=False),
+            nn.BatchNorm1d(256, affine=True),
+            nn.ReLU(),
+            nn.Linear(256, numFeatures, bias=True)  # Only layer with bias
+        )
+
+    def forward(self, input):
+        return self.main(input)
+
+    def get_param_number(self):
+        return sum(p.numel() for p in self.parameters())

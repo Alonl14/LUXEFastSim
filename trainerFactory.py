@@ -13,9 +13,9 @@ import trainer
 importlib.reload(dataset)
 from dataset import ParticleDataset
 importlib.reload(generator)
-from generator import Generator
+from generator import Generator, Generator2
 importlib.reload(discriminator)
-from discriminator import Discriminator
+from discriminator import Discriminator, Discriminator2
 importlib.reload(trainer)
 from trainer import Trainer
 from torch.utils.data import random_split
@@ -58,8 +58,11 @@ def create_trainer(cfg):
     if not cfg['applyQT']:
         cfg['noiseDim'] = numFeatures
 
-    genNet = Generator(noiseDim=cfg['noiseDim'], numFeatures=numFeatures)
-    discNet = Discriminator(numFeatures=numFeatures)
+    # genNet = Generator(noiseDim=cfg['noiseDim'], numFeatures=numFeatures)
+    # discNet = Discriminator(numFeatures=numFeatures)
+
+    genNet = Generator2(noiseDim=cfg['noiseDim'], numFeatures=numFeatures)
+    discNet = Discriminator2(numFeatures=numFeatures)
 
     genNet = nn.DataParallel(genNet)
     discNet = nn.DataParallel(discNet)
@@ -80,8 +83,8 @@ def create_trainer(cfg):
         'applyQT': cfg['applyQT']
     }
 
-    genOptimizer = optim.Adam(cfgDict['genNet'].parameters(), lr=cfg['criticLearningRate'], betas=(0.5, 0.999))
-    discOptimizer = optim.Adam(cfgDict['discNet'].parameters(), lr=cfg['generatorLearningRate'], betas=(0.5, 0.999))
+    genOptimizer = optim.Adam(cfgDict['genNet'].parameters(), lr=cfg['criticLearningRate'], betas=(0.5, 0.9))
+    discOptimizer = optim.Adam(cfgDict['discNet'].parameters(), lr=cfg['generatorLearningRate'], betas=(0.5, 0.9))
 
     cfgDict['genOptimizer'] = genOptimizer
     cfgDict['discOptimizer'] = discOptimizer
