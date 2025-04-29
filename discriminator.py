@@ -80,8 +80,10 @@ class Discriminator2(nn.Module):
             nn.Linear(256, 1, bias=False)
         )
 
-    def forward(self, input):
-        return self.main(input)
+    def forward(self, x):
+        x = x.unsqueeze(2)  # (B, D) → (B, D, 1)
+        x = self.main(x)
+        return x.squeeze(2)
 
     def get_param_number(self):
         return sum(p.numel() for p in self.parameters())
