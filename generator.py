@@ -51,7 +51,7 @@ class Generator2(nn.Module):
     def __init__(self, noiseDim, numFeatures):
         super().__init__()
         self.noiseDim = noiseDim
-        self.net = nn.Sequential(
+        self.main = nn.Sequential(
             nn.Linear(noiseDim, 256, bias=False),
             nn.BatchNorm1d(256, affine=True),
             nn.ReLU(),

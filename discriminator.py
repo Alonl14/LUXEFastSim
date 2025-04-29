@@ -64,7 +64,7 @@ class Discriminator(nn.Module):
 class Discriminator2(nn.Module):
     def __init__(self, numFeatures):
         super().__init__()
-        self.net = nn.Sequential(
+        self.main = nn.Sequential(
             nn.Linear(numFeatures, 256, bias=True),
             nn.InstanceNorm1d(256, affine=True),
             nn.LeakyReLU(0.2),
