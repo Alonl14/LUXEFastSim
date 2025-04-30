@@ -47,6 +47,7 @@ class Generator(nn.Module):
     def get_param_number(self):
         return sum(p.numel() for p in self.parameters())
 
+
 class Generator2(nn.Module):
     def __init__(self, noiseDim, numFeatures):
         super().__init__()
