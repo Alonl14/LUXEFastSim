@@ -74,8 +74,13 @@ class Trainer:
 
                     output = self.discNet(real_data)
                     err_D_real = -torch.mean(output)
-
-                    noise = torch.randn(batch_size, self.noiseDim, device=self.device)
+                    if self.applyQT:
+                        noise = torch.randn(batch_size, self.noiseDim, device=self.device)
+                    else:
+                        noise = np.float32(np.random.randn(batch_size, self.noiseDim))
+                        noise = self.dataset.quantiles.inverse_transform(noise)
+                        noise = torch.from_numpy(noise)
+                        noise = noise.to(self.device)
                     fake_p = self.genNet(noise)
                     output = self.discNet(fake_p.detach())
                     err_D_fake = torch.mean(output)
