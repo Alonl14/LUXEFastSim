@@ -225,33 +225,6 @@ def get_q(ds):
     return ds.quantiles.quantiles_
 
 
-# def plot_features(ds):
-#     print("Feature Slope      Curvature")
-#
-#     for i, col in enumerate(ds.preprocess):
-#         fig, (ax1, ax2, ax3, ax4) = plt.subplots(1, 4, figsize=(20, 5))
-#         fig.suptitle(col)
-#
-#         ax1.hist(ds.preprocess[col], bins=400)
-#         ax2.hist(ds.preqt[:, i], bins=400)
-#         ax3.hist(ds.data[:, i], bins=400)
-#         ax4.plot(ds.quantiles.quantiles_[:, i])
-#
-#         feature = '{:8}'.format(col)
-#
-#         norm = np.max(get_q(ds)[:, i])
-#         slope = np.max(get_q(ds)[1:, i] - get_q(ds)[:-1, i]) / norm
-#         curvature = np.max(get_q(ds)[2:, i] - 2 * get_q(ds)[1:-1, i] + get_q(ds)[:-2, i]) / norm
-#
-#         print(feature + '%.4f     %.4f' % (slope, curvature))
-#         print("\n")
-#
-#         ax1.set_yscale('log')
-#         ax2.set_yscale('log')
-#         ax3.set_yscale('log')
-#         plt.show()
-
-
 def plot_features(ds, save_path=None):
     """Plots histograms and feature diagnostics for a dataset in one figure."""
     features = ds.preprocess.columns
@@ -398,22 +371,6 @@ def weights_init(m):
         nn.init.normal_(m.weight.data, 1, 0.02)
     elif isinstance(m, nn.InstanceNorm1d):
         nn.init.normal_(m.weight.data, 1, 0.02)
-
-#
-# def combine(innerT, outerT, real_df=None, inner=None, outer=None):
-#     if real_df is not None:
-#         inner, outer = split(real_df)
-#     numEvents = (len(inner) + len(outer)) / 10
-#     q_in = len(inner) / (len(inner) + len(outer))
-#     inner_events = np.int64(np.floor(numEvents * q_in))
-#     outer_events = np.int64(np.ceil(numEvents * (1 - q_in)))
-#     print(inner_events, outer_events)
-#     inner_df = generate_df(innerT, innerT.noiseDim, inner_events)
-#     outer_df = generate_df(outerT, outerT.noiseDim, outer_events)
-#
-#     generated_df = pd.concat((inner_df, outer_df), axis=0)
-#
-#     return generated_df
 
 
 def generate_fake_real_dfs(run_id, cfg, run_dir, generator_net=None):
@@ -731,15 +688,6 @@ def get_time(end_time, beg_time=np.zeros(9)):
     return time.asctime(time.struct_time(np.abs(np.int64(end_time) - np.int64(beg_time))))[11:19]
 
 
-# takes log of energy and time, normalizes everything
-def prep_matrix(x):
-    x[[2, 4, 5], :] = np.log(x[[2, 4, 5], :])
-
-    for d in range(np.shape(x)[0]):
-        x[d, :] = x[d, :] - np.min(x[d, :]) / (np.max(x[d, :]) - np.min(x[d, :]))
-    return x
-
-
 # calculates the Euclidean distance matrix for two np arrays x and y
 @njit
 def euclidean_distance_matrix(x, y):
@@ -754,73 +702,6 @@ def euclidean_distance_matrix(x, y):
                 D_XY[i, j] += (x[i, k] - y[j, k]) ** 2
             D_XY[i, j] = np.sqrt(D_XY[i, j])
     return D_XY
-
-
-# shuffles indexes based on permutation
-def permutation_indices(n_x, n_y):
-    n = n_x + n_y
-    idx_w = np.arange(n)
-    idx_g = np.concatenate((np.arange(n_x), np.arange(n_y)))
-    idx_p1 = np.random.choice(n_x + n_y, n_x, replace=False)
-    idx_p2 = np.setdiff1d(idx_w, idx_p1)
-    i_1 = idx_g[idx_p1[idx_p1 < n_x]]
-    i_1s = np.arange(len(i_1))
-    i_2 = idx_g[idx_p1[idx_p1 >= n_x]]
-    i_2s = np.arange(len(i_1), n_x)
-    j_1 = idx_g[idx_p2[idx_p2 < n_x]]
-    j_1s = np.arange(len(j_1))
-    j_2 = idx_g[idx_p2[idx_p2 >= n_x]]
-    j_2s = np.arange(len(j_1), n_y)
-    return i_1, i_2, i_1s, i_2s, j_1, j_2, j_1s, j_2s
-
-
-def get_perm_p_value(x, y, n_permutations, log_norm=True, progress=True):
-    if log_norm:
-        x_norm = np.copy(x)
-        x_norm = prep_matrix(x_norm)
-        y_norm = np.copy(y)
-        y_norm = prep_matrix(y_norm)
-    else:
-        x_norm = np.copy(x)
-        y_norm = np.copy(y)
-
-    beg_time = time.localtime()
-    D_XX = euclidean_distance_matrix(x_norm, x_norm)
-    D_XY = euclidean_distance_matrix(x_norm, y_norm)
-    D_YX = D_XY.T
-    D_YY = euclidean_distance_matrix(y_norm, y_norm)
-    n_x = np.shape(x)[1]
-    n_y = np.shape(y)[1]
-    ED_observed = 2 * np.sum(D_XY) / (n_x * n_y) - np.sum(D_XX) / n_x ** 2 - np.sum(D_YY) / n_y ** 2
-    end_time = time.localtime()
-    # print("Calculated ED in ", get_time(beg_time,end_time))
-    null_hyp_ED_dist = np.zeros(n_permutations)
-    if progress:
-        permutations_iter = tqdm.tqdm_notebook(range(n_permutations), desc='permutation')
-    else:
-        permutations_iter = range(n_permutations)
-    for i in permutations_iter:
-        [i_1, i_2, i_1s, i_2s,
-         j_1, j_2, j_1s, j_2s] = permutation_indices(n_x, n_y)
-
-        D_XXs = np.zeros_like(D_XX)
-        D_XXs[np.ix_(i_1s, i_1s)] = D_XX[np.ix_(i_1, i_1)]
-        D_XXs[np.ix_(i_1s, i_2s)] = D_XY[np.ix_(i_1, i_2)]
-        D_XXs[np.ix_(i_2s, i_1s)] = D_YX[np.ix_(i_2, i_1)]
-        D_XXs[np.ix_(i_2s, i_2s)] = D_YY[np.ix_(i_2, i_2)]
-        D_YYs = np.zeros_like(D_YY)
-        D_YYs[np.ix_(j_1s, j_1s)] = D_XX[np.ix_(j_1, j_1)]
-        D_YYs[np.ix_(j_1s, j_2s)] = D_XY[np.ix_(j_1, j_2)]
-        D_YYs[np.ix_(j_2s, j_1s)] = D_YX[np.ix_(j_2, j_1)]
-        D_YYs[np.ix_(j_2s, j_2s)] = D_YY[np.ix_(j_2, j_2)]
-        D_XYs = np.zeros_like(D_XY)
-        D_XYs[np.ix_(i_1s, j_1s)] = D_XX[np.ix_(i_1, j_1)]
-        D_XYs[np.ix_(i_1s, j_2s)] = D_XY[np.ix_(i_1, j_2)]
-        D_XYs[np.ix_(i_2s, j_1s)] = D_YX[np.ix_(i_2, j_1)]
-        D_XYs[np.ix_(i_2s, j_2s)] = D_YY[np.ix_(i_2, j_2)]
-        null_hyp_ED_dist[i] = 2 * np.mean(D_XYs) - np.mean(D_XXs) - np.mean(D_YYs)
-    p_value = (n_permutations - np.sum(null_hyp_ED_dist >= ED_observed)) / (n_permutations + 1)
-    return p_value, null_hyp_ED_dist, ED_observed
 
 
 def get_batch_ed_histograms(x, y, batch_size=1000):
@@ -1029,3 +910,122 @@ particle_dict = {
     pdg: Particle(name, mass, charge, spin, isospin, pdg)
     for pdg, (name, mass, charge, spin, isospin) in pdg_dict.items()
 }
+
+###
+# ARCHIVE
+
+# def plot_features(ds):
+#     print("Feature Slope      Curvature")
+#
+#     for i, col in enumerate(ds.preprocess):
+#         fig, (ax1, ax2, ax3, ax4) = plt.subplots(1, 4, figsize=(20, 5))
+#         fig.suptitle(col)
+#
+#         ax1.hist(ds.preprocess[col], bins=400)
+#         ax2.hist(ds.preqt[:, i], bins=400)
+#         ax3.hist(ds.data[:, i], bins=400)
+#         ax4.plot(ds.quantiles.quantiles_[:, i])
+#
+#         feature = '{:8}'.format(col)
+#
+#         norm = np.max(get_q(ds)[:, i])
+#         slope = np.max(get_q(ds)[1:, i] - get_q(ds)[:-1, i]) / norm
+#         curvature = np.max(get_q(ds)[2:, i] - 2 * get_q(ds)[1:-1, i] + get_q(ds)[:-2, i]) / norm
+#
+#         print(feature + '%.4f     %.4f' % (slope, curvature))
+#         print("\n")
+#
+#         ax1.set_yscale('log')
+#         ax2.set_yscale('log')
+#         ax3.set_yscale('log')
+#         plt.show()
+
+#
+# def combine(innerT, outerT, real_df=None, inner=None, outer=None):
+#     if real_df is not None:
+#         inner, outer = split(real_df)
+#     numEvents = (len(inner) + len(outer)) / 10
+#     q_in = len(inner) / (len(inner) + len(outer))
+#     inner_events = np.int64(np.floor(numEvents * q_in))
+#     outer_events = np.int64(np.ceil(numEvents * (1 - q_in)))
+#     print(inner_events, outer_events)
+#     inner_df = generate_df(innerT, innerT.noiseDim, inner_events)
+#     outer_df = generate_df(outerT, outerT.noiseDim, outer_events)
+#
+#     generated_df = pd.concat((inner_df, outer_df), axis=0)
+#
+#     return generated_df
+#
+# def get_perm_p_value(x, y, n_permutations, log_norm=True, progress=True):
+#     if log_norm:
+#         x_norm = np.copy(x)
+#         x_norm = prep_matrix(x_norm)
+#         y_norm = np.copy(y)
+#         y_norm = prep_matrix(y_norm)
+#     else:
+#         x_norm = np.copy(x)
+#         y_norm = np.copy(y)
+#
+#     beg_time = time.localtime()
+#     D_XX = euclidean_distance_matrix(x_norm, x_norm)
+#     D_XY = euclidean_distance_matrix(x_norm, y_norm)
+#     D_YX = D_XY.T
+#     D_YY = euclidean_distance_matrix(y_norm, y_norm)
+#     n_x = np.shape(x)[1]
+#     n_y = np.shape(y)[1]
+#     ED_observed = 2 * np.sum(D_XY) / (n_x * n_y) - np.sum(D_XX) / n_x ** 2 - np.sum(D_YY) / n_y ** 2
+#     end_time = time.localtime()
+#     # print("Calculated ED in ", get_time(beg_time,end_time))
+#     null_hyp_ED_dist = np.zeros(n_permutations)
+#     if progress:
+#         permutations_iter = tqdm.tqdm_notebook(range(n_permutations), desc='permutation')
+#     else:
+#         permutations_iter = range(n_permutations)
+#     for i in permutations_iter:
+#         [i_1, i_2, i_1s, i_2s,
+#          j_1, j_2, j_1s, j_2s] = permutation_indices(n_x, n_y)
+#
+#         D_XXs = np.zeros_like(D_XX)
+#         D_XXs[np.ix_(i_1s, i_1s)] = D_XX[np.ix_(i_1, i_1)]
+#         D_XXs[np.ix_(i_1s, i_2s)] = D_XY[np.ix_(i_1, i_2)]
+#         D_XXs[np.ix_(i_2s, i_1s)] = D_YX[np.ix_(i_2, i_1)]
+#         D_XXs[np.ix_(i_2s, i_2s)] = D_YY[np.ix_(i_2, i_2)]
+#         D_YYs = np.zeros_like(D_YY)
+#         D_YYs[np.ix_(j_1s, j_1s)] = D_XX[np.ix_(j_1, j_1)]
+#         D_YYs[np.ix_(j_1s, j_2s)] = D_XY[np.ix_(j_1, j_2)]
+#         D_YYs[np.ix_(j_2s, j_1s)] = D_YX[np.ix_(j_2, j_1)]
+#         D_YYs[np.ix_(j_2s, j_2s)] = D_YY[np.ix_(j_2, j_2)]
+#         D_XYs = np.zeros_like(D_XY)
+#         D_XYs[np.ix_(i_1s, j_1s)] = D_XX[np.ix_(i_1, j_1)]
+#         D_XYs[np.ix_(i_1s, j_2s)] = D_XY[np.ix_(i_1, j_2)]
+#         D_XYs[np.ix_(i_2s, j_1s)] = D_YX[np.ix_(i_2, j_1)]
+#         D_XYs[np.ix_(i_2s, j_2s)] = D_YY[np.ix_(i_2, j_2)]
+#         null_hyp_ED_dist[i] = 2 * np.mean(D_XYs) - np.mean(D_XXs) - np.mean(D_YYs)
+#     p_value = (n_permutations - np.sum(null_hyp_ED_dist >= ED_observed)) / (n_permutations + 1)
+#     return p_value, null_hyp_ED_dist, ED_observed
+#
+# # shuffles indexes based on permutation
+# def permutation_indices(n_x, n_y):
+#     n = n_x + n_y
+#     idx_w = np.arange(n)
+#     idx_g = np.concatenate((np.arange(n_x), np.arange(n_y)))
+#     idx_p1 = np.random.choice(n_x + n_y, n_x, replace=False)
+#     idx_p2 = np.setdiff1d(idx_w, idx_p1)
+#     i_1 = idx_g[idx_p1[idx_p1 < n_x]]
+#     i_1s = np.arange(len(i_1))
+#     i_2 = idx_g[idx_p1[idx_p1 >= n_x]]
+#     i_2s = np.arange(len(i_1), n_x)
+#     j_1 = idx_g[idx_p2[idx_p2 < n_x]]
+#     j_1s = np.arange(len(j_1))
+#     j_2 = idx_g[idx_p2[idx_p2 >= n_x]]
+#     j_2s = np.arange(len(j_1), n_y)
+#     return i_1, i_2, i_1s, i_2s, j_1, j_2, j_1s, j_2s
+#
+# # takes log of energy and time, normalizes everything
+# def prep_matrix(x):
+#     x[[2, 4, 5], :] = np.log(x[[2, 4, 5], :])
+#
+#     for d in range(np.shape(x)[0]):
+#         x[d, :] = x[d, :] - np.min(x[d, :]) / (np.max(x[d, :]) - np.min(x[d, :]))
+#     return x
+
