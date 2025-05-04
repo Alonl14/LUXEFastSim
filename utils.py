@@ -305,41 +305,6 @@ def plot_features(ds, save_path=None):
     return ds2.data, ds.preprocess
 
 
-def generate_df(generator_net, numEvents, cfg):
-    """
-    :param generator_net:
-    :param numEvents:
-    :param cfg:
-    :return: numpy array of generated data
-    """
-
-    ds = dataset.ParticleDataset(cfg)
-
-    if cfg['applyQT']:
-        noise = torch.randn(numEvents, cfg['noiseDim'], device='cpu')
-    else:
-        print("here")
-        noise = np.float32(np.random.randn(numEvents, cfg['noiseDim']))
-        noise = ds.quantiles.inverse_transform(noise)
-        noise = torch.from_numpy(noise)
-        noise = noise.to('cpu')
-
-    generator_net.to('cpu')
-    generated_data = generator_net(noise)
-    generated_data = generated_data.detach().numpy()
-
-    features = cfg['features'].keys()
-    empty_arr = np.empty((0, len(features)))
-    ds.data = pd.DataFrame(empty_arr, columns=features)
-    data_values = ds.quantiles.inverse_transform(generated_data) if cfg['applyQT'] else generated_data
-    for i, feature in enumerate(features):
-        ds.data[feature] = data_values[:, i]
-    ds.apply_transformation(cfg, inverse=True)
-    generated_df = ds.data.copy()
-    add_features(generated_df, cfg["pdg"])
-    return generated_df
-
-
 def generate_ds(generator_net, factor, cfg):
     """
     :param generator_net:
@@ -350,6 +315,14 @@ def generate_ds(generator_net, factor, cfg):
     ds = dataset.ParticleDataset(cfg)
     numEvents = np.shape(ds.data)[0]
     noise = torch.randn(np.int64(numEvents / factor), cfg['noiseDim'], device='cpu')
+    if cfg['applyQT']:
+        noise = torch.randn(np.int64(numEvents / factor), cfg['noiseDim'], device='cpu')
+    else:
+        print("here")
+        noise = np.float32(np.random.randn(np.int64(numEvents / factor), len(cfg['features'])))
+        noise = ds.quantiles.inverse_transform(noise)
+        noise = torch.from_numpy(noise)
+        noise = noise.to('cpu')
     generator_net.to('cpu')
     generated_data = generator_net(noise)
     generated_data = generated_data.detach().numpy()
@@ -1027,5 +1000,38 @@ particle_dict = {
 #
 #     for d in range(np.shape(x)[0]):
 #         x[d, :] = x[d, :] - np.min(x[d, :]) / (np.max(x[d, :]) - np.min(x[d, :]))
-#     return x
+# #     return x
+# def generate_df(generator_net, numEvents, cfg):
+#     """
+#     :param generator_net:
+#     :param numEvents:
+#     :param cfg:
+#     :return: numpy array of generated data
+#     """
+#
+#     ds = dataset.ParticleDataset(cfg)
+#
+#     if cfg['applyQT']:
+#         noise = torch.randn(numEvents, cfg['noiseDim'], device='cpu')
+#     else:
+#         print("here")
+#         noise = np.float32(np.random.randn(numEvents, cfg['noiseDim']))
+#         noise = ds.quantiles.inverse_transform(noise)
+#         noise = torch.from_numpy(noise)
+#         noise = noise.to('cpu')
+#
+#     generator_net.to('cpu')
+#     generated_data = generator_net(noise)
+#     generated_data = generated_data.detach().numpy()
+#
+#     features = cfg['features'].keys()
+#     empty_arr = np.empty((0, len(features)))
+#     ds.data = pd.DataFrame(empty_arr, columns=features)
+#     data_values = ds.quantiles.inverse_transform(generated_data) if cfg['applyQT'] else generated_data
+#     for i, feature in enumerate(features):
+#         ds.data[feature] = data_values[:, i]
+#     ds.apply_transformation(cfg, inverse=True)
+#     generated_df = ds.data.copy()
+#     add_features(generated_df, cfg["pdg"])
+#     return generated_df
 
