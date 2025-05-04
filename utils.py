@@ -362,14 +362,15 @@ def generate_fake_real_dfs(run_id, cfg, run_dir, generator_net=None):
 
     # Load parameters
     model_path = run_dir + cfg["dataGroup"] + "_Gen_model.pt"
+    dim = cfg["noiseDim"] if cfg["applyQT"] else numFeatures
     if generator_net is None:
-        generator_net = nn.DataParallel(Generator(cfg["noiseDim"], numFeatures=numFeatures))
+        generator_net = nn.DataParallel(Generator(dim, numFeatures=numFeatures))
         try:
             generator_net.load_state_dict(torch.load(model_path, map_location=torch.device('cpu')))
         except RuntimeError as e:
             print("Error loading model state_dict:", e)
             print("Switching model")
-            generator_net = nn.DataParallel(Generator2(cfg["noiseDim"], numFeatures=numFeatures))
+            generator_net = nn.DataParallel(Generator2(dim, numFeatures=numFeatures))
             generator_net.load_state_dict(torch.load(model_path, map_location=torch.device('cpu')))
 
     # TODO: remove factor, find a different way to ease local data generation
