@@ -375,7 +375,7 @@ def generate_fake_real_dfs(run_id, cfg, run_dir, generator_net=None):
 
     # TODO: remove factor, find a different way to ease local data generation
     # Read data used for training
-    fake_df, real_df = generate_ds(generator_net, factor=1000, cfg=cfg)
+    fake_df, real_df = generate_ds(generator_net, factor=100, cfg=cfg)
     real_df = real_df[real_df[' time'] <= 1e6]
     fake_df = fake_df[fake_df[' time'] <= 1e6]
     add_features(fake_df, cfg['pdg'])
@@ -1002,6 +1002,8 @@ particle_dict = {
 #     for d in range(np.shape(x)[0]):
 #         x[d, :] = x[d, :] - np.min(x[d, :]) / (np.max(x[d, :]) - np.min(x[d, :]))
 # #     return x
+
+
 # def generate_df(generator_net, numEvents, cfg):
 #     """
 #     :param generator_net:

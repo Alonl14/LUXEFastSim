@@ -8,6 +8,7 @@ warnings.filterwarnings("ignore", category=UserWarning, message=".*does not have
 warnings.filterwarnings("ignore", category=UserWarning,
                         message=".*You can silence this warning by not passing in num_features.*")
 
+
 def get_gradient(crit, real, fake, epsilon):
     mixed_images = real * epsilon + fake * (1 - epsilon)
     mixed_scores = crit(mixed_images)
@@ -19,6 +20,12 @@ def get_gradient(crit, real, fake, epsilon):
         retain_graph=True,
     )[0]
     return gradient
+
+
+def corr(x, y):
+    vx = x - x.mean()
+    vy = y - y.mean()
+    return (vx * vy).mean() / (vx.std() * vy.std())
 
 
 class Trainer:
@@ -98,7 +105,19 @@ class Trainer:
                 # Update generator
                 self.genNet.zero_grad()
                 output = self.discNet(fake_p)
-                err_G = -torch.mean(output)
+
+                # Testing some energy momentum related loss term
+                # real_space_vecs = self.dataset.quantiles.inverse_transform(output)
+                # # 4 is eneg, 2 is p_T, neutron mass is 0.939, lambda_phys is 0.1  TODO: change the hardcoded values
+                # phys_loss = (real_space_vecs[:, 4]**2-real_space_vecs[:, 2]**2-0.939**2).mean()
+
+                # fake_p: generator output in quantile space
+                corr_loss = 0
+                for j, k in [(0, 1), (0, 2), (1, 2), (4, 5)]:
+                    real_c = corr(real_data[:, j], real_data[:, k])
+                    fake_c = corr(fake_p[:, j], fake_p[:, k])
+                    corr_loss += (fake_c - real_c).abs()/4
+                err_G = -torch.mean(output) + 0.1*corr_loss
                 err_G.backward()
                 self.genOptimizer.step()
 
@@ -123,11 +142,11 @@ class Trainer:
             avg_error_G /= iters
             avg_error_D /= iters
 
-            self.G_Losses = np.append(self.G_Losses, -avg_error_G)
-            self.D_Losses = np.append(self.D_Losses, -avg_error_D)
+            self.G_Losses = np.append(self.G_Losses, avg_error_G)
+            self.D_Losses = np.append(self.D_Losses, avg_error_D)
 
-            self.Val_G_Losses = np.append(self.Val_G_Losses, -val_error_G)
-            self.Val_D_Losses = np.append(self.Val_D_Losses, -val_error_D)
+            self.Val_G_Losses = np.append(self.Val_G_Losses, val_error_G)
+            self.Val_D_Losses = np.append(self.Val_D_Losses, val_error_D)
 
             print(f'{epoch}/{self.numEpochs}\tLoss_D: {-avg_error_D:.4f}\tLoss_G: {-avg_error_G:.4f}')
             print(f'Validation Loss_D: {-val_error_D:.4f}\tValidation Loss_G: {-val_error_G:.4f}')

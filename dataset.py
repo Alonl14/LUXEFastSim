@@ -18,11 +18,15 @@ class ParticleDataset(Dataset):
         QT = qt(output_distribution='normal', n_quantiles=cfg['nQuantiles'], subsample=cfg['subsample'])
 
         self.data = pd.read_csv(cfg['data_path'])
+        try:
+            self.data = self.data.sample(1000000)
+        except ValueError:
+            print("Not enough data, using all of it")
         print(self.data.shape)
 
         if ' pdg' in self.data.columns.values:
             self.data = self.data[self.data[' pdg'].isin([cfg['pdg']])]  # 22 - photons , 2112 - neutrons
-        # self.data = self.data[(self.data[' time'] <= 10**6) & (self.data[' pzz'] <= 0)]
+        self.data = self.data[(self.data[' time'] <= 10**6) & (self.data[' pzz'] <= 0)]
         # print("time cut 10^6")
 
         # self.data[' rx'] = np.sqrt(self.data[' xx'].values ** 2 + self.data[' yy'].values ** 2)
