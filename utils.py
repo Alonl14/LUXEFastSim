@@ -608,12 +608,12 @@ def plot_1d(data, DF, feat, ks, fig_path, key):
     plt.rc('font', family='serif', size=25)
     plt.figure(dpi=200)
     plt.yscale('log')
-    bins = np.linspace(np.min(data[feat]), np.max(data[feat]), 400)
+    bins = np.linspace(np.min(DF[feat]), np.max(DF[feat]), 400)
     if feat == ' time':
-        bins = np.logspace(np.log10(np.min(data[feat])), np.log10(np.sort(data[feat]))[-10], 400)
+        bins = np.logspace(np.log10(np.min(DF[feat])), np.log10(np.sort(DF[feat]))[-10], 400)
         plt.xscale('log')
     elif feat == ' eneg':
-        bins = np.logspace(np.log10(np.min(data[feat])), np.log10(np.sort(data[feat]))[-10], 400)
+        bins = np.logspace(np.log10(np.min(DF[feat])), np.log10(np.sort(DF[feat]))[-10], 400)
         plt.xscale('log')
 
     plt.hist(DF[feat], bins=bins, density=True, alpha=0.6)
