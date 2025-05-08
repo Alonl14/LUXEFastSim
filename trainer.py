@@ -56,8 +56,8 @@ class Trainer:
     def run(self):
         print("Starting Training Loop...")
 
-        utils.weights_init(self.genNet)
-        utils.weights_init(self.discNet)
+        # utils.weights_init(self.genNet)
+        # utils.weights_init(self.discNet)
 
         self.genNet.to(self.device)
         self.genNet.train()
