@@ -610,10 +610,11 @@ def plot_1d(data, DF, feat, ks, fig_path, key):
     plt.yscale('log')
     bins = np.linspace(np.min(DF[feat]), np.max(DF[feat]), 400)
     if feat == ' time':
-        bins = np.logspace(np.log10(np.min(DF[feat])), np.log10(np.sort(DF[feat]))[-10], 400)
+        bins = np.logspace(np.log10(np.min(np.abs(DF[feat]))), np.log10(np.sort(DF[feat])[-10]), 400)
         plt.xscale('log')
     elif feat == ' eneg':
-        bins = np.logspace(np.log10(np.min(DF[feat])), np.log10(np.sort(DF[feat]))[-10], 400)
+        print(f"np.min(np.abs(DF[feat])): {np.min(np.abs(DF[feat]))} ,np.min(DF[feat]): {np.min(DF[feat])}")
+        bins = np.logspace(np.log10(np.min(np.abs(DF[feat]))), np.log10(np.sort(DF[feat])[-10]), 400)
         plt.xscale('log')
 
     plt.hist(DF[feat], bins=bins, density=True, alpha=0.6)
