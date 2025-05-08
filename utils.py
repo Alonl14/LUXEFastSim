@@ -679,7 +679,7 @@ def euclidean_distance_matrix(x, y):
     return D_XY
 
 
-def get_batch_ed_histograms(x, y, batch_size=1000):
+def get_batch_ed_histograms(x_c, y_c, batch_size=1000):
     """
     NORMALIZES THE DATA x = (x - np.mean(x)) / np.std(x)
     get histograms of energy distance for batches of data with itself (null) and data with generated data (h1)
@@ -688,14 +688,18 @@ def get_batch_ed_histograms(x, y, batch_size=1000):
     :param batch_size:
     :return: null values, H1 values
     """
+
+    x = x_c.copy()
+    y = y_c.copy()
+
     for f in x.columns:
         # Just so that any of the features won't take over the metric
         if f in [' rx', ' rp', ' eneg', ' time']:
             x[f] = np.log(x[f])
             y[f] = np.log(y[f])
 
-        # x[f] = (x[f] - np.mean(x[f])) / np.std(x[f])
-        # y[f] = (y[f] - np.mean(y[f])) / np.std(y[f])
+        x[f] = (x[f] - np.mean(x[f])) / np.std(x[f])
+        y[f] = (y[f] - np.mean(y[f])) / np.std(y[f])
 
     x_batches = get_batches(x.values, batch_size)
     y_batches = get_batches(y.values, batch_size)
