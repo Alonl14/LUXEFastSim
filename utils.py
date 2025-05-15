@@ -81,7 +81,7 @@ def add_features(df, pdg):
     df[' rx'] = np.sqrt(df[' xx'] ** 2 + df[' yy'] ** 2)
 
     exp = (df[' eneg'] + mass) ** 2 - mass ** 2 - df[' rp'] ** 2
-    # df.drop(df[exp < 0].index, inplace=True)
+    df.drop(df[exp < 0].index, inplace=True)
 
     df[' pzz'] = -np.sqrt((df[' eneg'] + mass) ** 2 - mass ** 2 - df[' rp'] ** 2)
     # df[' eneg'] = np.sqrt(df[' rp']**2+df[' pzz']**2+mass**2)-mass
@@ -812,6 +812,12 @@ def make_ed_fig(null, H1, group, fig_path, real_tag="Y", fake_tag="X", plotting=
         axs.grid(True, which='both', color='0.65', linestyle='-')
         bin_max = np.max(np.concatenate((null, H1)))
         bin_min = np.min(np.concatenate((null, H1)))
+        print("null:", null)
+        print("H1:", H1)
+        print("Any NaNs in null?", np.isnan(null).any())
+        print("Any NaNs in H1?", np.isnan(H1).any())
+        print("All NaNs in null?", np.isnan(null).all())
+        print("All NaNs in H1?", np.isnan(H1).all())
         bins = np.linspace(bin_min, bin_max, 50)
         axs.hist(null, bins=bins, density=True, alpha=0.6)
         axs.hist(H1, bins=bins, density=True, alpha=0.6)
