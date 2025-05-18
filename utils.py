@@ -80,11 +80,11 @@ def add_features(df, pdg):
     df[' phi_x'] = np.arctan2(df[' yy'], df[' xx']) + np.pi
     df[' rx'] = np.sqrt(df[' xx'] ** 2 + df[' yy'] ** 2)
 
-    exp = (df[' eneg'] + mass) ** 2 - mass ** 2 - df[' rp'] ** 2
-    df.drop(df[exp < 0].index, inplace=True)
+    # exp = (df[' eneg'] + mass) ** 2 - mass ** 2 - df[' rp'] ** 2
+    # df.drop(df[exp < 0].index, inplace=True)
 
-    df[' pzz'] = -np.sqrt((df[' eneg'] + mass) ** 2 - mass ** 2 - df[' rp'] ** 2)
-    # df[' eneg'] = np.sqrt(df[' rp']**2+df[' pzz']**2+mass**2)-mass
+    # df[' pzz'] = -np.sqrt((df[' eneg'] + mass) ** 2 - mass ** 2 - df[' rp'] ** 2)
+    df[' eneg'] = np.sqrt(df[' rp']**2+df[' pzz']**2+mass**2)-mass
     # df[' rp'] = np.sqrt((df[' eneg'] + mass) ** 2 - mass ** 2 - df[' pzz'] ** 2)
     # df[' phi_p'] = np.arctan2(df[' pyy'], df[' pxx'])+np.pi
     df[' pxx'] = df[' rp'] * np.cos(df[' phi_p'] - np.pi)

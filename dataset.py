@@ -11,17 +11,17 @@ class ParticleDataset(Dataset):
         self.preprocess = None
         self.preqt = None
         self.quantiles = None
-        self._registry = {"log": my_log,
-                          "s_log": simple_log,
+        self._registry = {"log": simple_log,
+                          "s_log": my_log,
                           "flip": flip}
         self.cfg = cfg
         QT = qt(output_distribution='normal', n_quantiles=cfg['nQuantiles'], subsample=cfg['subsample'])
 
         self.data = pd.read_csv(cfg['data_path'])
-        try:
-            self.data = self.data.sample(1000000)
-        except ValueError:
-            print("Not enough data, using all of it")
+        # try:
+        #     self.data = self.data.sample(1000000)
+        # except ValueError:
+        #     print("Not enough data, using all of it")
         print(self.data.shape)
 
         if ' pdg' in self.data.columns.values:
@@ -75,15 +75,15 @@ class ParticleDataset(Dataset):
 
         # make all transformations, if inverse flip the function list since (f(g(x)))^-1 = g^-1(f^-1(x))
         for feature, function_list in cfg["features"].items():
-            x_max = self.norm['max'][feature]
-            x_min = self.norm['min'][feature]
-            if not inverse:
-                self.data[feature] = normalize(self.data[feature], x_min, x_max, eps, inverse)
+            # x_max = self.norm['max'][feature]
+            # x_min = self.norm['min'][feature]
+            # if not inverse:
+            #     self.data[feature] = normalize(self.data[feature], x_min, x_max, eps, inverse)
             functions = function_list[::-1] if inverse else function_list[:]
             for f in functions:
                 self.data[feature] = self.registry[f](self.data[feature], eps, inverse)
-            if inverse:
-                self.data[feature] = normalize(self.data[feature], x_min, x_max, eps, inverse)
+            # if inverse:
+            #     self.data[feature] = normalize(self.data[feature], x_min, x_max, eps, inverse)
 
     def __getitem__(self, item):
         return self.data[item, :]
@@ -142,5 +142,5 @@ def simple_log(data, epsilon, inverse):
 
 
 def flip(data, epsilon, inverse):
-    return 1 - data
+    return -1 * data
 

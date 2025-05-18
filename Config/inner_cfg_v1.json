@@ -22,8 +22,9 @@
                                     "log"
                         ],
                         " phi_p": [],
-                        " eneg": [
-                                    "log"
+                        " pzz": [
+                                    "log",
+                                    "flip"
                         ],
                         " time": [
                                     "log"
