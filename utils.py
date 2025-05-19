@@ -84,13 +84,14 @@ def add_features(df, pdg):
     # df.drop(df[exp < 0].index, inplace=True)
 
     # df[' pzz'] = -np.sqrt((df[' eneg'] + mass) ** 2 - mass ** 2 - df[' rp'] ** 2)
-    df[' eneg'] = np.sqrt(df[' rp']**2+df[' pzz']**2+mass**2)-mass
+    df[' eneg'] = (df[' rp']**2+df[' pzz']**2)/(np.sqrt(df[' rp']**2+df[' pzz']**2+mass**2)+mass)
     # df[' rp'] = np.sqrt((df[' eneg'] + mass) ** 2 - mass ** 2 - df[' pzz'] ** 2)
     # df[' phi_p'] = np.arctan2(df[' pyy'], df[' pxx'])+np.pi
     df[' pxx'] = df[' rp'] * np.cos(df[' phi_p'] - np.pi)
     df[' pyy'] = df[' rp'] * np.sin(df[' phi_p'] - np.pi)
-    exp2 = df[' pzz'] / np.sqrt((df[' eneg'] + mass) ** 2 - mass ** 2)
-    df['theta'] = np.arccos(df[' pzz'] / np.sqrt((df[' eneg'] + mass) ** 2 - mass ** 2))
+    # exp2 = df[' pzz'] / np.sqrt((df[' eneg'] + mass) ** 2 - mass ** 2)
+    # df['theta'] = np.arccos(df[' pzz'] / np.sqrt((df[' eneg'] + mass) ** 2 - mass ** 2))
+    df['theta'] = np.arctan2(df[' rp'], df[' pzz'])
 
 
 def plot_correlations(x, y, xlabel, ylabel, run_id, key,
