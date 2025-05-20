@@ -56,8 +56,8 @@ class Trainer:
     def run(self):
         print("Starting Training Loop...")
 
-        # utils.weights_init(self.genNet)
-        # utils.weights_init(self.discNet)
+        utils.weights_init(self.genNet)
+        utils.weights_init(self.discNet)
 
         self.genNet.to(self.device)
         self.genNet.train()
@@ -106,18 +106,13 @@ class Trainer:
                 self.genNet.zero_grad()
                 output = self.discNet(fake_p)
 
-                # Testing some energy momentum related loss term
-                # real_space_vecs = self.dataset.quantiles.inverse_transform(output)
-                # # 4 is eneg, 2 is p_T, neutron mass is 0.939, lambda_phys is 0.1  TODO: change the hardcoded values
-                # phys_loss = (real_space_vecs[:, 4]**2-real_space_vecs[:, 2]**2-0.939**2).mean()
-
                 # fake_p: generator output in quantile space
-                corr_loss = 0
-                for j, k in [(0, 1), (0, 2), (1, 2), (4, 5)]:
-                    real_c = corr(real_data[:, j], real_data[:, k])
-                    fake_c = corr(fake_p[:, j], fake_p[:, k])
-                    corr_loss += (fake_c - real_c).abs()/4
-                err_G = -torch.mean(output) + 0.1*corr_loss
+                # corr_loss = 0
+                # for j, k in [(0, 1), (0, 2), (1, 2), (4, 5)]:
+                #     real_c = corr(real_data[:, j], real_data[:, k])
+                #     fake_c = corr(fake_p[:, j], fake_p[:, k])
+                #     corr_loss += (fake_c - real_c).abs()/4
+                err_G = -torch.mean(output)  # + 0*corr_loss
                 err_G.backward()
                 self.genOptimizer.step()
 
