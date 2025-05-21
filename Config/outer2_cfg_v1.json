@@ -23,7 +23,6 @@
                         ],
                         " phi_p": [],
                         " pzz": [
-                                    "log",
                                     "flip"
                         ],
                         " time": [
