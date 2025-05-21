@@ -430,7 +430,7 @@ def check_run(run_id, path=None, calculate_BED=True, save_df=False, plot_metrics
     print("getting batch ED...")
 
     # max_length = int(1e6)
-    batch_size = 5000
+    batch_size = 1000
     small_batch = 50
 
     if calculate_BED:
@@ -694,13 +694,14 @@ def get_batch_ed_histograms(x_c, y_c, batch_size=1000):
     y = y_c.copy()
 
     for f in x.columns:
-        # Just so that any of the features won't take over the metric
-        if f in [' rx', ' rp', ' eneg', ' time']:
-            x[f] = np.log(x[f])
-            y[f] = np.log(y[f])
-
         x[f] = (x[f] - np.mean(x[f])) / np.std(x[f])
         y[f] = (y[f] - np.mean(y[f])) / np.std(y[f])
+
+        #     # Just so that any of the features won't take over the metric
+        #     if f in [' rx', ' rp', ' eneg', ' time']:
+        #         x[f] = np.log(x[f])
+        #         y[f] = np.log(y[f])
+        #
 
     x_batches = get_batches(x.values, batch_size)
     y_batches = get_batches(y.values, batch_size)
@@ -736,9 +737,9 @@ def get_sampled_ed_histograms(x, y, batch_size=1000, num_iters=10000):
 
     for f in x.columns:
         # Just so that any of the features won't take over the metric
-        if f in [' rx', ' rp', ' eneg', ' time']:
-            x_processed[f] = np.log(x_processed[f])
-            y_processed[f] = np.log(y_processed[f])
+        # if f in [' rx', ' rp', ' eneg', ' time']:
+        #     x_processed[f] = np.log(x_processed[f])
+        #     y_processed[f] = np.log(y_processed[f])
 
         x_processed[f] = (x_processed[f] - np.mean(x_processed[f])) / np.std(x_processed[f])
         y_processed[f] = (y_processed[f] - np.mean(y_processed[f])) / np.std(y_processed[f])
