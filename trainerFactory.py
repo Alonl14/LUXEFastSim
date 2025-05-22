@@ -67,11 +67,6 @@ def create_trainer(cfg):
     genNet = nn.DataParallel(genNet)
     discNet = nn.DataParallel(discNet)
 
-    gen_model_path = cfg["outputDir"] + cfg["dataGroup"] + "_Gen_model.pt"
-    genNet.load_state_dict(torch.load(gen_model_path, map_location=torch.device('cpu')))
-    disc_model_path = cfg["outputDir"] + cfg["dataGroup"] + "_Disc_model.pt"
-    discNet.load_state_dict(torch.load(disc_model_path, map_location=torch.device('cpu')))
-    
     cfgDict = {
         'genNet': genNet,
         'noiseDim': cfg['noiseDim'],

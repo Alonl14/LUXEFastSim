@@ -9,17 +9,30 @@ warnings.filterwarnings("ignore", category=UserWarning,
                         message=".*You can silence this warning by not passing in num_features.*")
 
 
-def get_gradient(crit, real, fake, epsilon):
-    mixed_images = real * epsilon + fake * (1 - epsilon)
-    mixed_scores = crit(mixed_images)
-    gradient = torch.autograd.grad(
-        inputs=mixed_images,
-        outputs=mixed_scores,
-        grad_outputs=torch.ones_like(mixed_scores),
+def compute_gradient_penalty(critic, real_samples, fake_samples, lambda_gp, device):
+    """
+    Compute WGAN-GP gradient penalty.
+    """
+    batch_size = real_samples.size(0)
+    alpha = torch.rand(batch_size, 1, device=device).expand_as(real_samples)
+    interpolates = alpha * real_samples + (1 - alpha) * fake_samples
+    interpolates.requires_grad_(True)
+
+    d_interpolates = critic(interpolates)
+    grad_outputs = torch.ones_like(d_interpolates, device=device)
+
+    gradients = torch.autograd.grad(
+        outputs=d_interpolates,
+        inputs=interpolates,
+        grad_outputs=grad_outputs,
         create_graph=True,
         retain_graph=True,
     )[0]
-    return gradient
+
+    gradients = gradients.view(batch_size, -1)
+    gradient_norm = gradients.norm(2, dim=1)
+    penalty = lambda_gp * ((gradient_norm - 1) ** 2).mean()
+    return penalty
 
 
 def corr(x, y):
@@ -92,11 +105,11 @@ class Trainer:
                     output = self.discNet(fake_p.detach())
                     err_D_fake = torch.mean(output)
 
-                    epsilon = torch.rand(1, device=self.device, requires_grad=True)
-                    gradient = get_gradient(self.discNet, real_data, fake_p.detach(), epsilon)
-                    gradient_norm = gradient.norm(2, dim=1)
-                    penalty = self.Lambda * torch.mean((gradient_norm - 1) ** 2)
-                    err_D = err_D_real + err_D_fake + penalty
+                    gp = compute_gradient_penalty(
+                        self.discNet, real_data, fake_p.detach(), self.Lambda, self.device
+                    )
+
+                    err_D = err_D_real + err_D_fake + gp
                     err_D.backward()
                     crit_err_D += err_D.item()
 
@@ -106,13 +119,7 @@ class Trainer:
                 self.genNet.zero_grad()
                 output = self.discNet(fake_p)
 
-                # fake_p: generator output in quantile space
-                # corr_loss = 0
-                # for j, k in [(0, 1), (0, 2), (1, 2), (4, 5)]:
-                #     real_c = corr(real_data[:, j], real_data[:, k])
-                #     fake_c = corr(fake_p[:, j], fake_p[:, k])
-                #     corr_loss += (fake_c - real_c).abs()/4
-                err_G = -torch.mean(output)  # + 0*corr_loss
+                err_G = -torch.mean(output)
                 err_G.backward()
                 self.genOptimizer.step()
 
@@ -131,8 +138,11 @@ class Trainer:
             # Validation Phase
             val_error_G, val_error_D = self.validate()
 
-            torch.save(self.genNet.state_dict(), self.outputDir + self.dataGroup + '_Gen_model.pt')
-            torch.save(self.discNet.state_dict(), self.outputDir + self.dataGroup + '_Disc_model.pt')
+            # Save best model based on validation D loss
+            if val_error_D < np.min(self.Val_D_Losses) if len(self.Val_D_Losses) > 0 else float('inf'):
+                print("Saving best model based on validation D loss")
+                torch.save(self.genNet.state_dict(), self.outputDir + self.dataGroup + '_Gen_model.pt')
+                torch.save(self.discNet.state_dict(), self.outputDir + self.dataGroup + '_Disc_model.pt')
 
             avg_error_G /= iters
             avg_error_D /= iters
