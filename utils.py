@@ -424,23 +424,19 @@ def check_run(run_id, path=None, calculate_BED=True, save_df=False, plot_metrics
     # TODO: Think of a different condition to check if a df is needed to be produced
     plt.style.use('seaborn-v0_8-deep')
     plt.rcParams.update({'font.size': 25})
-    generation_time_a = time.localtime()
-    innerDF, innerData = generate_fake_real_dfs(run_id, cfg_inner, run_dir)
-    outer1DF, outer1Data = generate_fake_real_dfs(run_id, cfg_outer1, run_dir)
-    outer2DF, outer2Data = generate_fake_real_dfs(run_id, cfg_outer2, run_dir)
 
-    print("smallest E: ", np.min(innerDF[' eneg']))
-    print("smallest E: ", np.min(outer1DF[' eneg']))
-    print("smallest E: ", np.min(outer2DF[' eneg']))
-    generation_time_b = time.localtime()
-    print(f'Created DFs in {get_time(generation_time_a, generation_time_b)}')
-    print("getting batch ED...")
-
-    # max_length = int(1e6)
-    batch_size = 1000
-    small_batch = 50
+    if plot_results or save_df or calculate_BED:
+        generation_time_a = time.localtime()
+        innerDF, innerData = generate_fake_real_dfs(run_id, cfg_inner, run_dir)
+        outer1DF, outer1Data = generate_fake_real_dfs(run_id, cfg_outer1, run_dir)
+        outer2DF, outer2Data = generate_fake_real_dfs(run_id, cfg_outer2, run_dir)
+        generation_time_b = time.localtime()
+        print(f'Created DFs in {get_time(generation_time_a, generation_time_b)}')
 
     if calculate_BED:
+        print("getting batch ED...")
+        batch_size = 1000
+        small_batch = 50
         inner_null_values, inner_H1_values = get_batch_ed_histograms(
             innerDF, innerData,
             batch_size=batch_size)
