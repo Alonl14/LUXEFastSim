@@ -57,7 +57,6 @@ class Trainer:
         self.device = cfgDict['device']
         self.nCrit = cfgDict['nCrit']
         self.Lambda = cfgDict['Lambda']
-        self.applyQT = cfgDict['applyQT']
 
         self.trainedGen = torch.Tensor([])
         self.G_Losses = np.array([])

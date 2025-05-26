@@ -1,27 +1,23 @@
 {
-    "applyQT": 1,
-    "nQuantiles": 100000,
-    "subsample": 1000000,
-    "data_path": "/storage/agrp/alonle/GAN_InputSample/v3_2112_outer2.csv",
-    "norm_path": "/storage/agrp/alonle/GAN_InputSample/v3_2112_outer2_norm.csv",
-    "outputDir": "",
-    "dataGroup": "outer2",
-    "pdg": 2112,
-    "batchSize": 512,
-    "noiseDim": 64,
-    "numEpochs": 100,
-    "device": "cpu",
-    "nCrit": 4,
-    "Lambda": 10.0,
-    "criticLearningRate": 1e-5,
-    "generatorLearningRate": 1e-4,
-    "features": {
+            "nQuantiles": 100000,
+            "subsample": 1000000,
+            "data_path": "/storage/agrp/alonle/GAN_InputSample/22_outer2.csv",
+            "outputDir": "",
+            "dataGroup": "outer2",
+            "pdg": 22,
+            "batchSize": 1024,
+            "noiseDim": 100,
+            "numEpochs": 50,
+            "device": "cpu",
+            "nCrit": 2,
+            "Lambda": 1,
+            "criticLearningRate": 5e-05,
+            "generatorLearningRate": 0.0001,
+            "features": {
                   " xx": [],
                   " yy": [],
-                  " rp": [
-                              "log"
-                  ],
-                  " phi_p": [],
+                  " pxx": [],
+                  " pyy": [],
                   " pzz": [
                               "flip",
                               "log"
@@ -29,6 +25,5 @@
                   " time": [
                               "log"
                   ]
-    },
-    "epsilon": 1e-16
+            }
 }

@@ -1,10 +1,8 @@
 {
-            "applyQT": 1,
             "nQuantiles": 100000,
             "subsample": 1000000,
-            "data_path": "/storage/agrp/alonle/GAN_InputSample/v2_2112_inner.csv",
-            "norm_path": "/storage/agrp/alonle/GAN_InputSample/v2_2112_inner_norm.csv",
-            "outputDir": "/storage/agrp/alonle/GAN_Output/run_98/",
+            "data_path": "/storage/agrp/alonle/GAN_InputSample/2112_inner.csv",
+            "outputDir": "",
             "dataGroup": "inner",
             "pdg": 2112,
             "batchSize": 1024,
@@ -18,10 +16,8 @@
             "features": {
                   " xx": [],
                   " yy": [],
-                  " rp": [
-                              "log"
-                  ],
-                  " phi_p": [],
+                  " pxx": [],
+                  " pyy": [],
                   " pzz": [
                               "flip",
                               "log"
@@ -29,6 +25,5 @@
                   " time": [
                               "log"
                   ]
-            },
-            "epsilon": 1e-16
+            }
 }

@@ -58,11 +58,11 @@ def create_trainer(cfg):
     if not cfg['applyQT']:
         cfg['noiseDim'] = numFeatures
 
-    genNet = Generator(noiseDim=cfg['noiseDim'], numFeatures=numFeatures)
-    discNet = Discriminator(numFeatures=numFeatures)
+    # genNet = Generator(noiseDim=cfg['noiseDim'], numFeatures=numFeatures)
+    # discNet = Discriminator(numFeatures=numFeatures)
 
-    # genNet = Generator2(noiseDim=cfg['noiseDim'], numFeatures=numFeatures)
-    # discNet = Discriminator2(numFeatures=numFeatures)
+    genNet = Generator2(noiseDim=cfg['noiseDim'], numFeatures=numFeatures)
+    discNet = Discriminator2(numFeatures=numFeatures)
 
     genNet = nn.DataParallel(genNet)
     discNet = nn.DataParallel(discNet)
@@ -79,8 +79,7 @@ def create_trainer(cfg):
         'numEpochs': cfg['numEpochs'],
         'device': device,
         'nCrit': cfg['nCrit'],
-        'Lambda': cfg['Lambda'],
-        'applyQT': cfg['applyQT']
+        'Lambda': cfg['Lambda']
     }
 
     genOptimizer = optim.Adam(cfgDict['genNet'].parameters(), lr=cfg['criticLearningRate'], betas=(0.5, 0.9))

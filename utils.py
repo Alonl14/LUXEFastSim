@@ -90,12 +90,13 @@ def add_features(df, pdg):
     # exp = (df[' eneg'] + mass) ** 2 - mass ** 2 - df[' rp'] ** 2
     # df.drop(df[exp < 0].index, inplace=True)
 
+    df[' rp'] = np.sqrt(df[' pxx'] ** 2 + df[' pyy'] ** 2)
+    df[' phi_p'] = np.arctan2(df[' pyy'], df[' pxx']) + np.pi
+
     # df[' pzz'] = -np.sqrt((df[' eneg'] + mass) ** 2 - mass ** 2 - df[' rp'] ** 2)
     df[' eneg'] = (df[' rp']**2+df[' pzz']**2)/(np.sqrt(df[' rp']**2+df[' pzz']**2+mass**2)+mass)
-    # df[' rp'] = np.sqrt((df[' eneg'] + mass) ** 2 - mass ** 2 - df[' pzz'] ** 2)
-    # df[' phi_p'] = np.arctan2(df[' pyy'], df[' pxx'])+np.pi
-    df[' pxx'] = df[' rp'] * np.cos(df[' phi_p'] - np.pi)
-    df[' pyy'] = df[' rp'] * np.sin(df[' phi_p'] - np.pi)
+    # df[' pxx'] = df[' rp'] * np.cos(df[' phi_p'] - np.pi)
+    # df[' pyy'] = df[' rp'] * np.sin(df[' phi_p'] - np.pi)
     # exp2 = df[' pzz'] / np.sqrt((df[' eneg'] + mass) ** 2 - mass ** 2)
     # df['theta'] = np.arccos(df[' pzz'] / np.sqrt((df[' eneg'] + mass) ** 2 - mass ** 2))
     df['theta'] = np.arctan2(df[' rp'], df[' pzz'])
@@ -183,7 +184,6 @@ def split(df):
     :param df: input dataframe, contains all particles
     :return: inner dataframe, outer dataframe
     """
-    ## OLD SPLIT is y>420, y<620
     outer1_pos = (((df[' xx'] >= 500) | (df[' yy'] >= 500)) |
                   ((df[' yy'] >= 400) & (df[' xx'] <= -1700)))
     inner_pos = ~outer1_pos & (df[' xx'] >= -1700)
@@ -196,24 +196,6 @@ def split(df):
           f'\nPoints in region II: {len(outer2_df)}'
           f'\nPoints in region III: {len(inner_df)}')
     return inner_df, outer1_df, outer2_df
-
-
-def make_norm_file(df, path):
-    """
-    makes a normalization file from the given file at path
-    :param df: supply df to avoid reading potentially large dataframes
-    :param path: path to df
-    :return: path to normalization file
-    """
-    normDF = pd.DataFrame(columns=['max', 'min'], index=pd.Index(df.columns))
-    for col in df.columns:
-        normDF['max'][col] = np.max(df[col])
-        normDF['min'][col] = np.min(df[col])
-    normPath = path.replace('.csv', '_norm.csv')
-    print(normDF)
-    normDF.to_csv(normPath)
-    print('New file created at: ' + normPath)
-    return normPath
 
 
 def make_polar_features(df):
@@ -248,10 +230,7 @@ def plot_features(ds, save_path=None):
     for i, feature in enumerate(features):
         ds2.data[feature] = data_values[:, i]
     ds2.apply_transformation(ds2.cfg, inverse=True)
-    ylabels = ['$x$', '$y$', '$r_p$', '$\phi_p$', '$E$', '$t$']  # , '$p_z$'
-    xlabels_1 = ['$x [mm]$', '$y [mm]$', '$r_p [GeV]$', '$\phi_p [rad]$', '$E [GeV]$', '$t [ns]$']  # , '$p_z [GeV]$'
-    xlabels_2 = ['$x [a.u.]$', '$y [a.u.]$', '$r_p [a.u.]$', '$\phi_p [a.u.]$', '$E [a.u.]$',
-                 '$t [a.u.]$']  # , '$p_z [a.u.]$'
+    xlabels = features
     print("Feature       Slope       Curvature")
     print("-" * 40)
 
@@ -294,8 +273,8 @@ def plot_features(ds, save_path=None):
             ax2.set_ylabel(f"frequency", fontsize=fontsize)
             ax3.set_ylabel(f"frequency", fontsize=fontsize)
             ax4.set_ylabel(f"data value", fontsize=fontsize)
-        ax1.set_xlabel(f"{xlabels_1[i]}", fontsize=fontsize)
-        ax2.set_xlabel(f"{xlabels_2[i]}", fontsize=fontsize)
+        ax1.set_xlabel(f"{xlabels[i]}", fontsize=fontsize)
+        ax2.set_xlabel(f"{xlabels[i]}", fontsize=fontsize)
         ax4.set_xlabel(f"Quantile", fontsize=fontsize)
         # if col in [' eneg', ' time']:
         # _____ ax5.set_xscale('log')
@@ -366,11 +345,9 @@ def generate_fake_real_dfs(run_id, cfg, run_dir, generator_net=None):
 
     # Create a generator based on the model's number of parameters used
     numFeatures = len(cfg["features"].keys())
-    # cfg["noiseDim"] = numFeatures
-
     # Load parameters
     model_path = run_dir + cfg["dataGroup"] + "_Gen_model.pt"
-    dim = cfg["noiseDim"] if cfg["applyQT"] else numFeatures
+    dim = cfg["noiseDim"]
     if generator_net is None:
         generator_net = nn.DataParallel(Generator(dim, numFeatures=numFeatures))
         try:
@@ -383,7 +360,7 @@ def generate_fake_real_dfs(run_id, cfg, run_dir, generator_net=None):
 
     # TODO: remove factor, find a different way to ease local data generation
     # Read data used for training
-    fake_df, real_df = generate_ds(generator_net, factor=100, cfg=cfg)
+    fake_df, real_df = generate_ds(generator_net, factor=5, cfg=cfg)
     real_df = real_df[real_df[' time'] <= 1e6]
     fake_df = fake_df[fake_df[' time'] <= 1e6]
     add_features(fake_df, cfg['pdg'])
@@ -415,11 +392,8 @@ def check_run(run_id, path=None, calculate_BED=True, save_df=False, plot_metrics
     # Specifically for data and norm files, changes the path to local
     if path is None:
         fix_path(cfg_inner, "data_path")
-        fix_path(cfg_inner, "norm_path")
         fix_path(cfg_outer1, "data_path")
-        fix_path(cfg_outer1, "norm_path")
         fix_path(cfg_outer2, "data_path")
-        fix_path(cfg_outer2, "norm_path")
 
     # TODO: Think of a different condition to check if a df is needed to be produced
     plt.style.use('seaborn-v0_8-deep')
@@ -593,18 +567,6 @@ def check_run(run_id, path=None, calculate_BED=True, save_df=False, plot_metrics
                 os.mkdir(fig_path + '1dHists/' + key)
             for feat in features:
                 exec("plot_1d(" + key + "Data," + key + "DF,feat,chi2_" + key + ", fig_path, key)")
-
-    # if len(noLeaksDF) > max_length:
-    #     noLeaks_null_values, noLeaks_H1_values = get_batch_ed_histograms(
-    #         noLeaksDF[features_for_test].sample(max_length),
-    #         noLeaksData[features_for_test].sample(max_length),
-    #         batch_size=batch_size)
-    # else:
-    #     noLeaks_null_values, noLeaks_H1_values = get_batch_ed_histograms(
-    #         noLeaksDF[features_for_test],
-    #         noLeaksData[features_for_test],
-    #         batch_size=batch_size)
-    # make_ed_fig(noLeaks_null_values, noLeaks_H1_values, 'noLeaks', fig_path)
 
 
 def plot_1d(data, DF, feat, ks, fig_path, key):
