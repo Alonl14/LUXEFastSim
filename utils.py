@@ -352,7 +352,7 @@ def generate_fake_real_dfs(run_id, cfg, run_dir, generator_net=None):
 
     # TODO: remove factor, find a different way to ease local data generation
     # Read data used for training
-    fake_df, real_df = generate_ds(generator_net, factor=5, cfg=cfg)
+    fake_df, real_df = generate_ds(generator_net, factor=1, cfg=cfg)
     real_df = real_df[real_df[' time'] <= 1e6]
     fake_df = fake_df[fake_df[' time'] <= 1e6]
     add_features(fake_df, cfg['pdg'])
@@ -566,13 +566,13 @@ def plot_1d(data, DF, feat, ks, fig_path, key):
     plt.rc('font', family='serif', size=25)
     plt.figure(dpi=200)
     plt.yscale('log')
-    bins = np.linspace(np.min(DF[feat]), np.max(DF[feat]), 400)
+    bins = np.linspace(np.min(DF[feat]), np.max(DF[feat]), 200)
     if feat == ' time':
-        bins = np.logspace(np.log10(np.min(np.abs(DF[feat]))), np.log10(np.sort(DF[feat])[-10]), 400)
+        bins = np.logspace(np.log10(np.min(np.abs(DF[feat]))), np.log10(np.sort(DF[feat])[-10]), 200)
         plt.xscale('log')
     elif feat == ' eneg':
         print(f"np.min(np.abs(DF[feat])): {np.min(np.abs(DF[feat]))} ,np.min(DF[feat]): {np.min(DF[feat])}")
-        bins = np.logspace(np.log10(np.min(np.abs(DF[feat]))), np.log10(np.sort(DF[feat])[-10]), 400)
+        bins = np.logspace(np.log10(np.min(np.abs(DF[feat]))), np.log10(np.sort(DF[feat])[-10]), 200)
         plt.xscale('log')
 
     plt.hist(DF[feat], bins=bins, density=True, alpha=0.6)

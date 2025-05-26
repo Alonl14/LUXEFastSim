@@ -12,7 +12,7 @@
     "nCrit": 1,
     "Lambda": 1,
     "criticLearningRate": 0.0001,
-    "generatorLearningRate": 0.0001,
+    "generatorLearningRate": 0.0005,
     "features": {
         " xx": [],
         " yy": [],

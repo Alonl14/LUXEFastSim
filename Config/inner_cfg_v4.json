@@ -1,9 +1,9 @@
 {
     "nQuantiles": 100000,
     "subsample": 1000000,
-    "data_path": "/storage/.../11_outer2.csv",
+    "data_path": "/storage/.../11_inner.csv",
     "outputDir": "",
-    "dataGroup": "outer2",
+    "dataGroup": "inner",
     "pdg": 11,
     "batchSize": 128,
     "noiseDim": 100,
@@ -12,7 +12,7 @@
     "nCrit": 1,
     "Lambda": 1,
     "criticLearningRate": 0.0001,
-    "generatorLearningRate": 0.0001,
+    "generatorLearningRate": 0.0005,
     "features": {
         " xx": [],
         " yy": [],
