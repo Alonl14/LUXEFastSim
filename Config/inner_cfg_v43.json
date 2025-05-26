@@ -1,0 +1,29 @@
+{
+    "nQuantiles": 100000,
+    "subsample": 1000000,
+    "data_path": "/storage/agrp/alonle/GAN_InputSample/22_inner.csv",
+    "outputDir": "",
+    "dataGroup": "inner",
+    "pdg": 22,
+    "batchSize": 1024,
+    "noiseDim": 100,
+    "numEpochs": 50,
+    "device": "cpu",
+    "nCrit": 5,
+    "Lambda": 1,
+    "criticLearningRate": 0.0001,
+    "generatorLearningRate": 0.0001,
+    "features": {
+        " xx": [],
+        " yy": [],
+        " pxx": [],
+        " pyy": [],
+        " pzz": [
+            "flip",
+            "log"
+        ],
+        " time": [
+            "log"
+        ]
+    }
+}

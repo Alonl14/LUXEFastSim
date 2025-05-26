@@ -1,10 +1,10 @@
 {
     "nQuantiles": 100000,
     "subsample": 1000000,
-    "data_path": "/storage/agrp/alonle/GAN_InputSample/11_outer2.csv",
+    "data_path": "/storage/agrp/alonle/GAN_InputSample/2112_outer2.csv",
     "outputDir": "",
     "dataGroup": "outer2",
-    "pdg": 11,
+    "pdg": 2112,
     "batchSize": 128,
     "noiseDim": 100,
     "numEpochs": 50,
