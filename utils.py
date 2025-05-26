@@ -302,14 +302,6 @@ def generate_ds(generator_net, factor, cfg):
     ds = dataset.ParticleDataset(cfg)
     numEvents = np.shape(ds.data)[0]
     noise = torch.randn(np.int64(numEvents / factor), cfg['noiseDim'], device='cpu')
-    if cfg['applyQT']:
-        noise = torch.randn(np.int64(numEvents / factor), cfg['noiseDim'], device='cpu')
-    else:
-        print("here")
-        noise = np.float32(np.random.randn(np.int64(numEvents / factor), len(cfg['features'])))
-        noise = ds.quantiles.inverse_transform(noise)
-        noise = torch.from_numpy(noise)
-        noise = noise.to('cpu')
     generator_net.to('cpu')
     generated_data = generator_net(noise)
     generated_data = generated_data.detach().numpy()
