@@ -66,7 +66,7 @@ class Trainer:
         self.KL_Div = np.array([])
         self.real_buffer = []
         self.fake_buffer = []
-        self.KL_sample_target = 10000
+        self.KL_sample_target = 4096
 
     def run(self):
         print("Starting Training Loop...")
