@@ -64,6 +64,9 @@ class Trainer:
         self.Val_G_Losses = np.array([])  # To store validation generator losses
         self.Val_D_Losses = np.array([])  # To store validation discriminator losses
         self.KL_Div = np.array([])
+        self.real_buffer = []
+        self.fake_buffer = []
+        self.KL_sample_target = 10000
 
     def run(self):
         print("Starting Training Loop...")
@@ -121,13 +124,32 @@ class Trainer:
                 avg_error_D += crit_err_D / self.nCrit
 
                 iters += 1
-                if iters % kl_log_interval == 0:  # Record KL_div 10 times per epoch
-                    print(f"Iteration #{iters}")
-                    kl_batch = min(batch_size, 8192)
-                    addCurrentKLD = utils.get_kld(real_data[:kl_batch, :], fake_p[:kl_batch, :])
-                    self.KL_Div = np.append(self.KL_Div, addCurrentKLD.detach().numpy())
-                    currentKLD = 0
+                # KL divergence calculation if buffer is full enough
+                buffer_size = sum(x.size(0) for x in self.real_buffer)
+                if buffer_size >= self.KL_sample_target:
+                    real_all = torch.cat(self.real_buffer, dim=0)[:self.KL_sample_target]
+                    fake_all = torch.cat(self.fake_buffer, dim=0)[:self.KL_sample_target]
 
+                    # If needed: inverse transform (optional)
+                    if hasattr(self.dataset, 'inverse_transform'):
+                        real_all = self.dataset.inverse_transform(real_all)
+                        fake_all = self.dataset.inverse_transform(fake_all)
+
+                    real_all = real_all.to(self.device)
+                    fake_all = fake_all.to(self.device)
+
+                    kl_epoch = utils.get_kld(real_all, fake_all)
+                    self.KL_Div = np.append(self.KL_Div, kl_epoch.detach().cpu().numpy())
+
+                    print(f"KL Divergence (Epoch {epoch}): {kl_epoch.item():.4f}")
+
+                    # Reset buffers
+                    self.real_buffer = []
+                    self.fake_buffer = []
+                else:
+                    # Store real and fake samples in buffers
+                    self.real_buffer.append(real_data.detach().cpu())
+                    self.fake_buffer.append(fake_p.detach().cpu())
             # Validation Phase
             val_error_G, val_error_D = self.validate()
 
