@@ -66,7 +66,7 @@ class Trainer:
         self.KL_Div = np.array([])
         self.real_buffer = []
         self.fake_buffer = []
-        self.KL_sample_target = 4096
+        self.KL_sample_target = 8192
 
     def run(self):
         print("Starting Training Loop...")
@@ -130,11 +130,6 @@ class Trainer:
                     real_all = torch.cat(self.real_buffer, dim=0)[:self.KL_sample_target]
                     fake_all = torch.cat(self.fake_buffer, dim=0)[:self.KL_sample_target]
 
-                    # If needed: inverse transform (optional)
-                    if hasattr(self.dataset, 'inverse_transform'):
-                        real_all = self.dataset.inverse_transform(real_all)
-                        fake_all = self.dataset.inverse_transform(fake_all)
-
                     real_all = real_all.to(self.device)
                     fake_all = fake_all.to(self.device)
 
@@ -154,7 +149,7 @@ class Trainer:
             val_error_G, val_error_D = self.validate()
 
             # Save best model based on validation D loss
-            if val_error_D < np.min(self.Val_D_Losses) if len(self.Val_D_Losses) > 0 else float('inf'):
+            if -val_error_D < np.min(self.Val_D_Losses) if len(self.Val_D_Losses) > 0 else float('inf'):
                 print("Saving best model based on validation D loss")
                 torch.save(self.genNet.state_dict(), self.outputDir + self.dataGroup + '_Gen_model.pt')
                 torch.save(self.discNet.state_dict(), self.outputDir + self.dataGroup + '_Disc_model.pt')
@@ -163,13 +158,13 @@ class Trainer:
             avg_error_D /= iters
 
             self.G_Losses = np.append(self.G_Losses, avg_error_G)
-            self.D_Losses = np.append(self.D_Losses, avg_error_D)
+            self.D_Losses = np.append(self.D_Losses, -avg_error_D)
 
             self.Val_G_Losses = np.append(self.Val_G_Losses, val_error_G)
-            self.Val_D_Losses = np.append(self.Val_D_Losses, val_error_D)
+            self.Val_D_Losses = np.append(self.Val_D_Losses, -val_error_D)
 
-            print(f'{epoch}/{self.numEpochs}\tLoss_D: {-avg_error_D:.4f}\tLoss_G: {-avg_error_G:.4f}')
-            print(f'Validation Loss_D: {-val_error_D:.4f}\tValidation Loss_G: {-val_error_G:.4f}')
+            print(f'{epoch}/{self.numEpochs}\tLoss_D: {-avg_error_D:.4f}\tLoss_G: {avg_error_G:.4f}')
+            print(f'Validation Loss_D: {-val_error_D:.4f}\tValidation Loss_G: {val_error_G:.4f}')
 
     def validate(self):
         self.genNet.eval()
