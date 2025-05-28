@@ -66,7 +66,7 @@ class Trainer:
         self.KL_Div = np.array([])
         self.real_buffer = []
         self.fake_buffer = []
-        self.KL_sample_target = 16384
+        self.KL_sample_target = 8192
 
     def run(self):
         print("Starting Training Loop...")
@@ -155,7 +155,7 @@ class Trainer:
                 torch.save(self.discNet.state_dict(), self.outputDir + self.dataGroup + '_Disc_model.pt')
 
             # End training if KL divergence has saturated
-            if len(self.KL_Div) > 10 and np.std(self.KL_Div[-10:]) < 0.03:
+            if len(self.KL_Div) > 10 and np.std(self.KL_Div[-10:]) < 0.03 and epoch > 15:
                 print("KL Divergence has saturated, stopping training.")
                 break
 
