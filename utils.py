@@ -3,7 +3,8 @@ import torch.nn as nn
 import pandas as pd
 import numpy as np
 from matplotlib import pyplot as plt
-import random
+import shutil
+import subprocess
 import dataset
 from generator import Generator, Generator2
 import time
@@ -762,12 +763,28 @@ def fix_path(cfg, feature):
     cfg[feature] = "TrainData/" + file_name
 
 
+def is_latex_available():
+    latex = shutil.which("latex")
+    dvipng = shutil.which("dvipng")
+    gs = shutil.which("gs")  # Ghostscript as fallback
+    return latex is not None and (dvipng is not None or gs is not None)
+
+
 def make_ed_fig(null, H1, group, fig_path, real_tag="Y", fake_tag="X", plotting=True):
     ks_test = ks(null, H1)
     pval, ks_stat = ks_test.pvalue, ks_test.statistic
     if plotting:
         fig, axs = plt.subplots(dpi=200)
-        plt.rcParams['text.usetex'] = True
+        if is_latex_available():
+            try:
+                # Check if LaTeX is functional
+                subprocess.run(["latex", "-version"], check=True, stdout=subprocess.DEVNULL)
+                plt.rcParams['text.usetex'] = True
+                print("LaTeX rendering enabled.")
+            except Exception as e:
+                print("LaTeX found, but couldn't be used:", e)
+        else:
+            print("LaTeX or required tools not found; using default matplotlib text.")
         axs.grid(True, which='both', color='0.65', linestyle='-')
         bin_max = np.max(np.concatenate((null, H1)))
         bin_min = np.min(np.concatenate((null, H1)))
