@@ -807,7 +807,7 @@ def make_ed_fig(null, H1, group, fig_path, real_tag="Y", fake_tag="X", plotting=
         plt.ylabel("frequency")
         plt.yscale('log')
         axs.legend([f"$D_E({real_tag},{fake_tag})$", f"$D_E({real_tag},{real_tag}^\prime)$"])
-        # fig.savefig(fig_path + group + '_histograms.png', bbox_inches='tight')
+        fig.savefig(fig_path + group + '_histograms.png', bbox_inches='tight')
     return pval, ks_stat
 
 
