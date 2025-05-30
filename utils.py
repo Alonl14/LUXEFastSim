@@ -572,7 +572,6 @@ def plot_1d(data, DF, feat, ks, fig_path, key):
         bins = np.logspace(np.log10(np.min(np.abs(DF[feat]))), np.log10(np.sort(DF[feat])[-10]), 200)
         plt.xscale('log')
     elif feat == ' eneg':
-        print(f"np.min(np.abs(DF[feat])): {np.min(np.abs(DF[feat]))} ,np.min(DF[feat]): {np.min(DF[feat])}")
         bins = np.logspace(np.log10(np.min(np.abs(DF[feat]))), np.log10(np.sort(DF[feat])[-10]), 200)
         plt.xscale('log')
 
@@ -666,8 +665,6 @@ def get_batch_ed_histograms(x_c, y_c, batch_size=1000):
 
     y_prime_batches = y_batches.copy()
     random.shuffle(y_prime_batches)
-
-    print("Length of batches: ", len(x_batches), len(y_batches))
 
     n_batches = min(len(x_batches), len(y_batches))
     ED_null = np.zeros(n_batches)
@@ -788,12 +785,6 @@ def make_ed_fig(null, H1, group, fig_path, real_tag="Y", fake_tag="X", plotting=
         axs.grid(True, which='both', color='0.65', linestyle='-')
         bin_max = np.max(np.concatenate((null, H1)))
         bin_min = np.min(np.concatenate((null, H1)))
-        print("null:", null)
-        print("H1:", H1)
-        print("Any NaNs in null?", np.isnan(null).any())
-        print("Any NaNs in H1?", np.isnan(H1).any())
-        print("All NaNs in null?", np.isnan(null).all())
-        print("All NaNs in H1?", np.isnan(H1).all())
         bins = np.linspace(bin_min, bin_max, 50)
         axs.hist(null, bins=bins, density=True, alpha=0.6)
         axs.hist(H1, bins=bins, density=True, alpha=0.6)

@@ -136,8 +136,6 @@ class Trainer:
                     kl_epoch = utils.get_kld(real_all, fake_all)
                     self.KL_Div = np.append(self.KL_Div, kl_epoch.detach().cpu().numpy())
 
-                    print(f"KL Divergence (Epoch {epoch}): {kl_epoch.item():.4f}")
-
                     # Reset buffers
                     self.real_buffer = []
                     self.fake_buffer = []
