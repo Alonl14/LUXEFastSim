@@ -6,7 +6,6 @@ import numpy as np
 import time
 import utils
 import pandas as pd
-import pickle
 
 beg_time = time.localtime()
 print(f"Starting timer at : {utils.get_time(beg_time)}")
