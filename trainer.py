@@ -65,24 +65,24 @@ class Trainer:
     SLOPE_EPS = 0.002
     SLOPE_WINDOW = 12  # epochs
 
-    def __init__(self, cfg: dict):
+    def __init__(self, cfgDict: dict):
         # architecture & data
-        self.genNet = cfg['genNet']
-        self.discNet = cfg['discNet']
-        self.dl_train = cfg['dataloader']
-        self.dl_val = cfg['valDataloader']
-        self.dataGroup = cfg['dataGroup']
+        self.genNet = cfgDict['genNet']
+        self.discNet = cfgDict['discNet']
+        self.dl_train = cfgDict['dataloader']
+        self.dl_val = cfgDict['valDataloader']
+        self.dataGroup = cfgDict['dataGroup']
 
         # hparams
-        self.noiseDim = cfg['noiseDim']
-        self.numEpochs = cfg['numEpochs']
-        self.device = cfg['device']
-        self.nCrit = cfg['nCrit']
-        self.Lambda = cfg['Lambda']
+        self.noiseDim = cfgDict['noiseDim']
+        self.numEpochs = cfgDict['numEpochs']
+        self.device = cfgDict['device']
+        self.nCrit = cfgDict['nCrit']
+        self.Lambda = cfgDict['Lambda']
 
-        self.optG = cfg['genOptimizer']
-        self.optD = cfg['discOptimizer']
-        self.outDir = cfg['outputDir']
+        self.optG = cfgDict['genOptimizer']
+        self.optD = cfgDict['discOptimizer']
+        self.outDir = cfgDict['outputDir']
 
         # logs
         self.G_loss_log, self.D_wdist_log = [], []
