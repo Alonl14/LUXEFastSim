@@ -5,7 +5,7 @@ Key fixes since last version
   • Validation loop rewritten – now returns correct mean W‑distance
   • Minor tidy‑ups: removed unused args, added type hints
 
-This is still a drop‑in replacement public API unchanged.
+This is still a drop‑in replacement; public API unchanged.
 """
 
 import torch
@@ -21,7 +21,6 @@ warnings.filterwarnings(
 warnings.filterwarnings(
     "ignore", category=UserWarning,
     message=".*You can silence this warning by not passing in num_features.*")
-
 
 # ------------------------------------------------------------------ #
 #  Helpers                                                           #
@@ -45,13 +44,12 @@ def compute_gradient_penalty(critic, real_samples, fake_samples, lambda_gp, devi
 
 
 def param_grad_norm(net):
-    """L2 norm of parameter gradients returns 0 if grads not yet computed."""
+    """L2 norm of parameter gradients; returns 0 if grads not yet computed."""
     sq_sum = 0.0
     for p in net.parameters():
         if p.grad is not None:
             sq_sum += p.grad.detach().norm(2).item() ** 2
     return sq_sum ** 0.5
-
 
 # ------------------------------------------------------------------ #
 #  Trainer                                                           #
@@ -154,17 +152,14 @@ class Trainer:
 
                 # ---- LR schedulers ----
                 self.step_G += 1
-                self.schedG.step()
-                self.schedD.step()
+                self.schedG.step(); self.schedD.step()
 
                 # ---- logs ----
                 self.GP_log.append(gp.item())
                 self.gradG_log.append(param_grad_norm(self.genNet))
                 self.gradD_log.append(param_grad_norm(self.discNet))
 
-                sum_G += loss_G.item()
-                sum_D += crit_loss / self.nCrit
-                n_batches += 1
+                sum_G += loss_G.item(); sum_D += crit_loss / self.nCrit; n_batches += 1
 
                 # ---- mini‑KL ----
                 self.real_buf.append(real.detach().cpu())
@@ -174,25 +169,24 @@ class Trainer:
                     f = torch.cat(self.fake_buf)[:self.KL_TARGET]
                     kl_val = utils.get_kld(r.to(self.device), f.to(self.device)).item()
                     self.KL_log.append(kl_val)
-                    self.real_buf.clear()
-                    self.fake_buf.clear()
+                    self.real_buf.clear(); self.fake_buf.clear()
 
             # ---- epoch stats ----
             self.G_loss_log.append(sum_G / n_batches)
             self.D_wdist_log.append(-(sum_D / n_batches))
 
             vG, vD = self._validate()
-            self.Val_G_log.append(vG)
-            self.Val_D_log.append(-vD)
+            self.Val_G_log.append(vG); self.Val_D_log.append(-vD)
 
-            print(f"{epoch}/{self.numEpochs}\tW_dist:{-sum_D / n_batches:.4f}\tG:{sum_G / n_batches:.4f}")
+            print(f"{epoch}/{self.numEpochs}\tW_dist:{-sum_D/n_batches:.4f}\tG:{sum_G/n_batches:.4f}")
             print(f"\tVal_W_dist:{-vD:.4f}\tVal_G:{vG:.4f}")
 
             # ---- rolling slope early stop ----
-            if len(self.KL_log) > self.SLOPE_WINDOW:
-                kl_slope = np.polyfit(range(self.SLOPE_WINDOW), self.KL_log[-self.SLOPE_WINDOW:], 1)[0]
-                w_slope = np.polyfit(range(self.SLOPE_WINDOW), self.D_wdist_log[-self.SLOPE_WINDOW:], 1)[0]
-                if abs(kl_slope) < self.SLOPE_EPS and abs(w_slope) < self.SLOPE_EPS and epoch > 15:
+            win = min(self.SLOPE_WINDOW, len(self.KL_log), len(self.D_wdist_log))
+            if win >= 3 and epoch > 15:
+                kl_slope = np.polyfit(range(win), self.KL_log[-win:], 1)[0]
+                w_slope  = np.polyfit(range(win), self.D_wdist_log[-win:], 1)[0]
+                if abs(kl_slope) < self.SLOPE_EPS and abs(w_slope) < self.SLOPE_EPS:
                     print("Rolling slopes flat – early stop.")
                     break
 
@@ -202,8 +196,7 @@ class Trainer:
 
     def _validate(self):
         """Return (gen_loss, critic_loss) averaged over validation set."""
-        self.genNet.eval()
-        self.discNet.eval()
+        self.genNet.eval(); self.discNet.eval()
         sum_G, sum_D, n = 0.0, 0.0, 0
         with torch.no_grad():
             for real in self.dl_val:
@@ -220,10 +213,7 @@ class Trainer:
                 # generator
                 loss_G = -self.discNet(fake).mean()
 
-                sum_G += loss_G.item()
-                sum_D += loss_D.item()
-                n += 1
+                sum_G += loss_G.item(); sum_D += loss_D.item(); n += 1
 
-        self.genNet.train()
-        self.discNet.train()
+        self.genNet.train(); self.discNet.train()
         return sum_G / n, sum_D / n
