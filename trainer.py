@@ -80,7 +80,7 @@ class Trainer:
 
         self.optG = cfgDict['genOptimizer']
         self.optD = cfgDict['discOptimizer']
-        self.outDir = cfgDict['outputDir']
+        self.outputDir = cfgDict['outputDir']
 
         # logs
         self.G_loss_log, self.D_wdist_log = [], []
