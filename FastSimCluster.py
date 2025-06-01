@@ -1,81 +1,55 @@
-import json
-import sys
+# fastsim_cluster_main.py  –  launcher (inner / outer1 / outer2)
+import os, sys, json, time, numpy as np, utils
 from trainerFactory import create_trainer
-import torch
-import numpy as np
-import time
-import utils
-import pandas as pd
 
-beg_time = time.localtime()
-print(f"Starting timer at : {utils.get_time(beg_time)}")
-config_dir = "/srv01/agrp/alonle/LUXEFastSim/Config"
-config_name = sys.argv[3]
+# ------------------------------------------------------------------ #
+# 0.  CLI                                                             #
+# ------------------------------------------------------------------ #
+num_epochs   = int(sys.argv[1])
+output_dir   = sys.argv[2]
+config_stamp = sys.argv[3]          # e.g. "_cfg_v7.json"
 
-with open(config_dir+"/inner"+config_name, 'r') as inner_file:  #
-    cfg_inner = json.loads(inner_file.read())
-with open(config_dir+"/outer1"+config_name, 'r') as outer1_file:
-    cfg_outer_1 = json.loads(outer1_file.read())
-with open(config_dir+"/outer2"+config_name, 'r') as outer2_file:
-    cfg_outer_2 = json.loads(outer2_file.read())
+cfg_dir = "/srv01/agrp/alonle/LUXEFastSim/Config"
+regions = ["inner", "outer1", "outer2"]
 
-cfg_inner['outputDir'] = sys.argv[2]
-cfg_outer_1['outputDir'] = sys.argv[2]
-cfg_outer_2['outputDir'] = sys.argv[2]
+# ------------------------------------------------------------------ #
+# 1.  Load configs, patch runtime fields, build trainers              #
+# ------------------------------------------------------------------ #
+trainers = {}
+for reg in regions:
+    with open(os.path.join(cfg_dir, f"{reg}{config_stamp}"), "r") as fp:
+        cfg = json.load(fp)
 
-numEpochs = int(sys.argv[1])
+    cfg.update({"outputDir": output_dir, "numEpochs": num_epochs})
+    trainers[reg] = create_trainer(cfg)
 
-cfg_inner["numEpochs"] = numEpochs
-cfg_outer_1["numEpochs"] = numEpochs
-cfg_outer_2["numEpochs"] = numEpochs
+# ------------------------------------------------------------------ #
+# 2.  Run: outer regions first, then inner                            #
+# ------------------------------------------------------------------ #
+t0 = time.localtime();  print(f"Start : {utils.get_time(t0)}")
+for reg in ["outer1", "outer2", "inner"]:
+    print(f"--- Training {reg} ---")
+    trainers[reg].run()
+    print(f"{reg} done : {utils.get_time(time.localtime(), t0)}")
 
-#LOCAL TESTING
-# cfg_inner["data_path"] = 'TrainData/neutron_inner_1M.csv'
-# cfg_outer["data_path"] = 'TrainData/neutron_outer_5M.csv'
+# ------------------------------------------------------------------ #
+# 3.  Persist logs                                                    #
+# ------------------------------------------------------------------ #
+log_map = {          # trainer attribute → prefix
+    "KL_log"        : "KL",
+    "D_wdist_log"   : "D",
+    "Val_D_log"     : "ValD",
+    "G_loss_log"    : "G",
+    "Val_G_log"     : "ValG",
+    "gp_log"        : "GP",        # gradient-penalty trace
+    "grad_norm_g"   : "GradG",
+    "grad_norm_d"   : "GradD"
+}
 
+for reg, tr in trainers.items():
+    for attr, prefix in log_map.items():
+        arr = getattr(tr, attr, None)
+        if arr is not None and len(arr):
+            np.save(os.path.join(tr.outputDir, f"{prefix}_{reg}.npy"), np.asarray(arr))
 
-create_time = time.localtime()
-
-print("Creating outer trainers...")
-outer_trainer_1 = create_trainer(cfg_outer_1)
-outer_trainer_2 = create_trainer(cfg_outer_2)
-print("Creating inner trainer...")
-inner_trainer = create_trainer(cfg_inner)
-
-training_time = time.localtime()
-print(f"Trainers Created ! Time elapsed : {utils.get_time(training_time, create_time)} \nStarting outer Training:")
-
-outer_trainer_1.run()
-outer_trainer_2.run()
-outer_time = time.localtime()
-print(f"Outer Training Done! Time elapsed : {utils.get_time(outer_time, training_time)} \nStarting inner Training:")
-inner_trainer.run()
-inner_time = time.localtime()
-print(f"Inner Training Done! Time elapsed : {utils.get_time(inner_time, outer_time)} \nMaking dataframes:")
-
-KL_in = np.zeros(len(inner_trainer.KL_Div))
-KL_out_1 = np.zeros(len(outer_trainer_1.KL_Div))
-KL_out_2 = np.zeros(len(outer_trainer_2.KL_Div))
-
-for i in range(len(KL_in)):
-    KL_in[i] = inner_trainer.KL_Div[i]
-for i in range(len(KL_out_1)):
-    KL_out_1[i] = outer_trainer_1.KL_Div[i]
-for i in range(len(KL_out_2)):
-    KL_out_2[i] = outer_trainer_2.KL_Div[i]
-
-np.save(inner_trainer.outputDir+'KL_in.npy', KL_in)
-np.save(outer_trainer_1.outputDir+'KL_out1.npy', KL_out_1)
-np.save(outer_trainer_2.outputDir+'KL_out2.npy', KL_out_2)
-np.save(inner_trainer.outputDir+'D_losses_in.npy', inner_trainer.D_Losses)
-np.save(outer_trainer_1.outputDir+'D_losses_out1.npy', outer_trainer_1.D_Losses)
-np.save(outer_trainer_2.outputDir+'D_losses_out2.npy', outer_trainer_2.D_Losses)
-np.save(inner_trainer.outputDir+'Val_D_losses_in.npy', inner_trainer.Val_D_Losses)
-np.save(outer_trainer_1.outputDir+'Val_D_losses_out1.npy', outer_trainer_1.Val_D_Losses)
-np.save(outer_trainer_2.outputDir+'Val_D_losses_out2.npy', outer_trainer_2.Val_D_Losses)
-np.save(inner_trainer.outputDir+'G_losses_in.npy', inner_trainer.G_Losses)
-np.save(outer_trainer_1.outputDir+'G_losses_out1.npy', outer_trainer_1.G_Losses)
-np.save(outer_trainer_2.outputDir+'G_losses_out2.npy', outer_trainer_2.G_Losses)
-np.save(inner_trainer.outputDir+'Val_G_losses_in.npy', inner_trainer.Val_G_Losses)
-np.save(outer_trainer_1.outputDir+'Val_G_losses_out1.npy', outer_trainer_1.Val_G_Losses)
-np.save(outer_trainer_2.outputDir+'Val_G_losses_out2.npy', outer_trainer_2.Val_G_Losses)
+print("All logs saved – job finished.")
