@@ -41,9 +41,9 @@ log_map = {          # trainer attribute → prefix
     "Val_D_log"     : "ValD",
     "G_loss_log"    : "G",
     "Val_G_log"     : "ValG",
-    "gp_log"        : "GP",        # gradient-penalty trace
-    "grad_norm_g"   : "GradG",
-    "grad_norm_d"   : "GradD"
+    "GP_log"        : "GP",        # gradient-penalty trace
+    "gradG_log"   : "GradG",
+    "gradD_log"   : "GradD"
 }
 
 for reg, tr in trainers.items():

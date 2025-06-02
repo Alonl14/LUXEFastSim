@@ -81,6 +81,7 @@ class Trainer:
         self.optG = cfgDict['genOptimizer']
         self.optD = cfgDict['discOptimizer']
         self.outputDir = cfgDict['outputDir']
+        self.GMaxSteps = cfgDict.get('GMaxSteps', None)
 
         # logs
         self.G_loss_log, self.D_wdist_log = [], []
