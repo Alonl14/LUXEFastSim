@@ -99,13 +99,18 @@ class Trainer:
         utils.weights_init(self.genNet); utils.weights_init(self.discNet)
         self.genNet.to(self.device).train(); self.discNet.to(self.device).train()
 
+        sigma = 1e-2  # start value
+        decay = 0.9995  # per G-step
+
+
         for epoch in tqdm.tqdm(range(self.numEpochs), desc="epochs"):
             sum_G = sum_D = 0.0; n_batches = 0
             gp_running = 0.0
             for real in self.dl_train:
                 if self.step_G >= self.GMaxSteps:
                     break
-                real = real.to(self.device); bs = real.size(0)
+                jitter_noise = sigma * torch.randn_like(real, device=self.device)
+                real = real.to(self.device) + jitter_noise; bs = real.size(0)
 
                 # critic
                 crit_loss = 0.0
@@ -114,6 +119,8 @@ class Trainer:
                     loss_real = -self.discNet(real).mean()
                     noise = torch.randn(bs, self.noiseDim, device=self.device)
                     fake = self.genNet(noise)
+                    jitter_noise = sigma * torch.randn_like(fake, device=self.device)
+                    fake += jitter_noise
                     loss_fake = self.discNet(fake.detach()).mean()
                     gp = compute_gradient_penalty(self.discNet, real, fake.detach(), self.Lambda, self.device)
                     loss_D = loss_real + loss_fake + gp
@@ -124,8 +131,13 @@ class Trainer:
                 self.optG.zero_grad()
                 noise = torch.randn(bs, self.noiseDim, device=self.device)
                 fake = self.genNet(noise)
+                jitter_noise = sigma * torch.randn_like(fake, device=self.device)
+                fake += jitter_noise
                 loss_G = -self.discNet(fake).mean()
                 loss_G.backward(); self.optG.step()
+
+                # decay jitter noise std
+                sigma *= decay
 
                 # LR sched
                 self.step_G += 1; self.schedG.step(); self.schedD.step()
