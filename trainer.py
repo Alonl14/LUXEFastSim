@@ -110,7 +110,7 @@ class Trainer:
                 if self.step_G >= self.GMaxSteps:
                     step_break = True; break
 
-                real = real.to(self.device) + sigma * torch.randn_like(real)
+                real = real.to(self.device) + sigma * torch.randn_like(real, device=self.device)
                 bs = real.size(0)
 
                 # ---- critic ----
@@ -122,7 +122,7 @@ class Trainer:
                     loss_real = -self.discNet(real).mean()
                     noise = torch.randn(bs, self.noiseDim, device=self.device)
                     fake = self.genNet(noise)
-                    fake_noisy = fake + sigma * torch.randn_like(fake)
+                    fake_noisy = fake + sigma * torch.randn_like(fake, device=self.device)
                     loss_fake = self.discNet(fake_noisy.detach()).mean()
 
                     gp = compute_gradient_penalty(self.discNet, real, fake_noisy.detach(),
@@ -137,7 +137,7 @@ class Trainer:
                 self.optG.zero_grad()
                 noise = torch.randn(bs, self.noiseDim, device=self.device)
                 fake = self.genNet(noise)
-                fake_noisy = fake + sigma * torch.randn_like(fake)
+                fake_noisy = fake + sigma * torch.randn_like(fake, device=self.device)
                 loss_G = -self.discNet(fake_noisy).mean()
                 loss_G.backward(); self.optG.step()
 
