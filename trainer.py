@@ -33,8 +33,10 @@ def compute_gradient_penalty(critic, real, fake, lam, device):
     return lam * ((grad_norm - 1) ** 2).mean()
 
 
-def compute_r1_gradient_penalty(loss_real, real, lam):
+def compute_r1_gradient_penalty(critic, real, lam):
     b = real.size(0)
+    real.requires_grad_(True)
+    loss_real = critic(real)
     grad = torch.autograd.grad(loss_real, real, create_graph=True,
                                grad_outputs=torch.ones_like(loss_real))[0]
     r1 = (grad.view(b, -1).norm(2, dim=1) ** 2).mean()
@@ -136,7 +138,7 @@ class Trainer:
 
                     gp = compute_gradient_penalty(self.discNet, real, fake_noisy.detach(),
                                                    self.Lambda, self.device) if self.gradMetric == 'norm' else \
-                        compute_r1_gradient_penalty(loss_real, real, self.Lambda)
+                        compute_r1_gradient_penalty(self.discNet, real, self.Lambda)
                     loss_D = loss_real + loss_fake + gp
                     loss_D.backward(); self.optD.step()
 

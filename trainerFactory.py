@@ -75,7 +75,8 @@ def create_trainer(cfg):
         'numEpochs': cfg['numEpochs'],
         'device': device,
         'nCrit': cfg['nCrit'],
-        'Lambda': cfg['Lambda']
+        'Lambda': cfg['Lambda'],
+        'gradMetric': cfg.get('gradMetric', 'norm')
     }
 
     genOptimizer = optim.Adam(cfgDict['genNet'].parameters(), lr=cfg['criticLearningRate'], betas=(0.5, 0.9))
