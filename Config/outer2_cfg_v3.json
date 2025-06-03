@@ -10,10 +10,11 @@
     "numEpochs": 50,
     "device": "cpu",
     "nCrit": 3,
-    "Lambda": 1,
+    "Lambda": 2,
     "criticLearningRate": 1e-05,
     "generatorLearningRate": 5e-05,
     "gradMetric": "r1",
+    "GMaxSteps": 10000,
     "features": {
         " xx": [],
         " yy": [],
