@@ -84,7 +84,7 @@ def create_trainer(cfg):
     cfgDict['genOptimizer'] = genOptimizer
     cfgDict['discOptimizer'] = discOptimizer
 
-    return Trainer(cfgDict=cfgDict)
+    return Trainer(cfg=cfgDict)
 
 
 class TrainerFactory:
