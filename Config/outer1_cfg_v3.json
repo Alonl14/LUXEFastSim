@@ -13,7 +13,7 @@
     "Lambda": 10,
     "criticLearningRate": 1.5e-05,
     "generatorLearningRate": 0.0001,
-    "gradMetric": "norm",
+    "gradMetric": "r1",
     "features": {
         " xx": [],
         " yy": [],
