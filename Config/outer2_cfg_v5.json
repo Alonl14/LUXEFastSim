@@ -9,9 +9,9 @@
     "noiseDim": 128,
     "numEpochs": 50,
     "device": "cpu",
-    "nCrit": 3,
-    "Lambda": 10,
-    "criticLearningRate": 1.5e-05,
+    "nCrit": 2,
+    "Lambda": 15,
+    "criticLearningRate": 2e-05,
     "generatorLearningRate": 0.0002,
     "features": {
         " xx": [],
