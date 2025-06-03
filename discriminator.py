@@ -72,7 +72,7 @@ class Discriminator2(nn.Module):
             nn.LayerNorm(512),
             nn.LeakyReLU(0.2),
             nn.Linear(512, 512, bias=True),
-            nn.LayerNorm(256),
+            nn.LayerNorm(512),
             nn.LeakyReLU(0.2),
             nn.Linear(512, 256, bias=True),
             nn.LayerNorm(256),
