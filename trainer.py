@@ -75,7 +75,7 @@ class Trainer:
         self.optG = cfg['genOptimizer']
         self.optD = cfg['discOptimizer']
         self.outputDir = cfg['outputDir']
-        self.GMaxSteps = cfg.get('GMaxSteps', 10_000)
+        self.GMaxSteps = cfg.get('GMaxSteps', None)
         self.gradMetric = cfg.get('gradMetric', 'norm')
 
         # logs
@@ -118,8 +118,9 @@ class Trainer:
             sum_G = sum_W = gp_acc = 0.0; n_batches = 0
 
             for real in self.dl_train:
-                if self.step_G >= self.GMaxSteps:
-                    step_break = True; break
+                if self.GMaxSteps is not None:
+                    if self.step_G >= self.GMaxSteps:
+                        step_break = True; break
 
                 real = real.to(self.device) + sigma * torch.randn_like(real, device=self.device)
                 bs = real.size(0)

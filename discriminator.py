@@ -1,4 +1,5 @@
 import torch.nn as nn
+from torch.nn.utils import spectral_norm
 
 
 class Discriminator(nn.Module):
@@ -65,17 +66,17 @@ class Discriminator2(nn.Module):
     def __init__(self, numFeatures):
         super().__init__()
         self.main = nn.Sequential(
-            nn.Linear(numFeatures, 512, bias=True),
-            nn.LayerNorm(512),
+            spectral_norm(nn.Linear(numFeatures, 512, bias=True)),
+            # nn.LayerNorm(512),
             nn.LeakyReLU(0.2),
-            nn.Linear(512, 512, bias=True),
-            nn.LayerNorm(512),
+            spectral_norm(nn.Linear(512, 512, bias=True)),
+            # nn.LayerNorm(512),
             nn.LeakyReLU(0.2),
-            nn.Linear(512, 512, bias=True),
-            nn.LayerNorm(512),
+            spectral_norm(nn.Linear(512, 512, bias=True)),
+            # nn.LayerNorm(512),
             nn.LeakyReLU(0.2),
-            nn.Linear(512, 256, bias=True),
-            nn.LayerNorm(256),
+            spectral_norm(nn.Linear(512, 256, bias=True)),
+            # nn.LayerNorm(256),
             nn.LeakyReLU(0.2),
             nn.Linear(256, 1, bias=False)
         )
