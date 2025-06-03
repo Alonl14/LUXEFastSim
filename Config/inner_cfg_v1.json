@@ -10,9 +10,10 @@
     "numEpochs": 50,
     "device": "cpu",
     "nCrit": 3,
-    "Lambda": 25,
+    "Lambda": 10,
     "criticLearningRate": 2e-05,
     "generatorLearningRate": 0.0001,
+    "gradMetric": "norm",
     "features": {
         " xx": [],
         " yy": [],
