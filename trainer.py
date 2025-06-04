@@ -78,6 +78,9 @@ class Trainer:
         self.GMaxSteps = cfg.get('GMaxSteps', None)
         self.gradMetric = cfg.get('gradMetric', 'norm')
 
+        # model checkpoint
+        self.best_ValD = float('inf')
+
         # logs
         self.G_loss_log   = []
         self.D_wdist_log  = []
@@ -184,6 +187,11 @@ class Trainer:
 
             vG, vD = self._validate()
             self.Val_G_log.append(vG); self.Val_D_log.append(-vD)
+            # Save the models if D_wdist_log is lower than previous best
+            if self.best_ValD > -vD > 0:
+                self.best_ValD = -vD
+                torch.save(self.genNet.state_dict(), f"{self.outputDir}{self.dataGroup}_Gen_model.pt")
+                torch.save(self.discNet.state_dict(), f"{self.outputDir}{self.dataGroup}_Disc_model.pt")
 
             # --- early‑stop slopes ---
             win = min(self.SLOPE_WINDOW, len(self.KL_log), len(self.D_wdist_log))
@@ -195,6 +203,8 @@ class Trainer:
                         return 0.0
                 if abs(slope(self.KL_log)) < self.SLOPE_EPS and abs(slope(self.D_wdist_log)) < self.SLOPE_EPS:
                     print('Early stop: slopes flat'); break
+
+
 
     # --------------------- validate ------------------ #
     def _validate(self):

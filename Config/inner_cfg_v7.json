@@ -6,7 +6,7 @@
     "dataGroup": "inner",
     "pdg": 2112,
     "batchSize": 256,
-    "noiseDim": 256,
+    "noiseDim": 512,
     "numEpochs": 50,
     "device": "cpu",
     "nCrit": 5,
