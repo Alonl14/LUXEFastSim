@@ -161,9 +161,10 @@ class Trainer:
                 self.step_G += 1; self.schedG.step(); self.schedD.step()
 
                 # per‑batch logs
-                self.GP_log.append(gp_batch / self.nCrit)
-                self.gradG_log.append(param_grad_norm(self.genNet))
-                self.gradD_log.append(param_grad_norm(self.discNet))
+                if self.step_G % 500 == 0:
+                    self.GP_log.append(gp_batch / self.nCrit)
+                    self.gradG_log.append(param_grad_norm(self.genNet))
+                    self.gradD_log.append(param_grad_norm(self.discNet))
 
                 sum_G += loss_G.item(); sum_W += w_dist_batch / self.nCrit
                 gp_acc += gp_batch; n_batches += 1
