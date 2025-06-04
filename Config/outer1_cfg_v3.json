@@ -14,7 +14,7 @@
     "criticLearningRate": 2e-05,
     "generatorLearningRate": 2e-05,
     "gradMetric": "r1",
-    "GMaxSteps": 10000,
+    "GMaxSteps": 20000,
     "features": {
         " xx": [],
         " yy": [],
