@@ -353,7 +353,7 @@ def generate_fake_real_dfs(run_id, cfg, run_dir, generator_net=None):
 
     # TODO: remove factor, find a different way to ease local data generation
     # Read data used for training
-    fake_df, real_df = generate_ds(generator_net, factor=1, cfg=cfg)
+    fake_df, real_df = generate_ds(generator_net, factor=100, cfg=cfg)
     real_df = real_df[real_df[' time'] <= 1e6]
     fake_df = fake_df[fake_df[' time'] <= 1e6]
     add_features(fake_df, cfg['pdg'])
@@ -418,104 +418,176 @@ def check_run(run_id, path=None, calculate_BED=True, save_df=False, plot_metrics
         make_ed_fig(outer2_null_values, outer2_H1_values, 'outer2', fig_path)
 
     if plot_metrics:
-        iKLPath = run_dir + "KL_in.npy"
-        oKL1Path = run_dir + "KL_out1.npy"
-        oKL2Path = run_dir + "KL_out2.npy"
+        # ─── file paths (new naming) ─────────────────────────────────────────────
+        iKLPath = os.path.join(run_dir, "KL_inner.npy")
+        oKL1Path = os.path.join(run_dir, "KL_outer1.npy")
+        oKL2Path = os.path.join(run_dir, "KL_outer2.npy")
 
-        iDLPath = run_dir + "D_losses_in.npy"
-        oDL1Path = run_dir + "D_losses_out1.npy"
-        oDL2Path = run_dir + "D_losses_out2.npy"
+        iDPath = os.path.join(run_dir, "D_inner.npy")
+        oD1Path = os.path.join(run_dir, "D_outer1.npy")
+        oD2Path = os.path.join(run_dir, "D_outer2.npy")
 
-        iVDLPath = run_dir + "Val_D_losses_in.npy"
-        oVDL1Path = run_dir + "Val_D_losses_out1.npy"
-        oVDL2Path = run_dir + "Val_D_losses_out2.npy"
+        iVDPath = os.path.join(run_dir, "ValD_inner.npy")
+        oVD1Path = os.path.join(run_dir, "ValD_outer1.npy")
+        oVD2Path = os.path.join(run_dir, "ValD_outer2.npy")
 
-        iGLPath = run_dir + "G_losses_in.npy"
-        oGL1Path = run_dir + "G_losses_out1.npy"
-        oGL2Path = run_dir + "G_losses_out2.npy"
-        iVGLPath = run_dir + "Val_G_losses_in.npy"
-        oVGL1Path = run_dir + "Val_G_losses_out1.npy"
-        oVGL2Path = run_dir + "Val_G_losses_out2.npy"
+        iGPath = os.path.join(run_dir, "G_inner.npy")
+        oG1Path = os.path.join(run_dir, "G_outer1.npy")
+        oG2Path = os.path.join(run_dir, "G_outer2.npy")
 
+        iVGPath = os.path.join(run_dir, "ValG_inner.npy")
+        oVG1Path = os.path.join(run_dir, "ValG_outer1.npy")
+        oVG2Path = os.path.join(run_dir, "ValG_outer2.npy")
+
+        iGradGPath = os.path.join(run_dir, "GradG_inner.npy")
+        oGradG1Path = os.path.join(run_dir, "GradG_outer1.npy")
+        oGradG2Path = os.path.join(run_dir, "GradG_outer2.npy")
+
+        iGradDPath = os.path.join(run_dir, "GradD_inner.npy")
+        oGradD1Path = os.path.join(run_dir, "GradD_outer1.npy")
+        oGradD2Path = os.path.join(run_dir, "GradD_outer2.npy")
+
+        # ─── load arrays ────────────────────────────────────────────────────────────
         innerKLDiv = np.load(iKLPath)
         outer1KLDiv = np.load(oKL1Path)
         outer2KLDiv = np.load(oKL2Path)
 
-        innerDLosses = np.load(iDLPath)
-        outer1DLosses = np.load(oDL1Path)
-        outer2DLosses = np.load(oDL2Path)
-        innerValDLosses = np.load(iVDLPath)
-        outer1ValDLosses = np.load(oVDL1Path)
-        outer2ValDLosses = np.load(oVDL2Path)
+        innerWdist = np.load(iDPath)
+        outer1Wdist = np.load(oD1Path)
+        outer2Wdist = np.load(oD2Path)
+        innerValWdist = np.load(iVDPath)
+        outer1ValWdist = np.load(oVD1Path)
+        outer2ValWdist = np.load(oVD2Path)
 
-        innerGLosses = np.load(iGLPath)
-        outer1GLosses = np.load(oGL1Path)
-        outer2GLosses = np.load(oGL2Path)
-        innerValGLosses = np.load(iVGLPath)
-        outer1ValGLosses = np.load(oVGL1Path)
-        outer2ValGLosses = np.load(oVGL2Path)
+        innerGLosses = np.load(iGPath)
+        outer1GLosses = np.load(oG1Path)
+        outer2GLosses = np.load(oG2Path)
+        innerValGLosses = np.load(iVGPath)
+        outer1ValGLosses = np.load(oVG1Path)
+        outer2ValGLosses = np.load(oVG2Path)
 
+        innerGradG = np.load(iGradGPath)
+        outer1GradG = np.load(oGradG1Path)
+        outer2GradG = np.load(oGradG2Path)
+
+        innerGradD = np.load(iGradDPath)
+        outer1GradD = np.load(oGradD1Path)
+        outer2GradD = np.load(oGradD2Path)
+
+        # ─── plot KL divergences ────────────────────────────────────────────────────
         plt.figure(dpi=200)
-        plt.title("Inner KL divergence")
+        plt.title("Inner KL Divergence")
         plt.grid(True, which='both', color='0.65', linestyle='-')
         plt.plot(innerKLDiv)
-        plt.yscale('log')
-        plt.savefig(fig_path + 'innerKLDiv.png')
-        plt.figure(dpi=200)
-        plt.title("Outer1 KL divergence")
-        plt.grid(True, which='both', color='0.65', linestyle='-')
-        plt.plot(outer1KLDiv)
-        plt.yscale('log')
-        plt.savefig(fig_path + 'outer1KLDiv.png')
-        plt.figure(dpi=200)
-        plt.title("Outer2 KL divergence")
-        plt.grid(True, which='both', color='0.65', linestyle='-')
-        plt.plot(outer2KLDiv)
-        plt.yscale('log')
-        plt.savefig(fig_path + 'outer2KLDiv.png')
-        plt.figure(dpi=200)
-        plt.title("Inner Critic Losses")
-        plt.grid(True, which='both', color='0.65', linestyle='-')
-        plt.plot(innerDLosses)
-        plt.plot(innerValDLosses)
-        plt.legend(["training", "validation"])
-        plt.savefig(fig_path + 'innerDLosses.png')
-        plt.figure(dpi=200)
-        plt.title("Outer1 Critic Losses")
-        plt.grid(True, which='both', color='0.65', linestyle='-')
-        plt.plot(outer1DLosses)
-        plt.plot(outer1ValDLosses)
-        plt.legend(["training", "validation"])
-        plt.savefig(fig_path + 'outer1DLosses.png')
-        plt.figure(dpi=200)
-        plt.title("Outer2 Critic Losses")
-        plt.grid(True, which='both', color='0.65', linestyle='-')
-        plt.plot(outer2DLosses)
-        plt.plot(outer2ValDLosses)
-        plt.legend(["training", "validation"])
-        plt.savefig(fig_path + 'outer2DLosses.png')
+        plt.yscale("log")
+        plt.savefig(fig_path + "inner_KL.png")
 
         plt.figure(dpi=200)
-        plt.title("Inner Generator Losses")
+        plt.title("Outer1 KL Divergence")
         plt.grid(True, which='both', color='0.65', linestyle='-')
-        plt.plot(innerGLosses)
-        plt.plot(innerValGLosses)
-        plt.legend(["training", "validation"])
-        plt.savefig(fig_path + 'innerGLosses.png')
+        plt.plot(outer1KLDiv)
+        plt.yscale("log")
+        plt.savefig(fig_path + "outer1_KL.png")
+
         plt.figure(dpi=200)
-        plt.title("Outer1 Generator Losses")
+        plt.title("Outer2 KL Divergence")
         plt.grid(True, which='both', color='0.65', linestyle='-')
-        plt.plot(outer1GLosses)
-        plt.plot(outer1ValGLosses)
-        plt.legend(["training", "validation"])
-        plt.savefig(fig_path + 'outer1GLosses.png')
+        plt.plot(outer2KLDiv)
+        plt.yscale("log")
+        plt.savefig(fig_path + "outer2_KL.png")
+
+        # ─── plot Training vs Validation W-distance (Critic) ────────────────────────
         plt.figure(dpi=200)
-        plt.title("Outer2 Generator Losses")
+        plt.title("Inner Critic W-distance")
         plt.grid(True, which='both', color='0.65', linestyle='-')
-        plt.plot(outer2GLosses)
-        plt.plot(outer2ValGLosses)
-        plt.legend(["training", "validation"])
-        plt.savefig(fig_path + 'outer2GLosses.png')
+        plt.plot(innerWdist, label="training")
+        plt.plot(innerValWdist, label="validation")
+        plt.legend()
+        plt.savefig(fig_path + "inner_Wdist.png")
+
+        plt.figure(dpi=200)
+        plt.title("Outer1 Critic W-distance")
+        plt.grid(True, which='both', color='0.65', linestyle='-')
+        plt.plot(outer1Wdist, label="training")
+        plt.plot(outer1ValWdist, label="validation")
+        plt.legend()
+        plt.savefig(fig_path + "outer1_Wdist.png")
+
+        plt.figure(dpi=200)
+        plt.title("Outer2 Critic W-distance")
+        plt.grid(True, which='both', color='0.65', linestyle='-')
+        plt.plot(outer2Wdist, label="training")
+        plt.plot(outer2ValWdist, label="validation")
+        plt.legend()
+        plt.savefig(fig_path + "outer2_Wdist.png")
+
+        # ─── plot Generator Losses ──────────────────────────────────────────────────
+        plt.figure(dpi=200)
+        plt.title("Inner Generator Loss")
+        plt.grid(True, which='both', color='0.65', linestyle='-')
+        plt.plot(innerGLosses, label="training")
+        plt.plot(innerValGLosses, label="validation")
+        plt.legend()
+        plt.savefig(fig_path + "inner_Gloss.png")
+
+        plt.figure(dpi=200)
+        plt.title("Outer1 Generator Loss")
+        plt.grid(True, which='both', color='0.65', linestyle='-')
+        plt.plot(outer1GLosses, label="training")
+        plt.plot(outer1ValGLosses, label="validation")
+        plt.legend()
+        plt.savefig(fig_path + "outer1_Gloss.png")
+
+        plt.figure(dpi=200)
+        plt.title("Outer2 Generator Loss")
+        plt.grid(True, which='both', color='0.65', linestyle='-')
+        plt.plot(outer2GLosses, label="training")
+        plt.plot(outer2ValGLosses, label="validation")
+        plt.legend()
+        plt.savefig(fig_path + "outer2_Gloss.png")
+
+        # ─── plot Gradient Norms (per-batch, smoothed externally if desired) ────────
+        plt.figure(dpi=200)
+        plt.title("Inner Generator ∥∇G∥₂")
+        plt.grid(True, which='both', color='0.65', linestyle='-')
+        plt.plot(innerGradG)
+        plt.yscale("log")
+        plt.savefig(fig_path + "inner_GradG.png")
+
+        plt.figure(dpi=200)
+        plt.title("Outer1 Generator ∥∇G∥₂")
+        plt.grid(True, which='both', color='0.65', linestyle='-')
+        plt.plot(outer1GradG)
+        plt.yscale("log")
+        plt.savefig(fig_path + "outer1_GradG.png")
+
+        plt.figure(dpi=200)
+        plt.title("Outer2 Generator ∥∇G∥₂")
+        plt.grid(True, which='both', color='0.65', linestyle='-')
+        plt.plot(outer2GradG)
+        plt.yscale("log")
+        plt.savefig(fig_path + "outer2_GradG.png")
+
+        plt.figure(dpi=200)
+        plt.title("Inner Critic ∥∇D∥₂")
+        plt.grid(True, which='both', color='0.65', linestyle='-')
+        plt.plot(innerGradD)
+        plt.yscale("log")
+        plt.savefig(fig_path + "inner_GradD.png")
+
+        plt.figure(dpi=200)
+        plt.title("Outer1 Critic ∥∇D∥₂")
+        plt.grid(True, which='both', color='0.65', linestyle='-')
+        plt.plot(outer1GradD)
+        plt.yscale("log")
+        plt.savefig(fig_path + "outer1_GradD.png")
+
+        plt.figure(dpi=200)
+        plt.title("Outer2 Critic ∥∇D∥₂")
+        plt.grid(True, which='both', color='0.65', linestyle='-')
+        plt.plot(outer2GradD)
+        plt.yscale("log")
+        plt.savefig(fig_path + "outer2_GradD.png")
 
     features = [' xx', ' yy', ' pxx', ' pyy', ' pzz', ' eneg', ' time', 'theta', ' rx', ' rp']
     chi2_tests = {'inner': {}, 'outer1': {}, 'outer2': {}, 'combined': {}, 'noLeaks': {}}
