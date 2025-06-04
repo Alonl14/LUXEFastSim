@@ -66,19 +66,19 @@ class Discriminator2(nn.Module):
     def __init__(self, numFeatures):
         super().__init__()
         self.main = nn.Sequential(
-            spectral_norm(nn.Linear(numFeatures, 512, bias=True)),
-            # nn.LayerNorm(512),
+            nn.Linear(numFeatures, 512, bias=True),
+            nn.LayerNorm(512),
             nn.LeakyReLU(0.2),
-            spectral_norm(nn.Linear(512, 512, bias=True)),
-            # nn.LayerNorm(512),
+            nn.Linear(512, 512, bias=True),
+            nn.LayerNorm(512),
             nn.LeakyReLU(0.2),
-            spectral_norm(nn.Linear(512, 512, bias=True)),
-            # nn.LayerNorm(512),
+            nn.Linear(512, 512, bias=True),
+            nn.LayerNorm(512),
             nn.LeakyReLU(0.2),
-            spectral_norm(nn.Linear(512, 256, bias=True)),
-            # nn.LayerNorm(256),
+            nn.Linear(512, 512, bias=True),
+            nn.LayerNorm(512),
             nn.LeakyReLU(0.2),
-            nn.Linear(256, 1, bias=False)
+            nn.Linear(512, 1, bias=False)
         )
 
     def forward(self, x):

@@ -59,10 +59,13 @@ class Generator2(nn.Module):
             nn.Linear(512, 512, bias=False),
             nn.BatchNorm1d(512, affine=True),
             nn.ReLU(),
-            nn.Linear(512, 256, bias=False),
-            nn.BatchNorm1d(256, affine=True),
+            nn.Linear(512, 512, bias=False),
+            nn.BatchNorm1d(512, affine=True),
             nn.ReLU(),
-            nn.Linear(256, numFeatures, bias=True)  # Only layer with bias
+            nn.Linear(512, 512, bias=False),
+            nn.BatchNorm1d(512, affine=True),
+            nn.ReLU(),
+            nn.Linear(512, numFeatures, bias=True)  # Only layer with bias
         )
 
     def forward(self, input):

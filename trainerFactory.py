@@ -76,6 +76,7 @@ def create_trainer(cfg):
         'device': device,
         'nCrit': cfg['nCrit'],
         'Lambda': cfg['Lambda'],
+        'GMaxSteps': cfg.get('GMaxSteps', None),
         'gradMetric': cfg.get('gradMetric', 'norm')
     }
 
