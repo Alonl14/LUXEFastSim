@@ -1,5 +1,5 @@
 {
-    "nQuantiles": 100000,
+    "nQuantiles": 1000000,
     "subsample": 40000000,
     "data_path": "/storage/agrp/alonle/GAN_InputSample/2112_outer2.csv",
     "outputDir": "",

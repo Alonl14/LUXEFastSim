@@ -190,6 +190,7 @@ class Trainer:
             # Save the models if D_wdist_log is lower than previous best
             if self.best_ValD > -vD > 0:
                 self.best_ValD = -vD
+                print(f"New best Val_D: {self.best_ValD:.4f} at epoch {epoch}")
                 torch.save(self.genNet.state_dict(), f"{self.outputDir}{self.dataGroup}_Gen_model.pt")
                 torch.save(self.discNet.state_dict(), f"{self.outputDir}{self.dataGroup}_Disc_model.pt")
 
