@@ -14,7 +14,7 @@ class ParticleDataset(Dataset):
         self._registry = {"log": simple_log,
                           "flip": flip}
         self.cfg = cfg
-        QT = qt(output_distribution='uniform', n_quantiles=cfg['nQuantiles'], subsample=cfg['subsample'])
+        QT = qt(output_distribution='normal', n_quantiles=cfg['nQuantiles'], subsample=cfg['subsample'])
 
         self.data = pd.read_csv(cfg['data_path'])
         print(f"Creating dataset w. shape: {self.data.shape}")
