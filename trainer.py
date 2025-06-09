@@ -196,7 +196,7 @@ class Trainer:
 
             # --- early‑stop slopes ---
             win = min(self.SLOPE_WINDOW, len(self.KL_log), len(self.D_wdist_log))
-            if win >= 3 and epoch > 15:
+            if win >= 3 and epoch > 60:
                 def slope(arr):
                     try:
                         return np.polyfit(range(win), arr[-win:], 1)[0]
