@@ -13,7 +13,7 @@
     "Lambda": 10,
     "criticLearningRate": 1e-06,
     "generatorLearningRate": 2e-05,
-    "gradMetric": "norm",
+    "gradMetric": "r1",
     "GMaxSteps": 30000,
     "features": {
         " xx": [],
