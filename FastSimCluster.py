@@ -10,7 +10,7 @@ output_dir   = sys.argv[2]
 config_stamp = sys.argv[3]          # e.g. "_cfg_v7.json"
 
 cfg_dir = "/srv01/agrp/alonle/LUXEFastSim/Config"
-regions = ["outer1"]
+regions = ["outer1", "outer2", "inner"]
 
 # ------------------------------------------------------------------ #
 # 1.  Load configs, patch runtime fields, build trainers              #
@@ -27,7 +27,7 @@ for reg in regions:
 # 2.  Run: outer regions first, then inner                            #
 # ------------------------------------------------------------------ #
 t0 = time.localtime();  print(f"Start : {utils.get_time(t0)}")
-for reg in ["outer1"]:  # , "outer2", "inner"
+for reg in ["outer1", "outer2", "inner"]:  #
     print(f"--- Training {reg} ---")
     trainers[reg].run()
     print(f"{reg} done : {utils.get_time(time.localtime(), t0)}")
