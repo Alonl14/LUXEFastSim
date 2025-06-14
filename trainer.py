@@ -16,6 +16,7 @@ warnings.filterwarnings("ignore", category=UserWarning,
 warnings.filterwarnings("ignore", category=UserWarning,
                         message=".*You can silence this warning by not passing in num_features.*")
 
+
 # ------------------------------------------------------------------ #
 #  helpers                                                            #
 # ------------------------------------------------------------------ #
@@ -54,23 +55,23 @@ def param_grad_norm(net):
 # ------------------------------------------------------------------ #
 class Trainer:
     WARMUP_STEPS = 1_000
-    SLOPE_EPS    = 0.002
+    SLOPE_EPS = 0.00002
     SLOPE_WINDOW = 12  # epochs
 
     def __init__(self, cfg):
         # networks & data
-        self.genNet  = cfg['genNet']
+        self.genNet = cfg['genNet']
         self.discNet = cfg['discNet']
         self.dl_train = cfg['dataloader']
-        self.dl_val   = cfg['valDataloader']
+        self.dl_val = cfg['valDataloader']
         self.dataGroup = cfg['dataGroup']
 
         # hparams
         self.noiseDim = cfg['noiseDim']
         self.numEpochs = cfg['numEpochs']
-        self.device    = cfg['device']
-        self.nCrit     = cfg['nCrit']
-        self.Lambda    = cfg['Lambda']
+        self.device = cfg['device']
+        self.nCrit = cfg['nCrit']
+        self.Lambda = cfg['Lambda']
 
         self.optG = cfg['genOptimizer']
         self.optD = cfg['discOptimizer']
@@ -82,15 +83,15 @@ class Trainer:
         self.best_ValD = float('inf')
 
         # logs
-        self.G_loss_log   = []
-        self.D_wdist_log  = []
-        self.Val_G_log    = []
-        self.Val_D_log    = []
-        self.KL_log       = []
-        self.GP_log       = []
-        self.GP_mean_log  = []
-        self.gradG_log    = []
-        self.gradD_log    = []
+        self.G_loss_log = []
+        self.D_wdist_log = []
+        self.Val_G_log = []
+        self.Val_D_log = []
+        self.KL_log = []
+        self.GP_log = []
+        self.GP_mean_log = []
+        self.gradG_log = []
+        self.gradD_log = []
 
         # KL buffers
         self.real_buf, self.fake_buf = [], []
@@ -118,12 +119,14 @@ class Trainer:
 
         for epoch in tqdm.tqdm(range(self.numEpochs), desc='epochs'):
             if step_break: break
-            sum_G = sum_W = gp_acc = 0.0; n_batches = 0
+            sum_G = sum_W = gp_acc = 0.0
+            n_batches = 0
 
             for real in self.dl_train:
                 if self.GMaxSteps is not None:
                     if self.step_G >= self.GMaxSteps:
-                        step_break = True; break
+                        step_break = True
+                        break
 
                 real = real.to(self.device) + sigma * torch.randn_like(real, device=self.device)
                 bs = real.size(0)
@@ -141,13 +144,14 @@ class Trainer:
                     loss_fake = self.discNet(fake_noisy.detach()).mean()
 
                     gp = compute_gradient_penalty(self.discNet, real, fake_noisy.detach(),
-                                                   self.Lambda, self.device) if self.gradMetric == 'norm' else \
+                                                  self.Lambda, self.device) if self.gradMetric == 'norm' else \
                         compute_r1_gradient_penalty(self.discNet, real, self.Lambda)
                     loss_D = loss_real + loss_fake + gp
-                    loss_D.backward(); self.optD.step()
+                    loss_D.backward()
+                    self.optD.step()
 
                     w_dist_batch += (loss_real + loss_fake).item()
-                    gp_batch     += gp.item()
+                    gp_batch += gp.item()
 
                 # ---- generator ----
                 self.optG.zero_grad()
@@ -155,13 +159,16 @@ class Trainer:
                 fake = self.genNet(noise)
                 fake_noisy = fake + sigma * torch.randn_like(fake, device=self.device)
                 loss_G = -self.discNet(fake_noisy).mean()
-                loss_G.backward(); self.optG.step()
+                loss_G.backward()
+                self.optG.step()
 
                 # decay noise std
                 sigma *= decay
 
                 # schedulers & counters
-                self.step_G += 1; self.schedG.step(); self.schedD.step()
+                self.step_G += 1
+                self.schedG.step()
+                self.schedD.step()
 
                 # per‑batch logs
                 if self.step_G % 500 == 0:
@@ -169,24 +176,29 @@ class Trainer:
                     self.gradG_log.append(param_grad_norm(self.genNet))
                     self.gradD_log.append(param_grad_norm(self.discNet))
 
-                sum_G += loss_G.item(); sum_W += w_dist_batch / self.nCrit
-                gp_acc += gp_batch; n_batches += 1
+                sum_G += loss_G.item()
+                sum_W += w_dist_batch / self.nCrit
+                gp_acc += gp_batch
+                n_batches += 1
 
                 # mini‑KL
-                self.real_buf.append(real.detach().cpu()); self.fake_buf.append(fake.detach().cpu())
+                self.real_buf.append(real.detach().cpu())
+                self.fake_buf.append(fake.detach().cpu())
                 if sum(t.size(0) for t in self.real_buf) >= self.KL_TARGET:
                     r = torch.cat(self.real_buf)[:self.KL_TARGET]
                     f = torch.cat(self.fake_buf)[:self.KL_TARGET]
                     self.KL_log.append(utils.get_kld(r.to(self.device), f.to(self.device)).item())
-                    self.real_buf.clear(); self.fake_buf.clear()
+                    self.real_buf.clear()
+                    self.fake_buf.clear()
 
             if n_batches == 0: break  # no data processed
             self.G_loss_log.append(sum_G / n_batches)
             self.D_wdist_log.append(-(sum_W / n_batches))
-            self.GP_mean_log.append(gp_acc / max(1, n_batches*self.nCrit))
+            self.GP_mean_log.append(gp_acc / max(1, n_batches * self.nCrit))
 
             vG, vD = self._validate()
-            self.Val_G_log.append(vG); self.Val_D_log.append(-vD)
+            self.Val_G_log.append(vG)
+            self.Val_D_log.append(-vD)
             # Save the models if D_wdist_log is lower than previous best
             if self.best_ValD > -vD > 0:
                 self.best_ValD = -vD
@@ -202,20 +214,26 @@ class Trainer:
                         return np.polyfit(range(win), arr[-win:], 1)[0]
                     except np.linalg.LinAlgError:
                         return 0.0
+
                 if abs(slope(self.KL_log)) < self.SLOPE_EPS and abs(slope(self.D_wdist_log)) < self.SLOPE_EPS:
-                    print('Early stop: slopes flat'); break
-
-
+                    print('Early stop: slopes flat')
+                    break
 
     # --------------------- validate ------------------ #
     def _validate(self):
-        self.genNet.eval(); self.discNet.eval(); sG=sD=n=0
+        self.genNet.eval()
+        self.discNet.eval()
+        sG = sD = n = 0
         with torch.no_grad():
             for real in self.dl_val:
-                real = real.to(self.device); bs = real.size(0)
+                real = real.to(self.device)
+                bs = real.size(0)
                 loss_real = -self.discNet(real).mean()
                 fake = self.genNet(torch.randn(bs, self.noiseDim, device=self.device))
                 loss_fake = self.discNet(fake).mean()
                 sD += (loss_real + loss_fake).item()
-                sG += (-self.discNet(fake).mean()).item(); n += 1
-        self.genNet.train(); self.discNet.train(); return sG/n, sD/n
+                sG += (-self.discNet(fake).mean()).item()
+                n += 1
+        self.genNet.train()
+        self.discNet.train()
+        return sG / n, sD / n
