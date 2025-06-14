@@ -5,7 +5,7 @@
     "outputDir": "",
     "dataGroup": "outer1",
     "pdg": 2112,
-    "batchSize": 262144,
+    "batchSize": 131072,
     "noiseDim": 1024,
     "numEpochs": 50,
     "device": "cpu",
