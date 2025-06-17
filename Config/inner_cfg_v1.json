@@ -1,6 +1,6 @@
 {
     "nQuantiles": 1000000,
-    "subsample": 40000000,
+    "subsample": 10000000,
     "data_path": "/storage/agrp/alonle/GAN_InputSample/2112_inner.csv",
     "outputDir": "",
     "dataGroup": "inner",
@@ -12,7 +12,7 @@
     "nCrit": 5,
     "Lambda": 10,
     "criticLearningRate": 1e-06,
-    "generatorLearningRate": 2e-05,
+    "generatorLearningRate": 3e-05,
     "gradMetric": "r1",
     "GMaxSteps": null,
     "features": {

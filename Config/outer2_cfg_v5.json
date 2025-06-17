@@ -1,6 +1,6 @@
 {
     "nQuantiles": 1000000,
-    "subsample": 40000000,
+    "subsample": 10000000,
     "data_path": "/storage/agrp/alonle/GAN_InputSample/2112_outer2.csv",
     "outputDir": "",
     "dataGroup": "outer2",
@@ -9,10 +9,10 @@
     "noiseDim": 128,
     "numEpochs": 50,
     "device": "cpu",
-    "nCrit": 2,
-    "Lambda": 2,
-    "criticLearningRate": 1e-05,
-    "generatorLearningRate": 5e-06,
+    "nCrit": 5,
+    "Lambda": 10,
+    "criticLearningRate": 5e-07,
+    "generatorLearningRate": 2e-05,
     "gradMetric": "r1",
     "GMaxSteps": null,
     "features": {
