@@ -801,19 +801,13 @@ def get_sampled_ed_histograms(x, y, batch_size=1000, num_iters=10000):
 
 
 # original get_batches:
-# def get_batches(array, batch_size):
-#     batch_list = []
-#     i = 0
-#     while i + batch_size < array.shape[0]:
-#         batch_list.append(array[i:i + batch_size, :])
-#         i += batch_size
-#     return batch_list
-
-# === Change 3: Make get_batches a generator to avoid holding all slices in memory ===
 def get_batches(array, batch_size):
-    for i in range(0, array.shape[0], batch_size):
-        yield array[i:i + batch_size]
-
+    batch_list = []
+    i = 0
+    while i + batch_size < array.shape[0]:
+        batch_list.append(array[i:i + batch_size, :])
+        i += batch_size
+    return batch_list
 
 def get_ed(x, y):
     D_XX = euclidean_distance_matrix(x, x)
