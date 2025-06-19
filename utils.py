@@ -15,6 +15,12 @@ from scipy.stats import kstest as ks
 from scipy.stats import binned_statistic_dd
 from numba import njit
 import random
+import psutil  # Change 7: import psutil for memory logging
+import gc      # Change 7: import gc for garbage collection
+
+# === Change 5: Global style setup moved outside function scope ===
+plt.style.use('seaborn-v0_8-deep')  # moved from inside check_run
+plt.rcParams.update({'font.size': 25})  # moved from inside check_run
 
 
 def compute_sparse_histogram(data, bin_edges):
@@ -107,7 +113,6 @@ def plot_correlations(x, y, xlabel, ylabel, run_id, key,
                       bins=[400, 400], loglog=False, Xlim=None, Ylim=None, path=None):
     H, xb, yb = np.histogram2d(x, y, bins=bins, range=[[x.min(), x.max()], [y.min(), y.max()]], density=True)
     X, Y = np.meshgrid(xb, yb)
-    plt.rc('font', family='serif', size=18)
     plt.figure(dpi=200)
     if xlabel == "x[mm]":
         vmin, vmax = 1e-10, 1e-6
@@ -144,9 +149,11 @@ def plot_correlations(x, y, xlabel, ylabel, run_id, key,
         clean_xlabel = ''.join(char for char in xlabel if char.isalnum())
         clean_ylabel = ''.join(char for char in ylabel if char.isalnum())
         plt.savefig(hist_path + '/' + key + '/2d-' + clean_xlabel + '-' + clean_ylabel + '.png', bbox_inches='tight')
+        plt.close()
     else:
         hist_path = "/storage/agrp/alonle/GAN_Output"
         plt.savefig(hist_path + '/' + key + xlabel + '-' + ylabel + '.png')
+        plt.close()
     return H
 
 
@@ -388,10 +395,6 @@ def check_run(run_id, path=None, calculate_BED=True, save_df=False, plot_metrics
         fix_path(cfg_outer1, "data_path")
         fix_path(cfg_outer2, "data_path")
 
-    # TODO: Think of a different condition to check if a df is needed to be produced
-    plt.style.use('seaborn-v0_8-deep')
-    plt.rcParams.update({'font.size': 25})
-
     if plot_results or save_df or calculate_BED:
         generation_time_a = time.localtime()
         innerDF, innerData = generate_fake_real_dfs(run_id, cfg_inner, run_dir)
@@ -416,6 +419,7 @@ def check_run(run_id, path=None, calculate_BED=True, save_df=False, plot_metrics
         make_ed_fig(inner_null_values, inner_H1_values, 'inner', fig_path)
         make_ed_fig(outer1_null_values, outer1_H1_values, 'outer1', fig_path)
         make_ed_fig(outer2_null_values, outer2_H1_values, 'outer2', fig_path)
+        print(f"[mem after ED init] {psutil.Process().memory_info().rss / 1e9:.2f} GB")
 
     if plot_metrics:
         # ─── file paths (new naming) ─────────────────────────────────────────────
@@ -481,6 +485,7 @@ def check_run(run_id, path=None, calculate_BED=True, save_df=False, plot_metrics
         plt.plot(innerKLDiv)
         plt.yscale("log")
         plt.savefig(fig_path + "inner_KL.png")
+        plt.close()
 
         plt.figure(dpi=200)
         plt.title("Outer1 KL Divergence")
@@ -488,6 +493,7 @@ def check_run(run_id, path=None, calculate_BED=True, save_df=False, plot_metrics
         plt.plot(outer1KLDiv)
         plt.yscale("log")
         plt.savefig(fig_path + "outer1_KL.png")
+        plt.close()
 
         plt.figure(dpi=200)
         plt.title("Outer2 KL Divergence")
@@ -495,6 +501,7 @@ def check_run(run_id, path=None, calculate_BED=True, save_df=False, plot_metrics
         plt.plot(outer2KLDiv)
         plt.yscale("log")
         plt.savefig(fig_path + "outer2_KL.png")
+        plt.close()
 
         # ─── plot Training vs Validation W-distance (Critic) ────────────────────────
         plt.figure(dpi=200)
@@ -504,6 +511,7 @@ def check_run(run_id, path=None, calculate_BED=True, save_df=False, plot_metrics
         plt.plot(innerValWdist, label="validation")
         plt.legend()
         plt.savefig(fig_path + "inner_Wdist.png")
+        plt.close()
 
         plt.figure(dpi=200)
         plt.title("Outer1 Critic W-distance")
@@ -512,6 +520,7 @@ def check_run(run_id, path=None, calculate_BED=True, save_df=False, plot_metrics
         plt.plot(outer1ValWdist, label="validation")
         plt.legend()
         plt.savefig(fig_path + "outer1_Wdist.png")
+        plt.close()
 
         plt.figure(dpi=200)
         plt.title("Outer2 Critic W-distance")
@@ -520,6 +529,7 @@ def check_run(run_id, path=None, calculate_BED=True, save_df=False, plot_metrics
         plt.plot(outer2ValWdist, label="validation")
         plt.legend()
         plt.savefig(fig_path + "outer2_Wdist.png")
+        plt.close()
 
         # ─── plot Generator Losses ──────────────────────────────────────────────────
         plt.figure(dpi=200)
@@ -529,6 +539,7 @@ def check_run(run_id, path=None, calculate_BED=True, save_df=False, plot_metrics
         plt.plot(innerValGLosses, label="validation")
         plt.legend()
         plt.savefig(fig_path + "inner_Gloss.png")
+        plt.close()
 
         plt.figure(dpi=200)
         plt.title("Outer1 Generator Loss")
@@ -537,6 +548,7 @@ def check_run(run_id, path=None, calculate_BED=True, save_df=False, plot_metrics
         plt.plot(outer1ValGLosses, label="validation")
         plt.legend()
         plt.savefig(fig_path + "outer1_Gloss.png")
+        plt.close()
 
         plt.figure(dpi=200)
         plt.title("Outer2 Generator Loss")
@@ -545,6 +557,7 @@ def check_run(run_id, path=None, calculate_BED=True, save_df=False, plot_metrics
         plt.plot(outer2ValGLosses, label="validation")
         plt.legend()
         plt.savefig(fig_path + "outer2_Gloss.png")
+        plt.close()
 
         # ─── plot Gradient Norms (per-batch, smoothed externally if desired) ────────
         plt.figure(dpi=200)
@@ -553,6 +566,7 @@ def check_run(run_id, path=None, calculate_BED=True, save_df=False, plot_metrics
         plt.plot(innerGradG)
         plt.yscale("log")
         plt.savefig(fig_path + "inner_GradG.png")
+        plt.close()
 
         plt.figure(dpi=200)
         plt.title("Outer1 Generator ∥∇G∥₂")
@@ -560,6 +574,7 @@ def check_run(run_id, path=None, calculate_BED=True, save_df=False, plot_metrics
         plt.plot(outer1GradG)
         plt.yscale("log")
         plt.savefig(fig_path + "outer1_GradG.png")
+        plt.close()
 
         plt.figure(dpi=200)
         plt.title("Outer2 Generator ∥∇G∥₂")
@@ -567,6 +582,7 @@ def check_run(run_id, path=None, calculate_BED=True, save_df=False, plot_metrics
         plt.plot(outer2GradG)
         plt.yscale("log")
         plt.savefig(fig_path + "outer2_GradG.png")
+        plt.close()
 
         plt.figure(dpi=200)
         plt.title("Inner Critic ∥∇D∥₂")
@@ -574,6 +590,7 @@ def check_run(run_id, path=None, calculate_BED=True, save_df=False, plot_metrics
         plt.plot(innerGradD)
         plt.yscale("log")
         plt.savefig(fig_path + "inner_GradD.png")
+        plt.close()
 
         plt.figure(dpi=200)
         plt.title("Outer1 Critic ∥∇D∥₂")
@@ -581,6 +598,7 @@ def check_run(run_id, path=None, calculate_BED=True, save_df=False, plot_metrics
         plt.plot(outer1GradD)
         plt.yscale("log")
         plt.savefig(fig_path + "outer1_GradD.png")
+        plt.close()
 
         plt.figure(dpi=200)
         plt.title("Outer2 Critic ∥∇D∥₂")
@@ -588,42 +606,30 @@ def check_run(run_id, path=None, calculate_BED=True, save_df=False, plot_metrics
         plt.plot(outer2GradD)
         plt.yscale("log")
         plt.savefig(fig_path + "outer2_GradD.png")
+        plt.close()
 
     features = [' xx', ' yy', ' pxx', ' pyy', ' pzz', ' eneg', ' time', 'theta', ' rx', ' rp']
-    chi2_tests = {'inner': {}, 'outer1': {}, 'outer2': {}, 'combined': {}, 'noLeaks': {}}
-    dfDict = {'inner': {}, 'outer1': {}, 'outer2': {}, 'combined': {}, 'noLeaks': {}}
+    chi2_tests = {'inner': {}, 'outer1': {}, 'outer2': {}, 'noLeaks': {}}
     chi2_inner = {' xx': 0, ' yy': 0, ' pxx': 0, ' pyy': 0,
                   ' pzz': 0, ' eneg': 0, ' time': 0, 'theta': 0, ' rx': 0}
     chi2_outer1 = chi2_inner.copy()
     chi2_outer2 = chi2_inner.copy()
     chi2_combined = chi2_inner.copy()
     chi2_noLeaks = chi2_inner.copy()
-    combinedData = pd.concat([innerData, outer1Data, outer2Data])
-    combinedDF = pd.concat([innerDF, outer1DF, outer2DF])
-    noLeaksData = combinedData[combinedData[' time'] <= 1e6]
     posIn = (innerDF[' time'] <= 1e6) & (innerDF[' rx'] <= 4000) & (innerDF[' xx'] <= 500) & (innerDF[' xx'] >= -1700) & (innerDF[' yy'] <= 520)
     posOut1 = (outer1DF[' time'] <= 1e6) & (outer1DF[' rx'] <= 4000) & ((outer1DF[' xx'] >= 500) | (outer1DF[' yy'] >= 520))
     posOut2 = (outer2DF[' time'] <= 1e6) & (outer2DF[' rx'] <= 4000) & ((outer2DF[' xx'] < -1700) & (outer2DF[' yy'] <= 520))
 
-    noLeakInner = innerDF[posIn]
-    noLeakOuter1 = outer1DF[posOut1]
-    noLeakOuter2 = outer2DF[posOut2]
-    noLeaksDF = pd.concat([noLeakInner, noLeakOuter1, noLeakOuter2])
+    noLeaksDF = pd.concat([innerDF[posIn], outer1DF[posOut1], outer2DF[posOut2]])
     if save_df:
         noLeaksDF.to_csv(run_dir + "noLeaksDF.csv")
-    features_for_test = [' xx', ' yy', ' rp', ' phi_p', ' eneg', ' time']
 
-    dfDict['inner'] = innerDF
-    dfDict['outer1'] = outer1DF
-    dfDict['outer2'] = outer2DF
-    dfDict['combined'] = combinedDF
-    dfDict['noLeaks'] = noLeaksDF
     if plot_results:
         Hxy, Het, Hrth, Hpp = make_plots(innerDF, "inner", run_id, 'inner', run_dir)
         Hxy, Het, Hrth, Hpp = make_plots(outer1DF, "outer1", run_id, 'outer1', run_dir)
         Hxy, Het, Hrth, Hpp = make_plots(outer2DF, "outer2", run_id, 'outer2', run_dir)
         Hxy, Het, Hrth, Hpp = make_plots(noLeaksDF, "outer1", run_id, 'noLeaks', run_dir)
-        GHxy, GHet, GHrth, GHpp = make_plots(combinedDF, "outer1", run_id, 'combined', run_dir)
+        # GHxy, GHet, GHrth, GHpp = make_plots(combinedDF, "outer1", run_id, 'combined', run_dir)
 
         for key in chi2_tests.keys():
             if not os.path.isdir(fig_path + '1dHists/' + key):
@@ -635,8 +641,6 @@ def check_run(run_id, path=None, calculate_BED=True, save_df=False, plot_metrics
 
 
 def plot_1d(data, DF, feat, ks, fig_path, key):
-    plt.style.use('seaborn-v0_8-deep')
-    plt.rc('font', family='serif', size=25)
     plt.figure(dpi=200)
     plt.yscale('log')
     bins = np.linspace(np.min(DF[feat]), np.max(DF[feat]), 200)
@@ -664,6 +668,7 @@ def plot_1d(data, DF, feat, ks, fig_path, key):
                  'theta': '$\\theta~$[rad]'}
     plt.xlabel(labeldict[feat])
     plt.savefig(fig_path + '1dHists/' + key + '/' + feat.strip().capitalize(),bbox_inches='tight')
+    plt.close()
 
 
 def get_distance(data, DF, feat):
@@ -695,18 +700,18 @@ def get_time(end_time, beg_time=np.zeros(9)):
 
 # calculates the Euclidean distance matrix for two np arrays x and y
 @njit
-def euclidean_distance_matrix(x, y):
-    n_x = x.shape[0]
+def euclidean_distance_matrix(x, y, out):
+    n_x, dim = x.shape
     n_y = y.shape[0]
-    dim = x.shape[1]
-    D_XY = np.zeros((n_x, n_y))
-
+    # original:
+    # D_XY = np.zeros((n_x, n_y))
     for i in range(n_x):
         for j in range(n_y):
+            s = 0.0
             for k in range(dim):
-                D_XY[i, j] += (x[i, k] - y[j, k]) ** 2
-            D_XY[i, j] = np.sqrt(D_XY[i, j])
-    return D_XY
+                s += (x[i, k] - y[j, k]) ** 2
+            out[i, j] = np.sqrt(s)
+    return out
 
 
 def get_batch_ed_histograms(x_c, y_c, batch_size=1000):
@@ -795,13 +800,19 @@ def get_sampled_ed_histograms(x, y, batch_size=1000, num_iters=10000):
     return ED_null, ED_H1
 
 
+# original get_batches:
+# def get_batches(array, batch_size):
+#     batch_list = []
+#     i = 0
+#     while i + batch_size < array.shape[0]:
+#         batch_list.append(array[i:i + batch_size, :])
+#         i += batch_size
+#     return batch_list
+
+# === Change 3: Make get_batches a generator to avoid holding all slices in memory ===
 def get_batches(array, batch_size):
-    batch_list = []
-    i = 0
-    while i + batch_size < np.shape(array)[0]:
-        batch_list.append(array[i:i + batch_size, :])
-        i += batch_size
-    return batch_list
+    for i in range(0, array.shape[0], batch_size):
+        yield array[i:i + batch_size]
 
 
 def get_ed(x, y):
