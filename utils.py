@@ -809,10 +809,12 @@ def get_batches(array, batch_size):
         i += batch_size
     return batch_list
 
+
 def get_ed(x, y):
-    D_XX = euclidean_distance_matrix(x, x)
-    D_XY = euclidean_distance_matrix(x, y)
-    D_YY = euclidean_distance_matrix(y, y)
+    buf = np.empty((x.shape[0], y.shape[0]), dtype=np.float32)
+    D_XX = euclidean_distance_matrix(x, x, out=buf)
+    D_XY = euclidean_distance_matrix(x, y, out=buf)
+    D_YY = euclidean_distance_matrix(y, y, out=buf)
     n_x = np.shape(x)[0]
     n_y = np.shape(y)[0]
     return 2 * np.sum(D_XY) / (n_x * n_y) - np.sum(D_XX) / n_x ** 2 - np.sum(D_YY) / n_y ** 2
