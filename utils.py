@@ -620,15 +620,15 @@ def check_run(run_id, path=None, calculate_BED=True, save_df=False, plot_metrics
     posOut1 = (outer1DF[' time'] <= 1e6) & (outer1DF[' rx'] <= 4000) & ((outer1DF[' xx'] >= 500) | (outer1DF[' yy'] >= 520))
     posOut2 = (outer2DF[' time'] <= 1e6) & (outer2DF[' rx'] <= 4000) & ((outer2DF[' xx'] < -1700) & (outer2DF[' yy'] <= 520))
 
-    noLeaksDF = pd.concat([innerDF[posIn], outer1DF[posOut1], outer2DF[posOut2]])
     if save_df:
+        noLeaksDF = pd.concat([innerDF[posIn], outer1DF[posOut1], outer2DF[posOut2]])
         noLeaksDF.to_csv(run_dir + "noLeaksDF.csv")
 
     if plot_results:
         Hxy, Het, Hrth, Hpp = make_plots(innerDF, "inner", run_id, 'inner', run_dir)
         Hxy, Het, Hrth, Hpp = make_plots(outer1DF, "outer1", run_id, 'outer1', run_dir)
         Hxy, Het, Hrth, Hpp = make_plots(outer2DF, "outer2", run_id, 'outer2', run_dir)
-        Hxy, Het, Hrth, Hpp = make_plots(noLeaksDF, "outer1", run_id, 'noLeaks', run_dir)
+        Hxy, Het, Hrth, Hpp = make_plots(pd.concat([innerDF[posIn], outer1DF[posOut1], outer2DF[posOut2]]), "outer1", run_id, 'noLeaks', run_dir)
         # GHxy, GHet, GHrth, GHpp = make_plots(combinedDF, "outer1", run_id, 'combined', run_dir)
 
         for key in chi2_tests.keys():
@@ -637,7 +637,12 @@ def check_run(run_id, path=None, calculate_BED=True, save_df=False, plot_metrics
                     os.mkdir(fig_path + '1dHists')
                 os.mkdir(fig_path + '1dHists/' + key)
             for feat in features:
-                exec("plot_1d(" + key + "Data," + key + "DF,feat,chi2_" + key + ", fig_path, key)")
+                if not key == 'noLeaks':
+                    exec("plot_1d(" + key + "Data," + key + "DF,feat,chi2_" + key + ", fig_path, key)")
+                else:
+                    plot_1d(pd.concat([innerData[posIn], outer1Data[posOut1], outer2Data[posOut2]]),
+                            pd.concat([innerDF[posIn], outer1DF[posOut1], outer2DF[posOut2]])
+                            , feat, chi2_noLeaks, fig_path, key)
 
 
 def plot_1d(data, DF, feat, ks, fig_path, key):
