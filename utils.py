@@ -751,7 +751,6 @@ def get_batch_ed_histograms(x_c, y_c, batch_size=1000):
     n_batches = min(len(x_batches), len(y_batches))
     ED_null = np.zeros(n_batches)
     ED_H1 = np.zeros(n_batches)
-
     for i in tqdm.tqdm(range(n_batches)):
         x_batch, y_batch, y_prime_batch = (x_batches[i], y_batches[i], y_prime_batches[i])
         ED_null[i] = get_ed(x_batch, y_batch)
@@ -816,10 +815,12 @@ def get_batches(array, batch_size):
 
 
 def get_ed(x, y):
-    buf = np.empty((x.shape[0], y.shape[0]), dtype=np.float32)
-    D_XX = euclidean_distance_matrix(x, x, out=buf)
-    D_XY = euclidean_distance_matrix(x, y, out=buf)
-    D_YY = euclidean_distance_matrix(y, y, out=buf)
+    D_XX = np.empty((x.shape[0], y.shape[0]), dtype=np.float32)
+    D_XY = np.empty((x.shape[0], y.shape[0]), dtype=np.float32)
+    D_YY = np.empty((x.shape[0], y.shape[0]), dtype=np.float32)
+    D_XX = euclidean_distance_matrix(x, x, out=D_XX)
+    D_XY = euclidean_distance_matrix(x, y, out=D_XY)
+    D_YY = euclidean_distance_matrix(y, y, out=D_YY)
     n_x = np.shape(x)[0]
     n_y = np.shape(y)[0]
     return 2 * np.sum(D_XY) / (n_x * n_y) - np.sum(D_XX) / n_x ** 2 - np.sum(D_YY) / n_y ** 2
