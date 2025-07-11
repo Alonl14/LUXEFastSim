@@ -1,31 +1,31 @@
 {
-    "nQuantiles": 1000000,
-    "subsample": 10000000,
-    "data_path": "/storage/agrp/alonle/GAN_InputSample/2112_outer1.csv",
-    "outputDir": "",
-    "dataGroup": "outer1",
-    "pdg": 2112,
-    "batchSize": 32768,
-    "noiseDim": 1024,
-    "numEpochs": 50,
-    "device": "cpu",
-    "nCrit": 4,
-    "Lambda": 10,
-    "criticLearningRate": 1e-06,
-    "generatorLearningRate": 2e-05,
-    "gradMetric": "r1",
-    "GMaxSteps": null,
-    "features": {
-        " xx": [],
-        " yy": [],
-        " pxx": [],
-        " pyy": [],
-        " pzz": [
-            "flip",
-            "log"
-        ],
-        " time": [
-            "log"
-        ]
-    }
+  "nQuantiles": 100000,
+  "subsample": 40000000,
+  "data_path": "/storage/agrp/alonle/GAN_InputSample/2112_outer1.csv",
+  "outputDir": "",
+  "dataGroup": "outer1",
+  "pdg": 2112,
+  "batchSize": 32768,
+  "noiseDim": 1024,
+  "numEpochs": 50,
+  "device": "cpu",
+  "nCrit": 4,
+  "Lambda": 10,
+  "criticLearningRate": 0.000001,
+  "generatorLearningRate": 0.00002,
+  "gradMetric": "r1",
+  "GMaxSteps": null,
+  "features": {
+    " xx": [],
+    " yy": [],
+    " pxx": [],
+    " pyy": [],
+    " pzz": [
+      "flip",
+      "log"
+    ],
+    " time": [
+      "log"
+    ]
+  }
 }
