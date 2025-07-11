@@ -815,15 +815,18 @@ def get_batches(array, batch_size):
 
 
 def get_ed(x, y):
-    D_XX = np.empty((x.shape[0], y.shape[0]), dtype=np.float32)
-    D_XY = np.empty((x.shape[0], y.shape[0]), dtype=np.float32)
-    D_YY = np.empty((x.shape[0], y.shape[0]), dtype=np.float32)
-    D_XX = euclidean_distance_matrix(x, x, out=D_XX)
-    D_XY = euclidean_distance_matrix(x, y, out=D_XY)
-    D_YY = euclidean_distance_matrix(y, y, out=D_YY)
     n_x = np.shape(x)[0]
     n_y = np.shape(y)[0]
-    return 2 * np.sum(D_XY) / (n_x * n_y) - np.sum(D_XX) / n_x ** 2 - np.sum(D_YY) / n_y ** 2
+    buf = np.empty((x.shape[0], x.shape[0]), dtype=np.float32)
+    D_XX = euclidean_distance_matrix(x, x, out=buf)
+    XX_mean = np.sum(D_XX) / n_x ** 2
+    buf = np.empty((x.shape[0], y.shape[0]), dtype=np.float32)
+    D_XY = euclidean_distance_matrix(x, y, out=buf)
+    XY_mean = np.sum(D_XY) / (n_x * n_y)
+    buf = np.empty((y.shape[0], y.shape[0]), dtype=np.float32)
+    D_YY = euclidean_distance_matrix(y, y, out=buf)
+    YY_mean = np.sum(D_YY) / n_y ** 2
+    return 2 * XY_mean - XX_mean - YY_mean
 
 
 def save_cfg(cfg):
