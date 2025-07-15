@@ -309,19 +309,20 @@ def generate_ds(generator_net, factor, cfg):
     """
     ds = dataset.ParticleDataset(cfg)
     numEvents = np.shape(ds.data)[0]
-    noise = torch.randn(np.int64(numEvents / factor), cfg['noiseDim'], device='cpu')
-    generator_net.to('cpu')
-    generated_data = generator_net(noise)
+    generator_net.eval().to('cpu')
+    generated_data = generator_net(torch.randn(np.int64(numEvents / factor), cfg['noiseDim'], device='cpu'))
     generated_data = generated_data.detach().numpy()
-
     features = cfg['features'].keys()
-    empty_arr = np.empty((0, len(features)))
-    ds.data = pd.DataFrame(empty_arr, columns=features)
+    ds.data = pd.DataFrame(np.empty((0, len(features))), columns=features)
     data_values = ds.quantiles.inverse_transform(generated_data) if ds.quantiles is not None else generated_data
     for i, feature in enumerate(features):
         ds.data[feature] = data_values[:, i]
+    del data_values
     ds.apply_transformation(cfg, inverse=True)
-    return ds.data, ds.preprocess
+    fake, real = ds.data, ds.preprocess
+    del ds
+    gc.collect()
+    return fake, real
 
 
 def weights_init(m):
@@ -820,12 +821,16 @@ def get_ed(x, y):
     buf = np.empty((x.shape[0], x.shape[0]), dtype=np.float32)
     D_XX = euclidean_distance_matrix(x, x, out=buf)
     XX_mean = np.sum(D_XX) / n_x ** 2
+    del D_XX
     buf = np.empty((x.shape[0], y.shape[0]), dtype=np.float32)
     D_XY = euclidean_distance_matrix(x, y, out=buf)
     XY_mean = np.sum(D_XY) / (n_x * n_y)
+    del D_XY
     buf = np.empty((y.shape[0], y.shape[0]), dtype=np.float32)
     D_YY = euclidean_distance_matrix(y, y, out=buf)
     YY_mean = np.sum(D_YY) / n_y ** 2
+    del D_YY
+    del buf
     return 2 * XY_mean - XX_mean - YY_mean
 
 
