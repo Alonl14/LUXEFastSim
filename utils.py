@@ -399,8 +399,11 @@ def check_run(run_id, path=None, calculate_BED=True, save_df=False, plot_metrics
     if plot_results or save_df or calculate_BED:
         generation_time_a = time.localtime()
         innerDF, innerData = generate_fake_real_dfs(run_id, cfg_inner, run_dir)
+        print(f"[mem after inner init] {psutil.Process().memory_info().rss / 1e9:.2f} GB")
         outer1DF, outer1Data = generate_fake_real_dfs(run_id, cfg_outer1, run_dir)
+        print(f"[mem after outer1 init] {psutil.Process().memory_info().rss / 1e9:.2f} GB")
         outer2DF, outer2Data = generate_fake_real_dfs(run_id, cfg_outer2, run_dir)
+        print(f"[mem after outer2 init] {psutil.Process().memory_info().rss / 1e9:.2f} GB")
         generation_time_b = time.localtime()
         print(f'Created DFs in {get_time(generation_time_a, generation_time_b)}')
 
