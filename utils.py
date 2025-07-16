@@ -308,6 +308,7 @@ def generate_ds(generator_net, factor, cfg):
     :return: numpy array of generated data
     """
     ds = dataset.ParticleDataset(cfg)
+    print(f"Created dataset for region {cfg['dataGroup']} with {len(ds.data)} events")
     numEvents = np.shape(ds.data)[0]
     generator_net.eval().to('cpu')
     generated_data = generator_net(torch.randn(np.int64(numEvents / factor), cfg['noiseDim'], device='cpu'))
@@ -361,7 +362,7 @@ def generate_fake_real_dfs(run_id, cfg, run_dir, generator_net=None):
 
     # TODO: remove factor, find a different way to ease local data generation
     # Read data used for training
-    fake_df, real_df = generate_ds(generator_net, factor=1, cfg=cfg)
+    fake_df, real_df = generate_ds(generator_net, factor=2, cfg=cfg)
     real_df = real_df[real_df[' time'] <= 1e6]
     fake_df = fake_df[fake_df[' time'] <= 1e6]
     add_features(fake_df, cfg['pdg'])
