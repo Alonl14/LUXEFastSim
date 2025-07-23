@@ -363,7 +363,7 @@ def generate_fake_real_dfs(run_id, cfg, run_dir, generator_net=None):
 
     # TODO: remove factor, find a different way to ease local data generation
     # Read data used for training
-    fake_df, real_df = generate_ds(generator_net, factor=100, cfg=cfg)
+    fake_df, real_df = generate_ds(generator_net, factor=1, cfg=cfg)
     real_df = real_df[real_df[' time'] <= 1e6]
     fake_df = fake_df[fake_df[' time'] <= 1e6]
     add_features(fake_df, cfg['pdg'])
@@ -515,6 +515,7 @@ def check_run(run_id, path=None, calculate_BED=True, save_df=False, plot_metrics
         plt.grid(True, which='both', color='0.65', linestyle='-')
         plt.plot(innerWdist, label="training")
         plt.plot(innerValWdist, label="validation")
+        plt.yscale("log")
         plt.legend()
         plt.savefig(fig_path + "inner_Wdist.png")
         plt.close()
@@ -524,6 +525,7 @@ def check_run(run_id, path=None, calculate_BED=True, save_df=False, plot_metrics
         plt.grid(True, which='both', color='0.65', linestyle='-')
         plt.plot(outer1Wdist, label="training")
         plt.plot(outer1ValWdist, label="validation")
+        plt.yscale("log")
         plt.legend()
         plt.savefig(fig_path + "outer1_Wdist.png")
         plt.close()
@@ -533,6 +535,7 @@ def check_run(run_id, path=None, calculate_BED=True, save_df=False, plot_metrics
         plt.grid(True, which='both', color='0.65', linestyle='-')
         plt.plot(outer2Wdist, label="training")
         plt.plot(outer2ValWdist, label="validation")
+        plt.yscale("log")
         plt.legend()
         plt.savefig(fig_path + "outer2_Wdist.png")
         plt.close()
@@ -646,7 +649,7 @@ def check_run(run_id, path=None, calculate_BED=True, save_df=False, plot_metrics
                 if not key == 'noLeaks':
                     exec("plot_1d(" + key + "Data," + key + "DF,feat,chi2_" + key + ", fig_path, key)")
                 else:
-                    plot_1d(pd.concat([innerData[posIn], outer1Data[posOut1], outer2Data[posOut2]]),
+                    plot_1d(pd.concat([innerData, outer1Data, outer2Data]),
                             pd.concat([innerDF[posIn], outer1DF[posOut1], outer2DF[posOut2]])
                             , feat, chi2_noLeaks, fig_path, key)
 
