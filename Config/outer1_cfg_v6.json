@@ -27,5 +27,7 @@
     " time": [
       "log"
     ]
-  }
+  },
+  "genStateDict": "/storage/agrp/alonle/GAN_Output/run_17/outer1_Gen_model.pt",
+  "discStateDict": "/storage/agrp/alonle/GAN_Output/run_17/outer1_Disc_model.pt"
 }

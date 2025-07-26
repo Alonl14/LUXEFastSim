@@ -72,6 +72,8 @@ class Trainer:
         self.device = cfg['device']
         self.nCrit = cfg['nCrit']
         self.Lambda = cfg['Lambda']
+        # check if it's a trained network by seeing if we have a state dict in cfg
+        self.trained = cfg['genStateDict'] is not None and cfg['discStateDict'] is not None
 
         self.optG = cfg['genOptimizer']
         self.optD = cfg['discOptimizer']
@@ -109,8 +111,11 @@ class Trainer:
 
     # --------------------- main ---------------------- #
     def run(self):
-        utils.weights_init(self.genNet)
-        utils.weights_init(self.discNet)
+        # init weights only if not loaded from state dict
+        if not self.trained:
+            print("Initializing weights...")
+            utils.weights_init(self.genNet)
+            utils.weights_init(self.discNet)
         self.genNet.to(self.device).train()
         self.discNet.to(self.device).train()
 

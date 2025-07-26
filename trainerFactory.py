@@ -21,7 +21,7 @@ from trainer import Trainer
 from torch.utils.data import random_split
 
 
-def create_trainer(cfg):
+def create_trainer(cfg, trained=False):
     beg_time = time.localtime()
     print(f"Creating trainer at : {utils.get_time(beg_time)}")
     print("making dataset...")
@@ -63,6 +63,11 @@ def create_trainer(cfg):
     genNet = nn.DataParallel(genNet)
     discNet = nn.DataParallel(discNet)
 
+    if cfg['genStateDict'] is not None and cfg['discStateDict'] is not None:
+        print("Loading pre-trained generator and discriminator...")
+        genNet.load_state_dict(torch.load(cfg['genStateDict']))
+        discNet.load_state_dict(torch.load(cfg['discStateDict']))
+        print("Pre-trained networks loaded.")
     cfgDict = {
         'genNet': genNet,
         'noiseDim': cfg['noiseDim'],
