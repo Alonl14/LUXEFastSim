@@ -82,7 +82,9 @@ def create_trainer(cfg, trained=False):
         'nCrit': cfg['nCrit'],
         'Lambda': cfg['Lambda'],
         'GMaxSteps': cfg.get('GMaxSteps', None),
-        'gradMetric': cfg.get('gradMetric', 'norm')
+        'gradMetric': cfg.get('gradMetric', 'norm'),
+        'discStateDict': cfg['discStateDict'],
+        'genStateDict': cfg['genStateDict']
     }
 
     genOptimizer = optim.Adam(cfgDict['genNet'].parameters(), lr=cfg['criticLearningRate'], betas=(0.5, 0.9))
