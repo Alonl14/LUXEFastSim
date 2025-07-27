@@ -63,10 +63,13 @@ def create_trainer(cfg, trained=False):
     genNet = nn.DataParallel(genNet)
     discNet = nn.DataParallel(discNet)
 
-    if cfg['genStateDict'] is not None and cfg['discStateDict'] is not None:
+    genStateDict = cfg.get('genStateDict', None)
+    discStateDict = cfg.get('discStateDict', None)
+
+    if genStateDict is not None and discStateDict is not None:
         print("Loading pre-trained generator and discriminator...")
-        genNet.load_state_dict(torch.load(cfg['genStateDict']))
-        discNet.load_state_dict(torch.load(cfg['discStateDict']))
+        genNet.load_state_dict(torch.load(genStateDict))
+        discNet.load_state_dict(torch.load(discStateDict))
         print("Pre-trained networks loaded.")
     cfgDict = {
         'genNet': genNet,
@@ -83,8 +86,8 @@ def create_trainer(cfg, trained=False):
         'Lambda': cfg['Lambda'],
         'GMaxSteps': cfg.get('GMaxSteps', None),
         'gradMetric': cfg.get('gradMetric', 'norm'),
-        'discStateDict': cfg['discStateDict'],
-        'genStateDict': cfg['genStateDict']
+        'discStateDict': genStateDict,
+        'genStateDict': discStateDict
     }
 
     genOptimizer = optim.Adam(cfgDict['genNet'].parameters(), lr=cfg['criticLearningRate'], betas=(0.5, 0.9))
