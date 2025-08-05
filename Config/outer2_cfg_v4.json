@@ -1,7 +1,7 @@
 {
   "nQuantiles": 100000,
   "subsample": 40000000,
-  "data_path": "/storage/agrp/alonle/GAN_InputSample/2112_outer2.csv",
+  "data_path": "/storage/agrp/alonle/LUXE_FastSim/GAN_InputSample/2112_outer2.csv",
   "outputDir": "",
   "dataGroup": "outer2",
   "pdg": 2112,
