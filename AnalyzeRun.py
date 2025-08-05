@@ -24,7 +24,7 @@ beg_time = time.localtime()
 print(f"Starting timer at : {utils.get_time(beg_time)}")
 
 # Call utils.check_run with arguments
-cluster_output = "/storage/agrp/alonle/GAN_Output"
+cluster_output = "/storage/agrp/alonle/LUXE_FastSim/GAN_Output"
 utils.check_run(args.run_id, path=cluster_output,
                 calculate_BED=args.calculate_BED,
                 save_df=args.save_df,
