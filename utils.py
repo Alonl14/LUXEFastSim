@@ -411,7 +411,7 @@ def check_run(run_id, path=None, calculate_BED=True, save_df=False, plot_metrics
 
     if calculate_BED:
         print("getting batch ED...")
-        batch_size = 1000
+        batch_size = 500
         small_batch = 50
         inner_null_values, inner_H1_values = get_batch_ed_histograms(
             innerDF, innerData,
