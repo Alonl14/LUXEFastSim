@@ -401,10 +401,22 @@ def check_run(run_id, path=None, calculate_BED=True, save_df=False, plot_metrics
     if plot_results or save_df or calculate_BED:
         generation_time_a = time.localtime()
         innerDF, innerData = generate_fake_real_dfs(run_id, cfg_inner, run_dir)
+        posIn = (innerDF[' time'] <= 1e6) & (innerDF[' rx'] <= 4000) & (innerDF[' xx'] <= 500) & (
+                    innerDF[' xx'] >= -1700) & (innerDF[' yy'] <= 520)
+        # Filter innerDF to include only points in region II
+        innerDF = innerDF[posIn]
         print(f"[mem after inner init] {psutil.Process().memory_info().rss / 1e9:.2f} GB")
         outer1DF, outer1Data = generate_fake_real_dfs(run_id, cfg_outer1, run_dir)
+        posOut1 = (outer1DF[' time'] <= 1e6) & (outer1DF[' rx'] <= 4000) & (
+                (outer1DF[' xx'] >= 500) | (outer1DF[' yy'] >= 520))
+        # Filter outer1DF to include only points in region I
+        outer1DF = outer1DF[posOut1]
         print(f"[mem after outer1 init] {psutil.Process().memory_info().rss / 1e9:.2f} GB")
         outer2DF, outer2Data = generate_fake_real_dfs(run_id, cfg_outer2, run_dir)
+        posOut2 = (outer2DF[' time'] <= 1e6) & (outer2DF[' rx'] <= 4000) & (
+                (outer2DF[' xx'] < -1700) & (outer2DF[' yy'] <= 520))
+        # Filter outer2DF to include only points in region III
+        outer2DF = outer2DF[posOut2]
         print(f"[mem after outer2 init] {psutil.Process().memory_info().rss / 1e9:.2f} GB")
         generation_time_b = time.localtime()
         print(f'Created DFs in {get_time(generation_time_a, generation_time_b)}')
@@ -625,19 +637,16 @@ def check_run(run_id, path=None, calculate_BED=True, save_df=False, plot_metrics
     chi2_outer2 = chi2_inner.copy()
     chi2_combined = chi2_inner.copy()
     chi2_noLeaks = chi2_inner.copy()
-    posIn = (innerDF[' time'] <= 1e6) & (innerDF[' rx'] <= 4000) & (innerDF[' xx'] <= 500) & (innerDF[' xx'] >= -1700) & (innerDF[' yy'] <= 520)
-    posOut1 = (outer1DF[' time'] <= 1e6) & (outer1DF[' rx'] <= 4000) & ((outer1DF[' xx'] >= 500) | (outer1DF[' yy'] >= 520))
-    posOut2 = (outer2DF[' time'] <= 1e6) & (outer2DF[' rx'] <= 4000) & ((outer2DF[' xx'] < -1700) & (outer2DF[' yy'] <= 520))
 
     if save_df:
-        noLeaksDF = pd.concat([innerDF[posIn], outer1DF[posOut1], outer2DF[posOut2]])
+        noLeaksDF = pd.concat([innerDF, outer1DF, outer2DF])
         noLeaksDF.to_csv(run_dir + "noLeaksDF.csv")
 
     if plot_results:
         Hxy, Het, Hrth, Hpp = make_plots(innerDF, "inner", run_id, 'inner', run_dir)
         Hxy, Het, Hrth, Hpp = make_plots(outer1DF, "outer1", run_id, 'outer1', run_dir)
         Hxy, Het, Hrth, Hpp = make_plots(outer2DF, "outer2", run_id, 'outer2', run_dir)
-        Hxy, Het, Hrth, Hpp = make_plots(pd.concat([innerDF[posIn], outer1DF[posOut1], outer2DF[posOut2]]), "outer1", run_id, 'noLeaks', run_dir)
+        Hxy, Het, Hrth, Hpp = make_plots(pd.concat([innerDF, outer1DF, outer2DF]), "outer1", run_id, 'noLeaks', run_dir)
         # GHxy, GHet, GHrth, GHpp = make_plots(combinedDF, "outer1", run_id, 'combined', run_dir)
 
         for key in chi2_tests.keys():
@@ -650,7 +659,7 @@ def check_run(run_id, path=None, calculate_BED=True, save_df=False, plot_metrics
                     exec("plot_1d(" + key + "Data," + key + "DF,feat,chi2_" + key + ", fig_path, key)")
                 else:
                     plot_1d(pd.concat([innerData, outer1Data, outer2Data]),
-                            pd.concat([innerDF[posIn], outer1DF[posOut1], outer2DF[posOut2]])
+                            pd.concat([innerDF, outer1DF, outer2DF])
                             , feat, chi2_noLeaks, fig_path, key)
 
 
