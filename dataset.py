@@ -19,7 +19,7 @@ class ParticleDataset(Dataset):
         QT = qt(output_distribution='normal', n_quantiles=cfg['nQuantiles'], subsample=cfg['subsample'])
 
         self.data = pd.read_csv(cfg['data_path'])
-        utils.add_features(self.data, cfg["features"])
+        utils.add_features(self.data, cfg["pdg"])
         print(f"Creating dataset w. shape: {self.data.shape}")
         self.data = self.data[cfg["features"].keys()]
         self.preprocess = self.data.copy()
