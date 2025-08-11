@@ -4,6 +4,8 @@ from torch.utils.data import Dataset
 from sklearn.preprocessing import QuantileTransformer as qt
 import copy
 
+import utils
+
 
 class ParticleDataset(Dataset):
     def __init__(self, cfg):
@@ -17,6 +19,7 @@ class ParticleDataset(Dataset):
         QT = qt(output_distribution='normal', n_quantiles=cfg['nQuantiles'], subsample=cfg['subsample'])
 
         self.data = pd.read_csv(cfg['data_path'])
+        utils.add_features(self.data, cfg["features"])
         print(f"Creating dataset w. shape: {self.data.shape}")
         self.data = self.data[cfg["features"].keys()]
         self.preprocess = self.data.copy()
