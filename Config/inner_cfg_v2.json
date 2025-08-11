@@ -1,5 +1,5 @@
 {
-  "nQuantiles": 100000,
+  "nQuantiles": 1000000,
   "subsample": 40000000,
   "data_path": "/storage/agrp/alonle/LUXE_FastSim/GAN_InputSample/2112_inner.csv",
   "outputDir": "",
@@ -9,10 +9,10 @@
   "noiseDim": 256,
   "numEpochs": 50,
   "device": "cpu",
-  "nCrit": 4,
+  "nCrit": 3,
   "Lambda": 5,
   "criticLearningRate": 0.000001,
-  "generatorLearningRate": 0.00001,
+  "generatorLearningRate": 0.000015,
   "gradMetric": "norm",
   "GMaxSteps": null,
   "features": {
@@ -27,7 +27,5 @@
     " time": [
       "log"
     ]
-  },
-  "genStateDict": "/storage/agrp/alonle/LUXE_FastSim/GAN_Output/run_19/inner_Gen_model.pt",
-  "discStateDict": "/storage/agrp/alonle/LUXE_FastSim/GAN_Output/run_19/inner_Disc_model.pt"
+  }
 }

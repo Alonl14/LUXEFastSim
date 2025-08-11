@@ -1,5 +1,5 @@
 {
-  "nQuantiles": 100000,
+  "nQuantiles": 1000000,
   "subsample": 40000000,
   "data_path": "/storage/agrp/alonle/LUXE_FastSim/GAN_InputSample/2112_outer1.csv",
   "outputDir": "",
@@ -9,17 +9,17 @@
   "noiseDim": 1024,
   "numEpochs": 50,
   "device": "cpu",
-  "nCrit": 4,
+  "nCrit": 5,
   "Lambda": 5,
   "criticLearningRate": 0.000001,
-  "generatorLearningRate": 0.00001,
+  "generatorLearningRate": 0.000015,
   "gradMetric": "norm",
   "GMaxSteps": null,
   "features": {
     " xx": [],
     " yy": [],
-    " pxx": [],
-    " pyy": [],
+    " rp": [],
+    " phi_p": [],
     " pzz": [
       "flip",
       "log"
@@ -27,8 +27,5 @@
     " time": [
       "log"
     ]
-  },
-  "genStateDict": "/storage/agrp/alonle/LUXE_FastSim/GAN_Output/run_19/outer1_Gen_model.pt",
-  "discStateDict": "/storage/agrp/alonle/LUXE_FastSim/GAN_Output/run_19/outer1_Disc_model.pt"
-
+  }
 }

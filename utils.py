@@ -97,13 +97,16 @@ def add_features(df, pdg):
     # exp = (df[' eneg'] + mass) ** 2 - mass ** 2 - df[' rp'] ** 2
     # df.drop(df[exp < 0].index, inplace=True)
 
-    df[' rp'] = np.sqrt(df[' pxx'] ** 2 + df[' pyy'] ** 2)
-    df[' phi_p'] = np.arctan2(df[' pyy'], df[' pxx']) + np.pi
+    if ' pxx' in df.columns and ' pyy' in df.columns:
+        df[' rp'] = np.sqrt(df[' pxx'] ** 2 + df[' pyy'] ** 2)
+        df[' phi_p'] = np.arctan2(df[' pyy'], df[' pxx']) + np.pi
+    else:
+        df[' pxx'] = df[' rp'] * np.cos(df[' phi_p'] - np.pi)
+        df[' pyy'] = df[' rp'] * np.sin(df[' phi_p'] - np.pi)
 
     # df[' pzz'] = -np.sqrt((df[' eneg'] + mass) ** 2 - mass ** 2 - df[' rp'] ** 2)
     df[' eneg'] = (df[' rp']**2+df[' pzz']**2)/(np.sqrt(df[' rp']**2+df[' pzz']**2+mass**2)+mass)
-    # df[' pxx'] = df[' rp'] * np.cos(df[' phi_p'] - np.pi)
-    # df[' pyy'] = df[' rp'] * np.sin(df[' phi_p'] - np.pi)
+
     # exp2 = df[' pzz'] / np.sqrt((df[' eneg'] + mass) ** 2 - mass ** 2)
     # df['theta'] = np.arccos(df[' pzz'] / np.sqrt((df[' eneg'] + mass) ** 2 - mass ** 2))
     df['theta'] = np.arctan2(df[' rp'], df[' pzz'])
