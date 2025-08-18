@@ -1,4 +1,4 @@
-# generator.py
+# critic.py
 import torch.nn as nn
 
 
@@ -14,38 +14,36 @@ def _norm(norm: str, dim: int):
 
 
 def _act(name: str):
-    name = (name or "relu").lower()
-    if name in ("relu",):
-        return nn.ReLU(inplace=True)
+    name = (name or "lrelu").lower()
     if name in ("lrelu", "leakyrelu", "leaky_relu"):
         return nn.LeakyReLU(0.2, inplace=True)
+    if name in ("relu",):
+        return nn.ReLU(inplace=True)
     if name in ("gelu",):
         return nn.GELU()
     raise ValueError(f"Unknown activation '{name}'")
 
 
-class Generator(nn.Module):
+class Critic(nn.Module):
     """
-    Tabular generator MLP.
-    Hidden sizes controlled by `hidden_dims` list from cfg["genLayers"].
+    Tabular WGAN critic (a.k.a. discriminator) for 1D features.
+    Hidden sizes controlled by `hidden_dims` list from cfg["criticLayers"].
     """
     def __init__(
         self,
-        noiseDim: int,
         numFeatures: int,
         hidden_dims=None,
         norm: str = "layer",
-        activation: str = "relu",
-        bias_last: bool = True,
-        bias_hidden: bool = False,
+        activation: str = "lrelu",
+        bias_hidden: bool = True,
         dropout: float = 0.0,
+        out_bias: bool = False,
     ):
         super().__init__()
-        self.noiseDim = int(noiseDim)
-        hidden_dims = list(hidden_dims or [512, 1024, 1024, 512])
+        hidden_dims = list(hidden_dims or [512, 512, 512, 512])
 
         layers = []
-        in_dim = self.noiseDim
+        in_dim = numFeatures
         for h in hidden_dims:
             layers.append(nn.Linear(in_dim, h, bias=bias_hidden))
             n = _norm(norm, h)
@@ -56,11 +54,11 @@ class Generator(nn.Module):
                 layers.append(nn.Dropout(p=dropout))
             in_dim = h
 
-        layers.append(nn.Linear(in_dim, numFeatures, bias=bias_last))
+        layers.append(nn.Linear(in_dim, 1, bias=out_bias))  # scalar score
         self.main = nn.Sequential(*layers)
 
-    def forward(self, z):
-        return self.main(z)
+    def forward(self, x):
+        return self.main(x)
 
     def get_param_number(self) -> int:
         return sum(p.numel() for p in self.parameters())

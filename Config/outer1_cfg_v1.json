@@ -11,6 +11,8 @@
   "device": "cpu",
   "nCrit": 5,
   "Lambda": 5,
+  "genLayers": [512, 1024, 1024, 512],
+  "criticLayers": [512, 512, 512, 512],
   "criticLearningRate": 0.000001,
   "generatorLearningRate": 0.000015,
   "gradMetric": "norm",
