@@ -1,33 +1,32 @@
-# critic.py
+# critic.py – cfg-driven WGAN critic (a.k.a. discriminator) for tabular features
 import torch.nn as nn
 
 
 def _norm(norm: str, dim: int):
-    norm = (norm or "layer").lower()
-    if norm == "layer":
+    n = (norm or "layer").lower()
+    if n == "layer":
         return nn.LayerNorm(dim)
-    if norm == "batch":
+    if n == "batch":
         return nn.BatchNorm1d(dim, affine=True)
-    if norm == "none":
+    if n == "none":
         return nn.Identity()
     raise ValueError(f"Unknown norm '{norm}'")
 
 
 def _act(name: str):
-    name = (name or "lrelu").lower()
-    if name in ("lrelu", "leakyrelu", "leaky_relu"):
+    a = (name or "lrelu").lower()
+    if a in ("lrelu", "leakyrelu", "leaky_relu"):
         return nn.LeakyReLU(0.2, inplace=True)
-    if name in ("relu",):
+    if a == "relu":
         return nn.ReLU(inplace=True)
-    if name in ("gelu",):
+    if a == "gelu":
         return nn.GELU()
     raise ValueError(f"Unknown activation '{name}'")
 
 
 class Critic(nn.Module):
     """
-    Tabular WGAN critic (a.k.a. discriminator) for 1D features.
-    Hidden sizes controlled by `hidden_dims` list from cfg["criticLayers"].
+    Hidden sizes controlled by cfg["criticLayers"] list.
     """
     def __init__(
         self,

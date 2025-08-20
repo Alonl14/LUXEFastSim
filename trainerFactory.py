@@ -1,6 +1,8 @@
-# trainerFactory.py
+# trainerFactory.py – builds per-region, cfg-driven Generator/Critic + loaders + optim
 import os
 import time
+from typing import Dict, Any
+
 import torch
 import torch.nn as nn
 import torch.optim as optim
@@ -12,7 +14,7 @@ from generator import Generator
 from critic import Critic
 
 
-def _select_device(cfg_device = None) -> torch.device:
+def _select_device(cfg_device=None) -> torch.device:
     if cfg_device:
         want = str(cfg_device).lower()
         if want.startswith("cuda"):
@@ -39,13 +41,7 @@ def _smart_load_state_dict(model: nn.Module, path: str, device: torch.device) ->
 
 
 def _suggest_layers(n: int, kind: str):
-    """
-    Fallback if cfg doesn't specify layers.
-    Tuned for your sizes:
-      - outer1 ~ 40M → wider/deeper,
-      - inner ~ 1M   → medium,
-      - outer2 ~ 100k→ compact.
-    """
+    # size-aware defaults; kind in {"gen","crit"}
     if n >= 10_000_000:
         return [512, 1024, 1024, 512] if kind == "gen" else [512, 512, 512, 512]
     if n >= 1_000_000:
@@ -55,7 +51,7 @@ def _suggest_layers(n: int, kind: str):
     return [128, 128] if kind == "gen" else [128, 128]
 
 
-def create_trainer(cfg: dict, trained: bool = False):
+def create_trainer(cfg: Dict[str, Any], trained: bool = False):
     t0 = time.localtime()
     print(f"[trainerFactory] Creating trainer at: {utils.get_time(t0)}")
 
@@ -110,7 +106,8 @@ def create_trainer(cfg: dict, trained: bool = False):
 
     # -------------------- models ----------------------
     num_features = len(cfg["features"].keys())
-    gen_layers = cfg.get("genLayers") or _suggest_layers(n_samples, kind="gen")
+
+    gen_layers  = cfg.get("genLayers")    or _suggest_layers(n_samples, kind="gen")
     crit_layers = cfg.get("criticLayers") or _suggest_layers(n_samples, kind="crit")
 
     gen_norm = cfg.get("genNorm", "layer")
@@ -143,8 +140,9 @@ def create_trainer(cfg: dict, trained: bool = False):
     ).to(device)
 
     # Optional checkpoints
-    gen_ckpt = cfg.get("genStateDict", None)
-    crit_ckpt = cfg.get("discStateDict", None)  # key kept for compatibility
+    gen_ckpt   = cfg.get("genStateDict", None)
+    # backward-compat: accept old key name too
+    crit_ckpt  = cfg.get("criticStateDict", cfg.get("discStateDict", None))
 
     if gen_ckpt:
         print(f"[trainerFactory] Loading generator weights: {gen_ckpt}")
@@ -154,19 +152,19 @@ def create_trainer(cfg: dict, trained: bool = False):
         _smart_load_state_dict(critic, crit_ckpt, device)
 
     # -------------------- optimizers ------------------
-    gen_lr = float(cfg.get("generatorLearningRate", 1.5e-5))
-    crit_lr = float(cfg.get("criticLearningRate", 1e-6))
-    betas = tuple(cfg.get("betas", (0.5, 0.9)))
+    gen_lr  = float(cfg.get("generatorLearningRate", 1.5e-5))
+    crit_lr = float(cfg.get("criticLearningRate",    1.0e-6))
+    betas   = tuple(cfg.get("betas", (0.5, 0.9)))
 
-    optG = optim.Adam(gen.parameters(), lr=gen_lr, betas=betas)
+    optG = optim.Adam(gen.parameters(),    lr=gen_lr,  betas=betas)
     optD = optim.Adam(critic.parameters(), lr=crit_lr, betas=betas)
 
     # -------------------- pack for Trainer ------------
     trainer_cfg = {
         "genNet": gen,
-        "discNet": critic,             # Trainer expects 'discNet' key; internally we use .critic
+        "criticNet": critic,            # NEW key
         "genOptimizer": optG,
-        "discOptimizer": optD,
+        "criticOptimizer": optD,        # NEW key
         "noiseDim": int(cfg["noiseDim"]),
         "outputDir": output_dir,
         "dataloader": train_loader,
@@ -180,8 +178,7 @@ def create_trainer(cfg: dict, trained: bool = False):
         "GMaxSteps": cfg.get("GMaxSteps", None),
         "gradMetric": cfg.get("gradMetric", "norm"),
         "genStateDict": gen_ckpt,
-        "discStateDict": crit_ckpt,
-        # (optionally log the architecture used)
+        "criticStateDict": crit_ckpt,
         "arch": {
             "genLayers": gen_layers,
             "criticLayers": crit_layers,

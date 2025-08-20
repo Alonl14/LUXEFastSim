@@ -1,33 +1,32 @@
-# generator.py
+# generator.py – cfg-driven MLP generator for tabular features
 import torch.nn as nn
 
 
 def _norm(norm: str, dim: int):
-    norm = (norm or "layer").lower()
-    if norm == "layer":
+    n = (norm or "layer").lower()
+    if n == "layer":
         return nn.LayerNorm(dim)
-    if norm == "batch":
+    if n == "batch":
         return nn.BatchNorm1d(dim, affine=True)
-    if norm == "none":
+    if n == "none":
         return nn.Identity()
     raise ValueError(f"Unknown norm '{norm}'")
 
 
 def _act(name: str):
-    name = (name or "relu").lower()
-    if name in ("relu",):
+    a = (name or "relu").lower()
+    if a == "relu":
         return nn.ReLU(inplace=True)
-    if name in ("lrelu", "leakyrelu", "leaky_relu"):
+    if a in ("lrelu", "leakyrelu", "leaky_relu"):
         return nn.LeakyReLU(0.2, inplace=True)
-    if name in ("gelu",):
+    if a == "gelu":
         return nn.GELU()
     raise ValueError(f"Unknown activation '{name}'")
 
 
 class Generator(nn.Module):
     """
-    Tabular generator MLP.
-    Hidden sizes controlled by `hidden_dims` list from cfg["genLayers"].
+    Hidden sizes controlled by cfg["genLayers"] list.
     """
     def __init__(
         self,
