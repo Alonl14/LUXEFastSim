@@ -5,6 +5,7 @@ trainer.py – critic terminology, W-distance/GP logging, safe break, input jitt
 
 import warnings
 import numpy as np
+import os
 import tqdm
 import torch
 import torch.nn as nn
