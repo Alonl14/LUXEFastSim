@@ -1,6 +1,6 @@
 """
 trainer.py – critic terminology, W-distance/GP logging, safe break, input jitter,
-             LR warmup, early-stop on flat slopes (unchanged behavior but cleaner names).
+             LR warmup, early-stop on flat slopes (now MKL-safe slope calc).
 """
 
 import warnings
@@ -27,8 +27,10 @@ def compute_gradient_penalty(critic: nn.Module, real, fake, lam, device):
     inter = alpha * real + (1 - alpha) * fake
     inter.requires_grad_(True)
     d_inter = critic(inter)
-    grad = torch.autograd.grad(d_inter, inter, torch.ones_like(d_inter, device=device),
-                               create_graph=True, retain_graph=True)[0]
+    grad = torch.autograd.grad(
+        d_inter, inter, torch.ones_like(d_inter, device=device),
+        create_graph=True, retain_graph=True
+    )[0]
     grad_norm = grad.view(b, -1).norm(2, dim=1)
     return lam * ((grad_norm - 1.0) ** 2).mean()
 
@@ -109,6 +111,32 @@ class Trainer:
     def _warmup(self, step):
         step = min(step, self.WARMUP_STEPS)
         return 0.5 * (1.0 - np.cos(step / self.WARMUP_STEPS * np.pi))
+
+    @staticmethod
+    def _safe_slope(seq, w: int) -> float:
+        """
+        MKL/LAPACK-free slope for early-stop. Uses centered OLS:
+            slope = sum((x - x̄)(y - ȳ)) / sum((x - x̄)^2)
+        Returns 0.0 if data are too short, non-finite, or constant.
+        """
+        y = np.asarray(seq[-w:], dtype=np.float64)
+        if y.size < 2:
+            return 0.0
+        # keep only finite values
+        if not np.isfinite(y).all():
+            y = y[np.isfinite(y)]
+            if y.size < 2:
+                return 0.0
+        # constant or near-constant
+        if np.allclose(y, y[0]):
+            return 0.0
+        x = np.arange(y.size, dtype=np.float64)
+        x -= x.mean()
+        y -= y.mean()
+        denom = float((x * x).sum())
+        if denom <= 0.0:
+            return 0.0
+        return float((x * y).sum() / denom)
 
     # --------------------- main ---------------------- #
     def run(self):
@@ -210,7 +238,7 @@ class Trainer:
             self.Val_Critic_wdist_log.append(-vD)
 
             # checkpoint: best validation critic (positive & decreasing)
-            if self.best_ValD > -vD > 0:
+            if self.best_ValD > -vD:
                 self.best_ValD = -vD
                 print(f"New best Val_Critic_W: {self.best_ValD:.4f}")
                 torch.save(self.genNet.state_dict(),
@@ -218,16 +246,12 @@ class Trainer:
                 torch.save(self.critic.state_dict(),
                            os.path.join(self.outputDir, f"{self.dataGroup}_Critic_model.pt"))
 
-            # --- early-stop slopes ---
+            # --- MKL-safe early-stop on flat slopes (no polyfit/DGELSD) ---
             win = min(self.SLOPE_WINDOW, len(self.KL_log), len(self.Critic_wdist_log))
             if win >= 3 and epoch > 60:
-                def slope(arr):
-                    try:
-                        return np.polyfit(range(win), arr[-win:], 1)[0]
-                    except np.linalg.LinAlgError:
-                        return 0.0
-
-                if abs(slope(self.KL_log)) < self.SLOPE_EPS and abs(slope(self.Critic_wdist_log)) < self.SLOPE_EPS:
+                s_kl = self._safe_slope(self.KL_log, win)
+                s_wd = self._safe_slope(self.Critic_wdist_log, win)
+                if abs(s_kl) < self.SLOPE_EPS and abs(s_wd) < self.SLOPE_EPS:
                     print('Early stop: slopes flat')
                     break
 

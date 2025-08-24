@@ -80,7 +80,7 @@ def create_trainer(cfg: Dict[str, Any], trained: bool = False):
     use_cuda = device.type == "cuda"
     print(f"[trainerFactory] Using device: {device}")
 
-    num_workers = int(cfg.get("numWorkers", min(8, os.cpu_count() or 1)))
+    num_workers = int(cfg.get("numWorkers", min(1, os.cpu_count() or 1)))
     pin_memory = bool(cfg.get("pinMemory", use_cuda))
     persistent_workers = num_workers > 0
 
