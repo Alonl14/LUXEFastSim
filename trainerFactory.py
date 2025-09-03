@@ -86,12 +86,12 @@ def create_trainer(cfg, trained=False):
         'Lambda': cfg['Lambda'],
         'GMaxSteps': cfg.get('GMaxSteps', None),
         'gradMetric': cfg.get('gradMetric', 'norm'),
-        'discStateDict': genStateDict,
-        'genStateDict': discStateDict
+        'discStateDict': discStateDict,
+        'genStateDict': genStateDict
     }
 
-    genOptimizer = optim.Adam(cfgDict['genNet'].parameters(), lr=cfg['criticLearningRate'], betas=(0.5, 0.9))
-    discOptimizer = optim.Adam(cfgDict['discNet'].parameters(), lr=cfg['generatorLearningRate'], betas=(0.5, 0.9))
+    genOptimizer = optim.Adam(cfgDict['genNet'].parameters(), lr=cfg['generatorLearningRate'], betas=(0.5, 0.9))
+    discOptimizer = optim.Adam(cfgDict['discNet'].parameters(), lr=cfg['criticLearningRate'], betas=(0.5, 0.9))
 
     cfgDict['genOptimizer'] = genOptimizer
     cfgDict['discOptimizer'] = discOptimizer
