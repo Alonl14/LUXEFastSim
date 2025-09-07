@@ -11,8 +11,8 @@
   "device": "cpu",
   "nCrit": 1,
   "Lambda": 5,
-  "criticLearningRate": 8e-07,
-  "generatorLearningRate": 1e-05,
+  "criticLearningRate": 1e-05,
+  "generatorLearningRate": 8e-07,
   "gradMetric": "norm",
   "GMaxSteps": null,
   "features": {

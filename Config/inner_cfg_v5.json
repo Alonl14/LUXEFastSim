@@ -9,7 +9,7 @@
   "noiseDim": 256,
   "numEpochs": 50,
   "device": "cpu",
-  "nCrit": 1,
+  "nCrit": 4,
   "Lambda": 5,
   "criticLearningRate": 1.5e-05,
   "generatorLearningRate": 8e-07,

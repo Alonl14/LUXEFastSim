@@ -11,17 +11,15 @@
   "device": "cpu",
   "nCrit": 5,
   "Lambda": 5,
-  "criticLearningRate": 1e-06,
-  "generatorLearningRate": 1.5e-05,
+  "criticLearningRate": 1.5e-05,
+  "generatorLearningRate": 1e-06,
   "gradMetric": "norm",
   "GMaxSteps": null,
   "features": {
     " xx": [],
     " yy": [],
-    " rp": [
-      "log"
-    ],
-    " phi_p": [],
+    " pxx": [],
+    " pyy": [],
     " pzz": [
       "flip",
       "log"
