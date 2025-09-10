@@ -16,7 +16,7 @@ from scipy.stats import binned_statistic_dd
 from numba import njit
 import random
 import psutil  # Change 7: import psutil for memory logging
-import gc      # Change 7: import gc for garbage collection
+import gc  # Change 7: import gc for garbage collection
 
 # === Change 5: Global style setup moved outside function scope ===
 plt.style.use('seaborn-v0_8-deep')  # moved from inside check_run
@@ -105,7 +105,7 @@ def add_features(df, pdg):
         df[' pyy'] = df[' rp'] * np.sin(df[' phi_p'] - np.pi)
 
     # df[' pzz'] = -np.sqrt((df[' eneg'] + mass) ** 2 - mass ** 2 - df[' rp'] ** 2)
-    df[' eneg'] = (df[' rp']**2+df[' pzz']**2)/(np.sqrt(df[' rp']**2+df[' pzz']**2+mass**2)+mass)
+    df[' eneg'] = (df[' rp'] ** 2 + df[' pzz'] ** 2) / (np.sqrt(df[' rp'] ** 2 + df[' pzz'] ** 2 + mass ** 2) + mass)
 
     # exp2 = df[' pzz'] / np.sqrt((df[' eneg'] + mass) ** 2 - mass ** 2)
     # df['theta'] = np.arccos(df[' pzz'] / np.sqrt((df[' eneg'] + mass) ** 2 - mass ** 2))
@@ -181,9 +181,9 @@ def make_plots(df, dataGroup, run_id="", key="", path=""):
     Hxy = plot_correlations(df[' xx'], df[' yy'], 'x[mm]', 'y[mm]', run_id, key, path=path)  # , Xlim=x_lim, Ylim=y_lim
     energy_bins = 10 ** np.linspace(-13, 0, 400)
     bin_stop = np.log10(np.max(df[' time']))
-    time_bins = 10 ** np.linspace(1, bin_stop+0.5, 400)
+    time_bins = 10 ** np.linspace(1, bin_stop + 0.5, 400)
     Het = plot_correlations(df[' time'], df[' eneg'], 't[ns]', 'E[GeV]', run_id, key, bins=[time_bins, energy_bins],
-                            loglog=True, path=path) #, Xlim=10**6.5
+                            loglog=True, path=path)  # , Xlim=10**6.5
     Hrth = plot_correlations(df[' rx'], df['theta'], 'r [mm]', '\\theta_p [rad]', run_id, key, path=path)
     Hpp = plot_correlations(df[' phi_p'], df[' phi_x'], '\phi_p [rad]', '\phi_x [rad]', run_id, key, path=path)
     return Hxy, Het, Hrth, Hpp
@@ -278,7 +278,7 @@ def plot_features(ds, save_path=None):
         #     ax3.set_title("Quantile Transformation")
         #     ax4.set_title("Approximated \nQuantile Function")
         #     ax5.set_title("QT-generated Data")
-        fontsize=28
+        fontsize = 28
         if i == 0:
             ax1.set_ylabel(f"frequency", fontsize=fontsize)
             ax2.set_ylabel(f"frequency", fontsize=fontsize)
@@ -405,38 +405,41 @@ def check_run(run_id, path=None, calculate_BED=True, save_df=False, plot_metrics
         generation_time_a = time.localtime()
         innerDF, innerData = generate_fake_real_dfs(run_id, cfg_inner, run_dir)
         posIn = (innerDF[' time'] <= 1e6) & (innerDF[' rx'] <= 4000) & (innerDF[' xx'] <= 500) & (
-                    innerDF[' xx'] >= -1700) & (innerDF[' yy'] <= 520)
+                innerDF[' xx'] >= -1700) & (innerDF[' yy'] <= 520)
         # Filter innerDF to include only points in region II
         innerDF = innerDF[posIn]
+        # save into a variable, the length of innerDF after filtering by counting posIn True values
+        len_inner = posIn.sum()
         print(f"[mem after inner init] {psutil.Process().memory_info().rss / 1e9:.2f} GB")
         outer1DF, outer1Data = generate_fake_real_dfs(run_id, cfg_outer1, run_dir)
         posOut1 = (outer1DF[' time'] <= 1e6) & (outer1DF[' rx'] <= 4000) & (
                 (outer1DF[' xx'] >= 500) | (outer1DF[' yy'] >= 520))
         # Filter outer1DF to include only points in region I
         outer1DF = outer1DF[posOut1]
+        len_outer1 = posOut1.sum()
         print(f"[mem after outer1 init] {psutil.Process().memory_info().rss / 1e9:.2f} GB")
         outer2DF, outer2Data = generate_fake_real_dfs(run_id, cfg_outer2, run_dir)
         posOut2 = (outer2DF[' time'] <= 1e6) & (outer2DF[' rx'] <= 4000) & (
                 (outer2DF[' xx'] < -1700) & (outer2DF[' yy'] <= 520))
         # Filter outer2DF to include only points in region III
         outer2DF = outer2DF[posOut2]
+        len_outer2 = posOut2.sum()
         print(f"[mem after outer2 init] {psutil.Process().memory_info().rss / 1e9:.2f} GB")
         generation_time_b = time.localtime()
         print(f'Created DFs in {get_time(generation_time_a, generation_time_b)}')
 
     if calculate_BED:
-        print("getting batch ED...")
-        batch_size = 500
-        small_batch = 50
+        batch_size = map(lambda x: 50 * np.floor(np.log10(x)), [len_inner, len_outer1, len_outer2])
+        print(f"Batch sizes for ED: {batch_size}")
         inner_null_values, inner_H1_values = get_batch_ed_histograms(
             innerDF, innerData,
-            batch_size=batch_size)
+            batch_size=batch_size[0])
         outer1_null_values, outer1_H1_values = get_batch_ed_histograms(
             outer1DF, outer1Data,
-            batch_size=batch_size)
+            batch_size=batch_size[1])
         outer2_null_values, outer2_H1_values = get_batch_ed_histograms(
             outer2DF, outer2Data,
-            batch_size=small_batch)
+            batch_size=batch_size[2])
         make_ed_fig(inner_null_values, inner_H1_values, 'inner', fig_path)
         make_ed_fig(outer1_null_values, outer1_H1_values, 'outer1', fig_path)
         make_ed_fig(outer2_null_values, outer2_H1_values, 'outer2', fig_path)
@@ -693,7 +696,7 @@ def plot_1d(data, DF, feat, ks, fig_path, key):
                  ' phi_p': '$\\phi_p~$[rad]',
                  'theta': '$\\theta~$[rad]'}
     plt.xlabel(labeldict[feat])
-    plt.savefig(fig_path + '1dHists/' + key + '/' + feat.strip().capitalize(),bbox_inches='tight')
+    plt.savefig(fig_path + '1dHists/' + key + '/' + feat.strip().capitalize(), bbox_inches='tight')
     plt.close()
 
 
@@ -766,8 +769,9 @@ def get_batch_ed_histograms(x_c, y_c, batch_size=1000):
     x_batches = get_batches(x.values, batch_size)
     y_batches = get_batches(y.values, batch_size)
 
-    y_prime_batches = y_batches.copy()
-    random.shuffle(y_prime_batches)
+    # shift each batch's position in the list by some random non-zero amount
+    shift = np.random.randint(low=1, high=len(y_batches) - 1)
+    y_prime_batches = y_batches[shift:] + y_batches[:shift]
 
     n_batches = min(len(x_batches), len(y_batches))
     ED_null = np.zeros(n_batches)
@@ -1128,4 +1132,3 @@ particle_dict = {
 #     generated_df = ds.data.copy()
 #     add_features(generated_df, cfg["pdg"])
 #     return generated_df
-
