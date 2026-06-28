@@ -1,0 +1,11 @@
+{
+  "shared": {},
+  "defaultFeatures": {
+    " xx": [],
+    " yy": [],
+    " pxx": [],
+    " pyy": [],
+    " pzz": ["flip", "log"],
+    " time": ["log"]
+  }
+}
