@@ -86,6 +86,7 @@ def create_trainer(cfg, trained=False):
         'Lambda': cfg['Lambda'],
         'GMaxSteps': cfg.get('GMaxSteps', None),
         'gradMetric': cfg.get('gradMetric', 'norm'),
+        'emaDecay': cfg.get('emaDecay', None),
         'discStateDict': discStateDict,
         'genStateDict': genStateDict
     }

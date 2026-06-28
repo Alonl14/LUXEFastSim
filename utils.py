@@ -17,6 +17,7 @@ from numba import njit
 import random
 import psutil  # Change 7: import psutil for memory logging
 import gc  # Change 7: import gc for garbage collection
+from pipeline.regions import region_mask, DISC_RX_MAX, TIME_MAX
 
 # === Change 5: Global style setup moved outside function scope ===
 plt.style.use('seaborn-v0_8-deep')  # moved from inside check_run
@@ -303,7 +304,7 @@ def plot_features(ds, save_path=None):
     return ds2.data, ds.preprocess
 
 
-def generate_ds(generator_net, factor, cfg):
+def generate_ds(generator_net, factor, cfg, calibrator=None):
     """
     :param generator_net:
     :param factor:
@@ -317,6 +318,8 @@ def generate_ds(generator_net, factor, cfg):
     generator_net.eval().to('cpu')
     generated_data = generator_net(torch.randn(np.int64(numEvents / factor), cfg['noiseDim'], device='cpu'))
     generated_data = generated_data.detach().numpy()
+    if calibrator is not None:
+        generated_data = calibrator.transform(generated_data)
     features = cfg['features'].keys()
     ds.data = pd.DataFrame(np.empty((0, len(features))), columns=features)
     data_values = ds.quantiles.inverse_transform(generated_data) if ds.quantiles is not None else generated_data
@@ -339,7 +342,7 @@ def weights_init(m):
         nn.init.normal_(m.weight.data, 1, 0.02)
 
 
-def generate_fake_real_dfs(run_id, cfg, run_dir, generator_net=None):
+def generate_fake_real_dfs(run_id, cfg, run_dir, generator_net=None, calibrator=None):
     """
     Given a run id load the trained model in run_id dir to its respective trainer and return the generated dataframe
     :param generator_net: network, if available
@@ -366,7 +369,7 @@ def generate_fake_real_dfs(run_id, cfg, run_dir, generator_net=None):
 
     # TODO: remove factor, find a different way to ease local data generation
     # Read data used for training
-    fake_df, real_df = generate_ds(generator_net, factor=1, cfg=cfg)
+    fake_df, real_df = generate_ds(generator_net, factor=1, cfg=cfg, calibrator=calibrator)
     real_df = real_df[real_df[' time'] <= 1e6]
     fake_df = fake_df[fake_df[' time'] <= 1e6]
     add_features(fake_df, cfg['pdg'])
@@ -404,23 +407,20 @@ def check_run(run_id, path=None, calculate_BED=True, save_df=False, plot_metrics
     if plot_results or save_df or calculate_BED:
         generation_time_a = time.localtime()
         innerDF, innerData = generate_fake_real_dfs(run_id, cfg_inner, run_dir)
-        posIn = (innerDF[' time'] <= 1e6) & (innerDF[' rx'] <= 4000) & (innerDF[' xx'] <= 500) & (
-                innerDF[' xx'] >= -1700) & (innerDF[' yy'] <= 520)
+        posIn = (innerDF[' time'] <= TIME_MAX) & (innerDF[' rx'] <= DISC_RX_MAX) & region_mask(innerDF, "inner")
         # Filter innerDF to include only points in region II
         innerDF = innerDF[posIn]
         # save into a variable, the length of innerDF after filtering by counting posIn True values
         len_inner = posIn.sum()
         print(f"[mem after inner init] {psutil.Process().memory_info().rss / 1e9:.2f} GB")
         outer1DF, outer1Data = generate_fake_real_dfs(run_id, cfg_outer1, run_dir)
-        posOut1 = (outer1DF[' time'] <= 1e6) & (outer1DF[' rx'] <= 4000) & (
-                (outer1DF[' xx'] >= 500) | (outer1DF[' yy'] >= 520))
+        posOut1 = (outer1DF[' time'] <= TIME_MAX) & (outer1DF[' rx'] <= DISC_RX_MAX) & region_mask(outer1DF, "outer1")
         # Filter outer1DF to include only points in region I
         outer1DF = outer1DF[posOut1]
         len_outer1 = posOut1.sum()
         print(f"[mem after outer1 init] {psutil.Process().memory_info().rss / 1e9:.2f} GB")
         outer2DF, outer2Data = generate_fake_real_dfs(run_id, cfg_outer2, run_dir)
-        posOut2 = (outer2DF[' time'] <= 1e6) & (outer2DF[' rx'] <= 4000) & (
-                (outer2DF[' xx'] < -1700) & (outer2DF[' yy'] <= 520))
+        posOut2 = (outer2DF[' time'] <= TIME_MAX) & (outer2DF[' rx'] <= DISC_RX_MAX) & region_mask(outer2DF, "outer2")
         # Filter outer2DF to include only points in region III
         outer2DF = outer2DF[posOut2]
         len_outer2 = posOut2.sum()

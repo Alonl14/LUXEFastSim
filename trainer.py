@@ -5,6 +5,7 @@ Minimal deltas; all list names & public API unchanged.
 """
 
 import torch
+import copy
 import numpy as np
 import tqdm
 import utils
@@ -52,6 +53,14 @@ def param_grad_norm(net):
     return s ** 0.5
 
 
+def ema_update(ema_model, model, decay):
+    with torch.no_grad():
+        for ema_p, p in zip(ema_model.parameters(), model.parameters()):
+            ema_p.mul_(decay).add_(p.detach(), alpha=1 - decay)
+        for ema_b, b in zip(ema_model.buffers(), model.buffers()):
+            ema_b.copy_(b)
+
+
 # ------------------------------------------------------------------ #
 class Trainer:
     WARMUP_STEPS = 1_000
@@ -80,6 +89,14 @@ class Trainer:
         self.outputDir = cfg['outputDir']
         self.GMaxSteps = cfg.get('GMaxSteps', None)
         self.gradMetric = cfg.get('gradMetric', 'norm')
+
+        # EMA generator (training-time only; zero inference cost)
+        self.ema_decay = cfg.get('emaDecay', None)
+        self.ema_gen = None
+        if self.ema_decay:
+            self.ema_gen = copy.deepcopy(self.genNet)
+            for p in self.ema_gen.parameters():
+                p.requires_grad_(False)
 
         # model checkpoint
         self.best_ValD = float('inf')
@@ -167,6 +184,10 @@ class Trainer:
                 loss_G.backward()
                 self.optG.step()
 
+                if self.ema_gen is not None:
+                    self.ema_gen.to(self.device)
+                    ema_update(self.ema_gen, self.genNet, self.ema_decay)
+
                 # decay noise std
                 sigma *= decay
 
@@ -208,7 +229,8 @@ class Trainer:
             if self.best_ValD > -vD > 0:
                 self.best_ValD = -vD
                 print(f"New best Val_D: {self.best_ValD:.4f} at epoch {epoch}")
-                torch.save(self.genNet.state_dict(), f"{self.outputDir}{self.dataGroup}_Gen_model.pt")
+                gen_to_save = self.ema_gen if self.ema_gen is not None else self.genNet
+                torch.save(gen_to_save.state_dict(), f"{self.outputDir}{self.dataGroup}_Gen_model.pt")
                 torch.save(self.discNet.state_dict(), f"{self.outputDir}{self.dataGroup}_Disc_model.pt")
 
             # --- early‑stop slopes ---
@@ -226,7 +248,8 @@ class Trainer:
 
     # --------------------- validate ------------------ #
     def _validate(self):
-        self.genNet.eval()
+        gen = self.ema_gen if self.ema_gen is not None else self.genNet
+        gen.eval()
         self.discNet.eval()
         sG = sD = n = 0
         with torch.no_grad():
@@ -234,7 +257,7 @@ class Trainer:
                 real = real.to(self.device)
                 bs = real.size(0)
                 loss_real = -self.discNet(real).mean()
-                fake = self.genNet(torch.randn(bs, self.noiseDim, device=self.device))
+                fake = gen(torch.randn(bs, self.noiseDim, device=self.device))
                 loss_fake = self.discNet(fake).mean()
                 sD += (loss_real + loss_fake).item()
                 sG += (-self.discNet(fake).mean()).item()

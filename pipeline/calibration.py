@@ -1,0 +1,47 @@
+"""Post-hoc per-feature marginal calibration.
+
+The generator's per-feature output is assumed by the inverse QuantileTransformer
+to be standard normal. In practice it deviates slightly, which is amplified into
+off physical marginals. This calibrator maps the generator's actual per-feature
+marginal back onto standard normal with a monotone (rank-preserving) map.
+"""
+
+import joblib
+import numpy as np
+import torch
+from sklearn.preprocessing import QuantileTransformer
+
+
+class MarginalCalibrator:
+    def __init__(self, n_quantiles=1000):
+        self._n_quantiles = n_quantiles
+        self.qt = None
+
+    def fit(self, gen_output):
+        gen_output = np.asarray(gen_output)
+        n_q = min(self._n_quantiles, gen_output.shape[0])
+        self.qt = QuantileTransformer(output_distribution="normal", n_quantiles=n_q)
+        self.qt.fit(gen_output)
+        return self
+
+    def transform(self, gen_output):
+        return self.qt.transform(np.asarray(gen_output))
+
+    def save(self, path):
+        joblib.dump(self.qt, path)
+
+    @classmethod
+    def load(cls, path):
+        obj = cls()
+        obj.qt = joblib.load(path)
+        return obj
+
+
+def fit_calibrator(generator_net, noise_dim, n_samples, out_path, device="cpu"):
+    generator_net.eval().to(device)
+    with torch.no_grad():
+        z = torch.randn(n_samples, noise_dim, device=device)
+        out = generator_net(z).detach().cpu().numpy()
+    cal = MarginalCalibrator().fit(out)
+    cal.save(out_path)
+    return cal

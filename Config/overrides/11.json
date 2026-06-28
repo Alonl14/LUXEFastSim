@@ -1,0 +1,12 @@
+{
+  "shared": {
+    "nQuantiles": 1000,
+    "subsample": 200000,
+    "batchSize": 256,
+    "nCrit": 2,
+    "GMaxSteps": 60,
+    "emaDecay": 0.9
+  },
+  "dataRoot": "TrainData",
+  "dataPrefix": ""
+}
