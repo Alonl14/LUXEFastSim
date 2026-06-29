@@ -23,9 +23,12 @@ LOG_MAP = {
 
 def build_configs(pdg, output_dir, num_epochs,
                   base_path="Config/base_cfg.json",
-                  overrides_dir="Config/overrides"):
+                  overrides_dir="Config/overrides",
+                  data_root=None):
     base = load_base(base_path)
     override = load_override(overrides_dir, pdg)
+    if data_root is not None:
+        override = {**override, "dataRoot": data_root}
     return materialize_all(base, override, pdg, output_dir, num_epochs)
 
 
@@ -35,7 +38,7 @@ def write_configs(configs, output_dir):
         utils.save_cfg(cfg)
 
 
-def split_if_requested(master_csv, pdg, base_path, overrides_dir):
+def split_if_requested(master_csv, pdg, base_path, overrides_dir, data_root=None):
     import pandas as pd
 
     from pipeline.config import load_base, load_override
@@ -43,7 +46,7 @@ def split_if_requested(master_csv, pdg, base_path, overrides_dir):
 
     base = load_base(base_path)
     override = load_override(overrides_dir, pdg)
-    root = override.get("dataRoot", base["dataRoot"])
+    root = data_root if data_root is not None else override.get("dataRoot", base["dataRoot"])
     prefix = override.get("dataPrefix", base.get("dataPrefix", ""))
     master = pd.read_csv(master_csv)
     return split_particle(master, pdg, out_dir=root, prefix=prefix)
@@ -82,6 +85,8 @@ def main(argv=None):
     parser.add_argument("--output-dir", type=str, required=True)
     parser.add_argument("--base", type=str, default="Config/base_cfg.json")
     parser.add_argument("--overrides-dir", type=str, default="Config/overrides")
+    parser.add_argument("--data-root", type=str, default=None,
+                        help="Override the input-CSV directory (e.g. TrainData for local runs).")
     parser.add_argument("--split-from", type=str, default=None,
                         help="Master CSV to split into per-region inputs before training.")
     parser.add_argument("--dry-run", action="store_true",
@@ -90,10 +95,12 @@ def main(argv=None):
 
     output_dir = args.output_dir if args.output_dir.endswith("/") else args.output_dir + "/"
     if args.split_from:
-        paths = split_if_requested(args.split_from, args.pdg, args.base, args.overrides_dir)
+        paths = split_if_requested(args.split_from, args.pdg, args.base, args.overrides_dir,
+                                   data_root=args.data_root)
         print(f"Split master into: {paths}")
     configs = build_configs(args.pdg, output_dir, args.epochs,
-                            base_path=args.base, overrides_dir=args.overrides_dir)
+                            base_path=args.base, overrides_dir=args.overrides_dir,
+                            data_root=args.data_root)
     write_configs(configs, output_dir)
     if args.dry_run:
         print(f"Dry run: wrote configs for pdg {args.pdg} to {output_dir}")

@@ -13,6 +13,11 @@ def test_build_configs_for_photon():
     assert cfgs["inner"]["data_path"].endswith("22_inner.csv")
 
 
+def test_build_configs_data_root_override():
+    cfgs = build_configs(11, output_dir="o/", num_epochs=1, data_root="TrainData")
+    assert cfgs["inner"]["data_path"] == "TrainData/11_inner.csv"
+
+
 def test_main_dry_run_writes_three_configs(tmp_path):
     out = str(tmp_path) + "/"
     main(["22", "--epochs", "2", "--output-dir", out, "--dry-run"])

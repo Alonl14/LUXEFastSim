@@ -37,6 +37,16 @@ class MarginalCalibrator:
         return obj
 
 
+def load_run_calibrator(run_dir, region):
+    """Load {region}_calib.pkl from a run dir, or None if absent (back-compat)."""
+    import os
+
+    path = os.path.join(run_dir, f"{region}_calib.pkl")
+    if os.path.exists(path):
+        return MarginalCalibrator.load(path)
+    return None
+
+
 def fit_calibrator(generator_net, noise_dim, n_samples, out_path, device="cpu"):
     generator_net.eval().to(device)
     with torch.no_grad():

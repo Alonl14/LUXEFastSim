@@ -3,7 +3,7 @@ import torch
 import torch.nn as nn
 from scipy.stats import kstest, spearmanr
 
-from pipeline.calibration import MarginalCalibrator, fit_calibrator
+from pipeline.calibration import MarginalCalibrator, fit_calibrator, load_run_calibrator
 
 
 def test_calibration_normalizes_off_marginal():
@@ -50,6 +50,18 @@ def test_fit_calibrator_with_dummy_generator(tmp_path):
     y = cal.transform(out)
     stat, pval = kstest(y[:, 0], "norm")
     assert pval > 0.01
+
+
+def test_load_run_calibrator_present_and_absent(tmp_path):
+    import numpy as np
+    rng = np.random.default_rng(3)
+    x = rng.normal(size=(5000, 2)).astype(np.float32)
+    MarginalCalibrator().fit(x).save(str(tmp_path / "inner_calib.pkl"))
+
+    loaded = load_run_calibrator(str(tmp_path), "inner")
+    assert loaded is not None
+    assert np.allclose(loaded.transform(x), MarginalCalibrator().fit(x).transform(x))
+    assert load_run_calibrator(str(tmp_path), "outer1") is None
 
 
 def test_generate_ds_applies_calibrator(monkeypatch):

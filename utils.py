@@ -405,21 +405,28 @@ def check_run(run_id, path=None, calculate_BED=True, save_df=False, plot_metrics
         fix_path(cfg_outer2, "data_path")
 
     if plot_results or save_df or calculate_BED:
+        from pipeline.calibration import load_run_calibrator
         generation_time_a = time.localtime()
-        innerDF, innerData = generate_fake_real_dfs(run_id, cfg_inner, run_dir)
+        innerDF, innerData = generate_fake_real_dfs(
+            run_id, cfg_inner, run_dir,
+            calibrator=load_run_calibrator(run_dir, "inner"))
         posIn = (innerDF[' time'] <= TIME_MAX) & (innerDF[' rx'] <= DISC_RX_MAX) & region_mask(innerDF, "inner")
         # Filter innerDF to include only points in region II
         innerDF = innerDF[posIn]
         # save into a variable, the length of innerDF after filtering by counting posIn True values
         len_inner = posIn.sum()
         print(f"[mem after inner init] {psutil.Process().memory_info().rss / 1e9:.2f} GB")
-        outer1DF, outer1Data = generate_fake_real_dfs(run_id, cfg_outer1, run_dir)
+        outer1DF, outer1Data = generate_fake_real_dfs(
+            run_id, cfg_outer1, run_dir,
+            calibrator=load_run_calibrator(run_dir, "outer1"))
         posOut1 = (outer1DF[' time'] <= TIME_MAX) & (outer1DF[' rx'] <= DISC_RX_MAX) & region_mask(outer1DF, "outer1")
         # Filter outer1DF to include only points in region I
         outer1DF = outer1DF[posOut1]
         len_outer1 = posOut1.sum()
         print(f"[mem after outer1 init] {psutil.Process().memory_info().rss / 1e9:.2f} GB")
-        outer2DF, outer2Data = generate_fake_real_dfs(run_id, cfg_outer2, run_dir)
+        outer2DF, outer2Data = generate_fake_real_dfs(
+            run_id, cfg_outer2, run_dir,
+            calibrator=load_run_calibrator(run_dir, "outer2"))
         posOut2 = (outer2DF[' time'] <= TIME_MAX) & (outer2DF[' rx'] <= DISC_RX_MAX) & region_mask(outer2DF, "outer2")
         # Filter outer2DF to include only points in region III
         outer2DF = outer2DF[posOut2]
