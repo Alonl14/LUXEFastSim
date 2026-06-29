@@ -6,8 +6,6 @@
 echo "Installing python3>>>>>>"
 source /usr/wipp/conda/24.5.0u/etc/profile.d/conda.sh
 conda activate common
-pip install numba
-pip install latex
 # Set default behavior
 calculate_BED="--calculate_BED"
 save_df=""

@@ -13,7 +13,9 @@ import os
 import tqdm
 from scipy.stats import kstest as ks
 from scipy.stats import binned_statistic_dd
-from numba import njit
+# numba is imported lazily inside euclidean_distance_matrix (analysis/BED only),
+# so the training path can import utils without pulling numba — and thus without
+# inheriting numba's narrower NumPy version ceiling.
 import random
 import psutil  # Change 7: import psutil for memory logging
 import gc  # Change 7: import gc for garbage collection
@@ -735,8 +737,7 @@ def get_time(end_time, beg_time=np.zeros(9)):
 
 
 # calculates the Euclidean distance matrix for two np arrays x and y
-@njit
-def euclidean_distance_matrix(x, y, out):
+def _euclidean_distance_matrix_py(x, y, out):
     n_x, dim = x.shape
     n_y = y.shape[0]
     # original:
@@ -748,6 +749,22 @@ def euclidean_distance_matrix(x, y, out):
                 s += (x[i, k] - y[j, k]) ** 2
             out[i, j] = np.sqrt(s)
     return out
+
+
+# JIT-compiled lazily on first call so importing utils (e.g. for training) does
+# not require numba. Falls back to pure Python if numba is unavailable.
+_edm_compiled = None
+
+
+def euclidean_distance_matrix(x, y, out):
+    global _edm_compiled
+    if _edm_compiled is None:
+        try:
+            from numba import njit
+            _edm_compiled = njit(_euclidean_distance_matrix_py)
+        except Exception:
+            _edm_compiled = _euclidean_distance_matrix_py
+    return _edm_compiled(x, y, out)
 
 
 def get_batch_ed_histograms(x_c, y_c, batch_size=1000):
