@@ -3,7 +3,12 @@ import torch
 import torch.nn as nn
 from scipy.stats import kstest, spearmanr
 
-from pipeline.calibration import MarginalCalibrator, fit_calibrator, load_run_calibrator
+from pipeline.calibration import (
+    MarginalCalibrator,
+    fit_calibrator,
+    load_run_calibrator,
+    unwrap_dataparallel,
+)
 
 
 def test_calibration_normalizes_off_marginal():
@@ -52,6 +57,31 @@ def test_fit_calibrator_with_dummy_generator(tmp_path):
     assert pval > 0.01
 
 
+def test_unwrap_dataparallel_returns_inner_module():
+    inner = nn.Linear(3, 2)
+    assert unwrap_dataparallel(inner) is inner
+    assert unwrap_dataparallel(nn.DataParallel(inner)) is inner
+
+
+def test_fit_calibrator_accepts_dataparallel_wrapped_generator(tmp_path):
+    # Regression: the trainer hands fit_calibrator a DataParallel-wrapped net
+    # (tr.ema_gen / tr.genNet). Forwarding through DataParallel after .to('cpu')
+    # raises a device RuntimeError on a GPU node; fit_calibrator must unwrap it.
+    torch.manual_seed(0)
+
+    class Shift(nn.Module):
+        def forward(self, z):
+            return z[:, :2] + 0.5
+
+    wrapped = nn.DataParallel(Shift())
+    p = str(tmp_path / "c.pkl")
+    cal = fit_calibrator(wrapped, noise_dim=4, n_samples=10000, out_path=p)
+    z = torch.randn(10000, 4)
+    y = cal.transform((z[:, :2] + 0.5).numpy())
+    _, pval = kstest(y[:, 0], "norm")
+    assert pval > 0.01
+
+
 def test_load_run_calibrator_present_and_absent(tmp_path):
     import numpy as np
     rng = np.random.default_rng(3)
@@ -96,5 +126,6 @@ def test_generate_ds_applies_calibrator(monkeypatch):
 
     cfg = {"dataGroup": "inner", "noiseDim": 3,
            "features": {" a": [], " b": []}, "pdg": 22}
-    utils.generate_ds(Gen(), factor=1, cfg=cfg, calibrator=Cal())
+    # DataParallel-wrapped: generate_ds must unwrap before its CPU forward.
+    utils.generate_ds(nn.DataParallel(Gen()), factor=1, cfg=cfg, calibrator=Cal())
     assert np.allclose(captured["into_inverse"], 0.0)

@@ -5,6 +5,7 @@ from sklearn.preprocessing import QuantileTransformer as qt
 import copy
 
 import utils
+from pipeline import qt_cache
 
 
 class ParticleDataset(Dataset):
@@ -16,7 +17,6 @@ class ParticleDataset(Dataset):
         self._registry = {"log": simple_log,
                           "flip": flip}
         self.cfg = cfg
-        QT = qt(output_distribution='normal', n_quantiles=cfg['nQuantiles'], subsample=cfg['subsample'])
 
         self.data = pd.read_csv(cfg['data_path'])
         utils.add_features(self.data, cfg["pdg"])
@@ -28,10 +28,22 @@ class ParticleDataset(Dataset):
         # mps doesn't work with double-percision floats, cuda does
         data_type = np.float32
 
-        self.quantiles = QT.fit(self.data)
+        # Fit the QuantileTransformer once, caching it to disk: the fit is the
+        # expensive part of dataset prep and is identical across runs/analyses
+        # of the same data. A single fit (then transform) also avoids the old
+        # double-fit, where the stored QT differed from the one that transformed
+        # the data because subsample() draws a fresh random subset each fit.
+        QT = qt_cache.load_qt(cfg)
+        if QT is None:
+            QT = qt(output_distribution='normal', n_quantiles=cfg['nQuantiles'], subsample=cfg['subsample'])
+            QT.fit(self.data)
+            qt_cache.save_qt(QT, cfg)
+            print(f"Fitted and cached QuantileTransformer for region {cfg['dataGroup']}")
+        else:
+            print(f"Loaded cached QuantileTransformer for region {cfg['dataGroup']}")
+        self.quantiles = QT
         self.preqt = self.data.values
-        self.data = QT.fit_transform(self.data)
-        self.data = self.data.astype(data_type)
+        self.data = QT.transform(self.data).astype(data_type)
 
     @property
     def registry(self):

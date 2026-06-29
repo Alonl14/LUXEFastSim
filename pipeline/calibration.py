@@ -47,7 +47,21 @@ def load_run_calibrator(run_dir, region):
     return None
 
 
+def unwrap_dataparallel(net):
+    """Return the bare module from an nn.DataParallel wrapper (else net unchanged).
+
+    DataParallel.forward always scatters to its configured device_ids[0] (cuda:0)
+    and asserts every parameter/buffer already lives there, so it cannot be run on
+    CPU — `.to('cpu')` followed by a forward raises
+    `RuntimeError: module must have its parameters and buffers on device cuda:0 ...`.
+    The unwrapped module runs wherever its parameters happen to be. Use this before
+    any CPU-side generation/calibration forward pass.
+    """
+    return net.module if isinstance(net, torch.nn.DataParallel) else net
+
+
 def fit_calibrator(generator_net, noise_dim, n_samples, out_path, device="cpu"):
+    generator_net = unwrap_dataparallel(generator_net)
     generator_net.eval().to(device)
     with torch.no_grad():
         z = torch.randn(n_samples, noise_dim, device=device)

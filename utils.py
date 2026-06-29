@@ -317,6 +317,8 @@ def generate_ds(generator_net, factor, cfg, calibrator=None):
     ds = dataset.ParticleDataset(cfg)
     print(f"Created dataset for region {cfg['dataGroup']} with {len(ds.data)} events")
     numEvents = np.shape(ds.data)[0]
+    from pipeline.calibration import unwrap_dataparallel
+    generator_net = unwrap_dataparallel(generator_net)  # DataParallel can't forward on CPU
     generator_net.eval().to('cpu')
     generated_data = generator_net(torch.randn(np.int64(numEvents / factor), cfg['noiseDim'], device='cpu'))
     generated_data = generated_data.detach().numpy()
